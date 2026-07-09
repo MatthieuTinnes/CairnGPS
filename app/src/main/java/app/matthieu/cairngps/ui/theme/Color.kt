@@ -17,3 +17,10 @@ val DarkOnSurface = Color(0xFFE6EAE3)
 val LightBackground = Color(0xFFF7FAF5)
 val LightSurface = Color(0xFFFFFFFF)
 val LightOnSurface = Color(0xFF191D17)
+
+// Accuracy quality indicator: green < 5 m, orange 5–15 m, red > 15 m.
+// Slightly desaturated so they stay comfortable on the dark background.
+val QualityGood = Color(0xFF4CAF50)
+val QualityMedium = Color(0xFFFFA726)
+val QualityPoor = Color(0xFFE53935)
+val QualityUnknown = Color(0xFF6E756B)

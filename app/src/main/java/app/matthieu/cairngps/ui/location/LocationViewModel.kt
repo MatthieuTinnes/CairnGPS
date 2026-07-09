@@ -21,7 +21,7 @@ class LocationViewModel(
     private val repository: LocationRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<LocationUiState>(LocationUiState.WaitingForFix)
+    private val _uiState = MutableStateFlow(LocationUiState())
     val uiState: StateFlow<LocationUiState> = _uiState.asStateFlow()
 
     private var trackingJob: Job? = null
@@ -29,12 +29,15 @@ class LocationViewModel(
     /**
      * Starts collecting GPS fixes. Idempotent: calling it again while already tracking is a no-op.
      * Must only be called once [Manifest.permission.ACCESS_FINE_LOCATION] has been granted.
+     *
+     * Tied to the screen lifecycle (started in ON_START, stopped in ON_STOP) so the GPS chip is
+     * only powered while the screen is visible.
      */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun startTracking() {
         if (trackingJob?.isActive == true) return
         trackingJob = repository.locationUpdates()
-            .onEach { fix -> _uiState.value = LocationUiState.Fixed(fix) }
+            .onEach { fix -> _uiState.value = LocationUiState(fix) }
             .launchIn(viewModelScope)
     }
 

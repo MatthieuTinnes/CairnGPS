@@ -11,4 +11,27 @@
     <string name="permission_grant">Autoriser l\'accès</string>
     <string name="permission_denied_rationale">La permission a été refusée. CairnGPS ne peut pas fonctionner sans accès à la position. Vous pouvez l\'activer depuis les réglages de l\'application.</string>
     <string name="permission_open_settings">Ouvrir les réglages</string>
+
+    <!-- Main screen: data labels -->
+    <string name="label_coordinates">Coordonnées</string>
+    <string name="label_latitude">Latitude</string>
+    <string name="label_longitude">Longitude</string>
+    <string name="label_altitude">Altitude</string>
+    <string name="label_speed">Vitesse</string>
+    <string name="label_accuracy">Précision horizontale</string>
+
+    <!-- Units -->
+    <string name="unit_meters">m</string>
+    <string name="unit_kmh">km/h</string>
+
+    <!-- Actions -->
+    <string name="action_toggle_format">Changer le format</string>
+    <string name="action_copy_coordinates">Copier les coordonnées</string>
+    <string name="coordinates_copied">Coordonnées copiées</string>
+
+    <!-- Accuracy quality -->
+    <string name="quality_good">Bonne</string>
+    <string name="quality_medium">Moyenne</string>
+    <string name="quality_poor">Faible</string>
+    <string name="quality_unknown">Inconnue</string>
 </resources>
