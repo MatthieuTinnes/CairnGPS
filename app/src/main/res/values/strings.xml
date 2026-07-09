@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">CairnGPS</string>
+
+    <!-- GPS status -->
+    <string name="waiting_for_fix">En attente d\'un fix GPS…</string>
+    <string name="fix_obtained">Fix obtenu</string>
+
+    <!-- Permission -->
+    <string name="permission_title">Accès à la position requis</string>
+    <string name="permission_rationale">CairnGPS a besoin d\'accéder à votre position GPS précise pour afficher vos coordonnées, votre altitude, etc.\n\nAucune donnée n\'est envoyée en ligne : tout reste sur votre appareil.</string>
+    <string name="permission_grant">Autoriser l\'accès</string>
+    <string name="permission_denied_rationale">La permission a été refusée. CairnGPS ne peut pas fonctionner sans accès à la position. Vous pouvez l\'activer depuis les réglages de l\'application.</string>
+    <string name="permission_open_settings">Ouvrir les réglages</string>
+</resources>

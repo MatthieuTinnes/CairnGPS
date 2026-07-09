@@ -1,0 +1,7 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base theme. Colors are driven by the Compose Material3 theme (CairnGpsTheme),
+         so this only needs to provide a windowing shell with no ActionBar. -->
+    <style name="Theme.CairnGPS" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/black</item>
+    </style>
+</resources>
