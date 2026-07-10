@@ -1,6 +1,7 @@
 package app.matthieu.cairngps
 
 import android.app.Application
+import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.SettingsRepository
 
@@ -12,6 +13,8 @@ import app.matthieu.cairngps.data.SettingsRepository
 class CairnApplication : Application() {
 
     val locationRepository: LocationRepository by lazy { LocationRepository(this) }
+
+    val compassRepository: CompassRepository by lazy { CompassRepository(this) }
 
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(this) }
 }

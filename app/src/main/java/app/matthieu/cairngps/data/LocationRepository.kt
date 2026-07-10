@@ -43,6 +43,15 @@ class LocationRepository(context: Context) {
      *
      * The caller MUST hold [Manifest.permission.ACCESS_FINE_LOCATION] before collecting.
      */
+    /**
+     * The most recent cached GPS fix the OS holds, or `null` if it has none. Cheap and does *not*
+     * power up the GPS chip — used e.g. to seed magnetic declination for the compass without
+     * forcing a full location request.
+     */
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    fun lastKnownLocation(): LocationData? =
+        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.toLocationData()
+
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun locationUpdates(
         minTimeMs: Long = 1_000L,

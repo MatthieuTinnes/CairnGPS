@@ -26,6 +26,7 @@
 
     <!-- Bottom navigation tabs -->
     <string name="tab_home">Position</string>
+    <string name="tab_compass">Boussole</string>
     <string name="tab_satellites">Satellites</string>
 
     <!-- Actions -->
@@ -86,4 +87,32 @@
 
     <string name="constellation_sbas_region">Augmentation</string>
     <string name="constellation_sbas_desc">Pas une constellation de navigation à part entière : des satellites géostationnaires (EGNOS en Europe, WAAS aux États-Unis…) diffusent des corrections qui améliorent la précision et la fiabilité.</string>
+
+    <!-- Compass screen -->
+    <string name="compass_title">Boussole</string>
+    <string name="compass_north_magnetic">Nord magnétique</string>
+    <string name="compass_north_true">Nord géographique</string>
+    <string name="compass_declination">Déclinaison : %1$s° %2$s</string>
+    <string name="compass_true_north_unavailable">Position GPS inconnue — nord géographique indisponible</string>
+    <string name="compass_calibration_needed">Boussole à calibrer</string>
+    <string name="compass_calibration_hint">Bougez l\'appareil en formant un 8 dans l\'air.</string>
+    <string name="compass_sensor_unavailable">Cet appareil ne dispose pas de capteur de boussole.</string>
+    <!-- Rose des vents : 4 points cardinaux, dans l'ordre N, E, S, O -->
+    <string-array name="compass_rose_labels">
+        <item>N</item>
+        <item>E</item>
+        <item>S</item>
+        <item>O</item>
+    </string-array>
+    <!-- 8 points cardinaux, dans l'ordre horaire à partir du nord -->
+    <string-array name="compass_cardinals">
+        <item>N</item>
+        <item>NE</item>
+        <item>E</item>
+        <item>SE</item>
+        <item>S</item>
+        <item>SO</item>
+        <item>O</item>
+        <item>NO</item>
+    </string-array>
 </resources>

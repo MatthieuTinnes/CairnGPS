@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.matthieu.cairngps.ui.compass.CompassRoute
 import app.matthieu.cairngps.ui.location.HomeRoute
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
 import app.matthieu.cairngps.ui.satellites.ConstellationInfoScreen
@@ -31,6 +32,7 @@ import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 
 private object Routes {
     const val HOME = "home"
+    const val COMPASS = "compass"
     const val SATELLITES = "satellites"
     const val CONSTELLATION_INFO = "constellation_info"
     const val SETTINGS = "settings"
@@ -46,6 +48,7 @@ private enum class TopLevelTab(
     @StringRes val labelRes: Int,
 ) {
     HOME(Routes.HOME, "📍", R.string.tab_home),
+    COMPASS(Routes.COMPASS, "🧭", R.string.tab_compass),
     SATELLITES(Routes.SATELLITES, "🛰", R.string.tab_satellites),
 }
 
@@ -122,6 +125,12 @@ private fun MainScaffold(app: CairnApplication) {
                     locationRepository = app.locationRepository,
                     settingsRepository = app.settingsRepository,
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                )
+            }
+            composable(Routes.COMPASS) {
+                CompassRoute(
+                    compassRepository = app.compassRepository,
+                    locationRepository = app.locationRepository,
                 )
             }
             composable(Routes.SATELLITES) {
