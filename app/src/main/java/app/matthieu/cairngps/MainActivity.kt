@@ -24,6 +24,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.matthieu.cairngps.ui.location.HomeRoute
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
+import app.matthieu.cairngps.ui.satellites.ConstellationInfoScreen
 import app.matthieu.cairngps.ui.satellites.SatellitesRoute
 import app.matthieu.cairngps.ui.settings.SettingsRoute
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
@@ -31,6 +32,7 @@ import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 private object Routes {
     const val HOME = "home"
     const val SATELLITES = "satellites"
+    const val CONSTELLATION_INFO = "constellation_info"
     const val SETTINGS = "settings"
 }
 
@@ -125,6 +127,12 @@ private fun MainScaffold(app: CairnApplication) {
             composable(Routes.SATELLITES) {
                 SatellitesRoute(
                     locationRepository = app.locationRepository,
+                    onOpenInfo = { navController.navigate(Routes.CONSTELLATION_INFO) },
+                )
+            }
+            composable(Routes.CONSTELLATION_INFO) {
+                ConstellationInfoScreen(
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(Routes.SETTINGS) {

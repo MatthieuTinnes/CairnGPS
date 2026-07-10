@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -71,6 +72,7 @@ private const val CN0_FULL_SCALE_DBHZ = 45f
 @Composable
 fun SatellitesRoute(
     locationRepository: LocationRepository,
+    onOpenInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: SatellitesViewModel =
@@ -84,6 +86,7 @@ fun SatellitesRoute(
 
     SatellitesScreen(
         uiState = uiState,
+        onOpenInfo = onOpenInfo,
         modifier = modifier,
     )
 }
@@ -92,6 +95,7 @@ fun SatellitesRoute(
 @Composable
 private fun SatellitesScreen(
     uiState: SatellitesUiState,
+    onOpenInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -99,6 +103,19 @@ private fun SatellitesScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.satellites_title)) },
+                actions = {
+                    val infoLabel = stringResource(R.string.action_open_constellation_info)
+                    IconButton(
+                        onClick = onOpenInfo,
+                        modifier = Modifier.semantics { contentDescription = infoLabel },
+                    ) {
+                        // Text glyph avoids depending on the large material-icons-extended artifact.
+                        Text(
+                            text = "ℹ",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    }
+                },
             )
         },
     ) { innerPadding ->
@@ -338,7 +355,7 @@ private fun UsedInFixMarker(used: Boolean) {
     )
 }
 
-private fun Constellation.color(): Color = when (this) {
+internal fun Constellation.color(): Color = when (this) {
     Constellation.GPS -> ConstellationGps
     Constellation.GLONASS -> ConstellationGlonass
     Constellation.GALILEO -> ConstellationGalileo

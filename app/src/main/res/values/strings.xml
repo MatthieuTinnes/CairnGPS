@@ -60,4 +60,30 @@
     <string name="sat_used_in_fix_marker">Utilisé dans le fix</string>
     <string name="sat_elevation_azimuth">él. %1$d° · az. %2$d°</string>
     <string name="unit_dbhz">dB-Hz</string>
+
+    <!-- Constellation info page -->
+    <string name="action_open_constellation_info">À propos des constellations</string>
+    <string name="constellation_info_title">Les constellations GNSS</string>
+    <string name="constellation_info_intro">Un récepteur GNSS combine les signaux de plusieurs constellations de satellites pour calculer votre position. Plus il y a de systèmes visibles, meilleurs sont la précision et le temps de fixation.</string>
+
+    <string name="constellation_gps_region">États-Unis</string>
+    <string name="constellation_gps_desc">Le premier système mondial, opérationnel depuis les années 1990 et toujours la référence. Une trentaine de satellites à ~20 200 km d\'altitude assurent une couverture mondiale.</string>
+
+    <string name="constellation_glonass_region">Russie</string>
+    <string name="constellation_glonass_desc">Le système russe à couverture mondiale. Ses orbites très inclinées offrent une bonne réception aux hautes latitudes.</string>
+
+    <string name="constellation_galileo_region">Union européenne</string>
+    <string name="constellation_galileo_desc">Le système civil européen, opérationnel depuis 2016. Il vise une grande précision et reste interopérable avec le GPS.</string>
+
+    <string name="constellation_beidou_region">Chine</string>
+    <string name="constellation_beidou_desc">Le système chinois, mondial depuis 2020. L\'une des plus grandes constellations, combinant satellites en orbite moyenne et géostationnaire.</string>
+
+    <string name="constellation_qzss_region">Japon · régional</string>
+    <string name="constellation_qzss_desc">Complète le GPS au-dessus de l\'Asie-Pacifique. Ses orbites « quasi-zénithales » améliorent la réception dans les rues encaissées et en montagne.</string>
+
+    <string name="constellation_irnss_region">Inde · régional</string>
+    <string name="constellation_irnss_desc">Le système régional indien (NavIC), qui couvre l\'Inde et les zones environnantes.</string>
+
+    <string name="constellation_sbas_region">Augmentation</string>
+    <string name="constellation_sbas_desc">Pas une constellation de navigation à part entière : des satellites géostationnaires (EGNOS en Europe, WAAS aux États-Unis…) diffusent des corrections qui améliorent la précision et la fiabilité.</string>
 </resources>
