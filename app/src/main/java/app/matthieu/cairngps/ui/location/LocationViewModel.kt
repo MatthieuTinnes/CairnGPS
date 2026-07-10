@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import kotlinx.coroutines.Job
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 class LocationViewModel(
     private val locationRepository: LocationRepository,
     private val waypointRepository: WaypointRepository,
+    private val recordingRepository: RecordingRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LocationUiState())
@@ -65,12 +67,18 @@ class LocationViewModel(
     /**
      * Captures the current GPS state as a named [Waypoint]. A no-op when no fix is available yet,
      * so callers should keep the save action disabled until [LocationUiState.hasFix] is true.
+     *
+     * If a recording is currently active, the new waypoint is automatically attached to it;
+     * otherwise it is saved standalone. The attachment slot is reserved *before* the insert (see
+     * [RecordingRepository.reserveWaypointAttachment]) so a concurrent [RecordingRepository.stop]
+     * can never race ahead of a save that started while still recording.
      */
     fun saveWaypoint(name: String) {
         val state = _uiState.value
         val fix = state.fix ?: return
         viewModelScope.launch {
-            waypointRepository.save(
+            val reserved = recordingRepository.reserveWaypointAttachment()
+            val id = waypointRepository.save(
                 Waypoint(
                     name = name,
                     latitude = fix.latitude,
@@ -82,6 +90,7 @@ class LocationViewModel(
                     timestamp = System.currentTimeMillis(),
                 )
             )
+            recordingRepository.completeWaypointAttachment(reserved, id)
         }
     }
 
@@ -90,11 +99,12 @@ class LocationViewModel(
         fun factory(
             locationRepository: LocationRepository,
             waypointRepository: WaypointRepository,
+            recordingRepository: RecordingRepository,
         ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return LocationViewModel(locationRepository, waypointRepository) as T
+                    return LocationViewModel(locationRepository, waypointRepository, recordingRepository) as T
                 }
             }
     }

@@ -1,20 +1,10 @@
-package app.matthieu.cairngps.ui.waypoints
+package app.matthieu.cairngps.ui.history
 
-import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,7 +13,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,47 +25,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.core.content.getSystemService
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
-import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.ui.location.DASH
-import app.matthieu.cairngps.ui.location.formatAccuracy
-import app.matthieu.cairngps.ui.location.formatAltitude
-import app.matthieu.cairngps.ui.location.formatCoordinate
-import app.matthieu.cairngps.ui.location.formatCoordinatesForClipboard
+import app.matthieu.cairngps.ui.location.formatDistanceKm
+import app.matthieu.cairngps.ui.location.formatDuration
+import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
-import java.util.Locale
-import androidx.core.net.toUri
+import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
 /**
- * Route: loads the waypoint identified by [waypointId] and renders its full detail. Navigates back
- * automatically once the waypoint has been deleted.
+ * Route: loads the session identified by [sessionId] and renders its full detail, including the
+ * waypoints attached to it. Navigates back automatically once the session has been deleted.
  */
 @Composable
-fun WaypointDetailRoute(
-    waypointId: Long,
-    waypointRepository: WaypointRepository,
+fun SessionDetailRoute(
+    sessionId: Long,
     sessionRepository: SessionRepository,
+    waypointRepository: WaypointRepository,
     onBack: () -> Unit,
-    onOpenSession: (Long) -> Unit,
+    onOpenWaypoint: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val viewModel: WaypointDetailViewModel =
-        viewModel(
-            factory = WaypointDetailViewModel.factory(waypointRepository, sessionRepository, waypointId),
-        )
+    val viewModel: SessionDetailViewModel = viewModel(
+        factory = SessionDetailViewModel.factory(sessionRepository, waypointRepository, sessionId),
+    )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Once the delete completes, leave the detail screen (side-effect, not done during composition).
@@ -84,27 +66,26 @@ fun WaypointDetailRoute(
         if (uiState.deleted) onBack()
     }
 
-    WaypointDetailScreen(
-        waypoint = uiState.waypoint,
+    SessionDetailScreen(
         session = uiState.session,
+        waypoints = uiState.waypoints,
         onBack = onBack,
+        onOpenWaypoint = onOpenWaypoint,
         onDelete = viewModel::delete,
-        onOpenSession = onOpenSession,
         modifier = modifier,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WaypointDetailScreen(
-    waypoint: Waypoint?,
+private fun SessionDetailScreen(
     session: Session?,
+    waypoints: List<Waypoint>,
     onBack: () -> Unit,
+    onOpenWaypoint: (Long) -> Unit,
     onDelete: () -> Unit,
-    onOpenSession: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
@@ -121,7 +102,7 @@ private fun WaypointDetailScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(waypoint?.name ?: stringResource(R.string.waypoint_detail_title)) },
+                title = { Text(session?.name ?: stringResource(R.string.session_detail_title)) },
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
                     IconButton(
@@ -135,8 +116,8 @@ private fun WaypointDetailScreen(
             )
         },
     ) { innerPadding ->
-        // waypoint stays null only for the brief load; nothing to render until it resolves.
-        if (waypoint == null) return@Scaffold
+        // session stays null only for the brief load; nothing to render until it resolves.
+        if (session == null) return@Scaffold
 
         Column(
             modifier = Modifier
@@ -146,80 +127,60 @@ private fun WaypointDetailScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            InfoCard(stringResource(R.string.label_coordinates)) {
-                InfoRow(
-                    stringResource(R.string.label_latitude),
-                    formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DECIMAL),
-                )
-                InfoRow(
-                    stringResource(R.string.label_longitude),
-                    formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DECIMAL),
-                )
-                Spacer(Modifier.height(4.dp))
-                InfoRow(
-                    stringResource(R.string.label_latitude),
-                    formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DMS),
-                )
-                InfoRow(
-                    stringResource(R.string.label_longitude),
-                    formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DMS),
-                )
-            }
-
             InfoCard(stringResource(R.string.label_measurements)) {
                 InfoRow(
-                    stringResource(R.string.label_altitude),
-                    "${formatAltitude(waypoint.altitude)} ${stringResource(R.string.unit_meters)}",
+                    stringResource(R.string.recording_distance),
+                    "${formatDistanceKm(session.distanceMeters)} km",
                 )
                 InfoRow(
-                    stringResource(R.string.label_speed),
-                    "${formatSpeedKmh(waypoint.speed)} ${stringResource(R.string.unit_kmh)}",
+                    stringResource(R.string.recording_duration),
+                    formatDuration(session.durationMillis),
                 )
                 InfoRow(
-                    stringResource(R.string.label_accuracy),
-                    "±${formatAccuracy(waypoint.horizontalAccuracy)} ${stringResource(R.string.unit_meters)}",
+                    stringResource(R.string.recording_avg_speed),
+                    "${formatSpeedKmh(session.averageSpeed)} ${stringResource(R.string.unit_kmh)}",
                 )
                 InfoRow(
-                    stringResource(R.string.label_satellites_used),
-                    waypoint.satellitesUsedInFix?.toString() ?: DASH,
+                    stringResource(R.string.recording_max_speed),
+                    "${formatSpeedKmh(session.maxSpeed)} ${stringResource(R.string.unit_kmh)}",
+                )
+                InfoRow(
+                    stringResource(R.string.recording_elevation_gain),
+                    "+${formatElevation(session.elevationGain)} ${stringResource(R.string.unit_meters)}",
+                )
+                InfoRow(
+                    stringResource(R.string.recording_elevation_loss),
+                    "-${formatElevation(session.elevationLoss)} ${stringResource(R.string.unit_meters)}",
+                )
+                InfoRow(
+                    stringResource(R.string.label_altitude_min),
+                    "${formatElevation(session.minAltitude)} ${stringResource(R.string.unit_meters)}",
+                )
+                InfoRow(
+                    stringResource(R.string.label_altitude_max),
+                    "${formatElevation(session.maxAltitude)} ${stringResource(R.string.unit_meters)}",
                 )
             }
 
             InfoCard(stringResource(R.string.label_saved_at)) {
                 Text(
-                    text = formatWaypointTimestamp(waypoint.timestamp),
+                    text = formatWaypointTimestamp(session.startTimestamp),
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
 
-            if (session != null) {
-                Card(onClick = { onOpenSession(session.id) }, modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.waypoint_parent_session).uppercase(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(text = session.name, style = MaterialTheme.typography.bodyLarge)
+            InfoCard(stringResource(R.string.session_waypoints_label)) {
+                if (waypoints.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.session_waypoints_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    waypoints.forEach { waypoint ->
+                        SessionWaypointRow(waypoint = waypoint, onClick = { onOpenWaypoint(waypoint.id) })
                     }
                 }
-            }
-
-            OutlinedButton(
-                onClick = { copyCoordinates(context, waypoint) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.action_copy_coordinates))
-            }
-
-            OutlinedButton(
-                onClick = { openInMaps(context, waypoint) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.action_open_in_maps))
             }
 
             TextButton(
@@ -236,11 +197,25 @@ private fun WaypointDetailScreen(
 }
 
 @Composable
+private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = waypoint.name, style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = formatWaypointTimestamp(waypoint.timestamp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.waypoint_delete_dialog_title)) },
-        text = { Text(stringResource(R.string.waypoint_delete_dialog_message)) },
+        title = { Text(stringResource(R.string.session_delete_dialog_title)) },
+        text = { Text(stringResource(R.string.session_delete_dialog_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
@@ -291,33 +266,5 @@ private fun InfoRow(label: String, value: String) {
             style = MaterialTheme.typography.bodyLarge,
             fontFamily = FontFamily.Monospace,
         )
-    }
-}
-
-private fun copyCoordinates(context: Context, waypoint: Waypoint) {
-    val text = formatCoordinatesForClipboard(waypoint.latitude, waypoint.longitude)
-    context.getSystemService<ClipboardManager>()
-        ?.setPrimaryClip(ClipData.newPlainText("coordinates", text))
-
-    // Android 13+ shows its own "copied" confirmation UI, so only toast on older versions.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        Toast.makeText(context, R.string.coordinates_copied, Toast.LENGTH_SHORT).show()
-    }
-}
-
-/**
- * Ouvre le repère dans une app de cartographie via une URI `geo:`. Android présente le sélecteur
- * de toutes les apps géo installées (Google Maps, Organic Maps, OsmAnd…), sans coder pour chacune.
- */
-private fun openInMaps(context: Context, waypoint: Waypoint) {
-    // Locale.US force le point décimal : une virgule casserait l'URI geo:.
-    val coordinates = "%.6f,%.6f".format(Locale.US, waypoint.latitude, waypoint.longitude)
-    // q=lat,lon(label) place un marqueur nommé au point ; le nom doit être encodé.
-    val uri = "geo:$coordinates?q=$coordinates(${Uri.encode(waypoint.name)})".toUri()
-    try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-    } catch (_: ActivityNotFoundException) {
-        // resolveActivity est peu fiable sous Android 11+ (visibilité des packages), d'où le catch.
-        Toast.makeText(context, R.string.no_maps_app, Toast.LENGTH_SHORT).show()
     }
 }

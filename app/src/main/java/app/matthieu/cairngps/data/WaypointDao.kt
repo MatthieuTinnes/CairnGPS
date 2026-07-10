@@ -24,4 +24,12 @@ interface WaypointDao {
     /** Deletes the waypoint with the given id; a no-op if none matches. */
     @Query("DELETE FROM waypoints WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /** Observes the waypoints attached to session [sessionId], most recent first. */
+    @Query("SELECT * FROM waypoints WHERE sessionId = :sessionId ORDER BY timestamp DESC")
+    fun observeBySession(sessionId: Long): Flow<List<Waypoint>>
+
+    /** Attaches every waypoint in [ids] to session [sessionId]; a no-op for an empty list. */
+    @Query("UPDATE waypoints SET sessionId = :sessionId WHERE id IN (:ids)")
+    suspend fun attachToSession(ids: List<Long>, sessionId: Long)
 }

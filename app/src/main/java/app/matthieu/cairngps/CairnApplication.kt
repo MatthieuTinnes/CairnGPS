@@ -4,6 +4,8 @@ import android.app.Application
 import app.matthieu.cairngps.data.AppDatabase
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.RecordingRepository
+import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.WaypointRepository
 
@@ -23,4 +25,10 @@ class CairnApplication : Application() {
     private val database: AppDatabase by lazy { AppDatabase.getInstance(this) }
 
     val waypointRepository: WaypointRepository by lazy { WaypointRepository(database.waypointDao()) }
+
+    val sessionRepository: SessionRepository by lazy { SessionRepository(database.sessionDao()) }
+
+    val recordingRepository: RecordingRepository by lazy {
+        RecordingRepository(locationRepository, sessionRepository, waypointRepository)
+    }
 }

@@ -60,19 +60,35 @@ private fun WaypointsListScreen(
             TopAppBar(title = { Text(stringResource(R.string.waypoints_title)) })
         },
     ) { innerPadding ->
-        if (uiState.isEmpty) {
-            EmptyState(modifier = Modifier.padding(innerPadding))
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(uiState.waypoints.orEmpty(), key = { it.id }) { waypoint ->
-                    WaypointRow(waypoint = waypoint, onClick = { onOpenWaypoint(waypoint.id) })
-                }
+        WaypointsListContent(
+            uiState = uiState,
+            onOpenWaypoint = onOpenWaypoint,
+            modifier = Modifier.padding(innerPadding),
+        )
+    }
+}
+
+/**
+ * The waypoints list body (empty state or [LazyColumn] of [WaypointRow]s), without its own
+ * [Scaffold]/[TopAppBar]. Shared between the standalone [WaypointsRoute] and the "Repères" tab of
+ * the Historique screen, which each own their surrounding chrome.
+ */
+@Composable
+fun WaypointsListContent(
+    uiState: WaypointsUiState,
+    onOpenWaypoint: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (uiState.isEmpty) {
+        EmptyState(modifier = modifier)
+    } else {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(uiState.waypoints.orEmpty(), key = { it.id }) { waypoint ->
+                WaypointRow(waypoint = waypoint, onClick = { onOpenWaypoint(waypoint.id) })
             }
         }
     }

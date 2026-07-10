@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -53,8 +54,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.recording.RecordingUiState
+import app.matthieu.cairngps.ui.recording.RecordingViewModel
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.waypoints.defaultWaypointName
 import app.matthieu.cairngps.ui.theme.QualityGood
@@ -73,16 +77,22 @@ fun HomeRoute(
     locationRepository: LocationRepository,
     settingsRepository: SettingsRepository,
     waypointRepository: WaypointRepository,
+    recordingRepository: RecordingRepository,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: LocationViewModel =
-        viewModel(factory = LocationViewModel.factory(locationRepository, waypointRepository))
+        viewModel(
+            factory = LocationViewModel.factory(locationRepository, waypointRepository, recordingRepository),
+        )
     val settingsViewModel: SettingsViewModel =
         viewModel(factory = SettingsViewModel.factory(settingsRepository))
+    val recordingViewModel: RecordingViewModel =
+        viewModel(factory = RecordingViewModel.factory(recordingRepository))
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+    val recordingUiState by recordingViewModel.uiState.collectAsStateWithLifecycle()
 
     LifecycleStartEffect(Unit) {
         viewModel.startTracking()
@@ -92,8 +102,11 @@ fun HomeRoute(
     HomeScreen(
         uiState = uiState,
         coordinateFormat = settings.coordinateFormat,
+        recordingUiState = recordingUiState,
         onOpenSettings = onOpenSettings,
         onSaveWaypoint = viewModel::saveWaypoint,
+        onStartRecording = { recordingViewModel.start() },
+        onStopRecording = { recordingViewModel.stop() },
         modifier = modifier,
     )
 }
@@ -103,8 +116,11 @@ fun HomeRoute(
 private fun HomeScreen(
     uiState: LocationUiState,
     coordinateFormat: CoordinateFormat,
+    recordingUiState: RecordingUiState,
     onOpenSettings: () -> Unit,
     onSaveWaypoint: (String) -> Unit,
+    onStartRecording: () -> Unit,
+    onStopRecording: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -179,7 +195,97 @@ private fun HomeScreen(
             ) {
                 Text(stringResource(R.string.action_save_waypoint))
             }
+
+            RecordingCard(
+                uiState = recordingUiState,
+                onStart = onStartRecording,
+                onStop = onStopRecording,
+            )
         }
+    }
+}
+
+@Composable
+private fun RecordingCard(
+    uiState: RecordingUiState,
+    onStart: () -> Unit,
+    onStop: () -> Unit,
+) {
+    DataCard {
+        CardTitle(stringResource(R.string.recording_title))
+        Spacer(Modifier.height(12.dp))
+
+        if (uiState.isRecording) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                RecordingStat(
+                    label = stringResource(R.string.recording_duration),
+                    value = formatDuration(uiState.elapsedMs),
+                )
+                RecordingStat(
+                    label = stringResource(R.string.recording_distance),
+                    value = "${formatDistanceKm(uiState.distanceMeters)} km",
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                RecordingStat(
+                    label = stringResource(R.string.recording_avg_speed),
+                    value = "${formatSpeedKmh(uiState.averageSpeed)} ${stringResource(R.string.unit_kmh)}",
+                )
+                RecordingStat(
+                    label = stringResource(R.string.recording_max_speed),
+                    value = "${formatSpeedKmh(uiState.maxSpeed)} ${stringResource(R.string.unit_kmh)}",
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                RecordingStat(
+                    label = stringResource(R.string.recording_elevation_gain),
+                    value = "+${formatElevation(uiState.elevationGain)} ${stringResource(R.string.unit_meters)}",
+                )
+                RecordingStat(
+                    label = stringResource(R.string.recording_elevation_loss),
+                    value = "-${formatElevation(uiState.elevationLoss)} ${stringResource(R.string.unit_meters)}",
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = onStop,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.recording_stop))
+            }
+        } else {
+            Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.recording_start))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecordingStat(label: String, value: String) {
+    Column {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontFamily = FontFamily.Monospace,
+        )
     }
 }
 

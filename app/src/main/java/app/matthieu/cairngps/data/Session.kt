@@ -1,0 +1,49 @@
+package app.matthieu.cairngps.data
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+/**
+ * A recorded track (session): the aggregated stats of a GPS recording between a start and an end
+ * time. Individual GPS fixes are not stored, only the running aggregates computed live by
+ * [RecordingRepository] while the recording was active.
+ *
+ * Units mirror [LocationData]: speeds in m/s, altitude/distance in meters.
+ *
+ * @property id               Auto-generated primary key.
+ * @property name             User-editable label, defaulting to the start date/time.
+ * @property startTimestamp   Recording start time, in milliseconds since the epoch.
+ * @property endTimestamp     Recording end time, in milliseconds since the epoch.
+ * @property distanceMeters   Total horizontal distance covered.
+ * @property averageSpeed     Average speed while moving (stationary periods excluded), in m/s.
+ * @property maxSpeed         Peak instantaneous speed, in m/s.
+ * @property elevationGain    Cumulative positive elevation change (D+), in meters.
+ * @property elevationLoss    Cumulative negative elevation change (D−), in meters.
+ * @property minAltitude      Lowest altitude reached, in meters.
+ * @property maxAltitude      Highest altitude reached, in meters.
+ * @property latitudeMax      Northernmost latitude reached — kept for the future records page.
+ * @property latitudeMin      Southernmost latitude reached.
+ * @property longitudeMax     Easternmost longitude reached.
+ * @property longitudeMin     Westernmost longitude reached.
+ */
+@Entity(tableName = "sessions")
+data class Session(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val startTimestamp: Long,
+    val endTimestamp: Long,
+    val distanceMeters: Double,
+    val averageSpeed: Float,
+    val maxSpeed: Float,
+    val elevationGain: Double,
+    val elevationLoss: Double,
+    val minAltitude: Double,
+    val maxAltitude: Double,
+    val latitudeMax: Double,
+    val latitudeMin: Double,
+    val longitudeMax: Double,
+    val longitudeMin: Double,
+) {
+    /** Recording duration, derived rather than stored. */
+    val durationMillis: Long get() = endTimestamp - startTimestamp
+}

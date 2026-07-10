@@ -1,6 +1,8 @@
 package app.matthieu.cairngps.data
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
@@ -19,8 +21,22 @@ import androidx.room.PrimaryKey
  * @property satellitesUsedInFix   Number of satellites used in the fix at capture time, or `null`
  *                                 when no GNSS status was available.
  * @property timestamp             Creation time, in milliseconds since the epoch.
+ * @property sessionId             Id of the [Session] this waypoint was captured during, or `null`
+ *                                 when the waypoint was saved outside of a recording. `SET NULL` on
+ *                                 delete: removing a trace never deletes the waypoints saved during it.
  */
-@Entity(tableName = "waypoints")
+@Entity(
+    tableName = "waypoints",
+    foreignKeys = [
+        ForeignKey(
+            entity = Session::class,
+            parentColumns = ["id"],
+            childColumns = ["sessionId"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
+    ],
+    indices = [Index("sessionId")],
+)
 data class Waypoint(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -31,4 +47,5 @@ data class Waypoint(
     val horizontalAccuracy: Float,
     val satellitesUsedInFix: Int?,
     val timestamp: Long,
+    val sessionId: Long? = null,
 )

@@ -21,4 +21,12 @@ class WaypointRepository(private val dao: WaypointDao) {
 
     /** Removes the waypoint with [id]. */
     suspend fun delete(id: Long) = dao.deleteById(id)
+
+    /** Cold flow of the waypoints attached to session [sessionId], most recent first. */
+    fun waypointsForSession(sessionId: Long): Flow<List<Waypoint>> = dao.observeBySession(sessionId)
+
+    /** Attaches every waypoint in [ids] to session [sessionId]; a no-op for an empty list. */
+    suspend fun attachToSession(ids: List<Long>, sessionId: Long) {
+        if (ids.isNotEmpty()) dao.attachToSession(ids, sessionId)
+    }
 }

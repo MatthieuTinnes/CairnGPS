@@ -28,7 +28,7 @@
     <string name="tab_home">Position</string>
     <string name="tab_compass">Boussole</string>
     <string name="tab_satellites">Satellites</string>
-    <string name="tab_waypoints">Repères</string>
+    <string name="tab_history">Historique</string>
 
     <!-- Actions -->
     <string name="hint_tap_to_copy">Appuyer pour copier</string>
@@ -68,6 +68,32 @@
     <string name="action_delete">Supprimer</string>
     <string name="waypoint_delete_dialog_title">Supprimer ce repère ?</string>
     <string name="waypoint_delete_dialog_message">Cette action est définitive.</string>
+    <string name="waypoint_parent_session">Trace parente</string>
+
+    <!-- Historique screen -->
+    <string name="history_tab_waypoints">Repères</string>
+    <string name="history_tab_tracks">Traces</string>
+    <string name="sessions_empty">Aucune trace enregistrée pour le moment.\n\nDepuis l\'écran Position, appuyez sur « Démarrer l\'enregistrement » pour commencer une trace.</string>
+    <string name="label_altitude_min">Altitude min</string>
+    <string name="label_altitude_max">Altitude max</string>
+
+    <!-- Recording (Position screen) -->
+    <string name="recording_title">Enregistrement</string>
+    <string name="recording_start">Démarrer l\'enregistrement</string>
+    <string name="recording_stop">Arrêter</string>
+    <string name="recording_duration">Durée</string>
+    <string name="recording_distance">Distance</string>
+    <string name="recording_avg_speed">Vitesse moy.</string>
+    <string name="recording_max_speed">Vitesse max</string>
+    <string name="recording_elevation_gain">D+</string>
+    <string name="recording_elevation_loss">D−</string>
+
+    <!-- Session (trace) detail -->
+    <string name="session_detail_title">Trace</string>
+    <string name="session_waypoints_label">Repères de la trace</string>
+    <string name="session_waypoints_empty">Aucun repère rattaché à cette trace.</string>
+    <string name="session_delete_dialog_title">Supprimer cette trace ?</string>
+    <string name="session_delete_dialog_message">Cette action est définitive. Les repères rattachés seront conservés.</string>
 
     <!-- Accuracy quality -->
     <string name="quality_good">Bonne</string>
