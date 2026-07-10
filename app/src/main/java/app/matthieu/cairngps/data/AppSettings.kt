@@ -9,6 +9,13 @@ enum class CoordinateFormat {
     DMS,
 }
 
+/** Which color scheme the app uses. Persisted as an app-wide preference. */
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK,
+}
+
 /**
  * User-configurable application settings.
  *
@@ -16,4 +23,5 @@ enum class CoordinateFormat {
  */
 data class AppSettings(
     val coordinateFormat: CoordinateFormat = CoordinateFormat.DECIMAL,
+    val themeMode: ThemeMode = ThemeMode.DARK,
 )

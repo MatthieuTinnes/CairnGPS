@@ -38,6 +38,10 @@
 
     <!-- Settings screen -->
     <string name="settings_title">Paramètres</string>
+    <string name="settings_theme">Thème</string>
+    <string name="theme_system">Système</string>
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
     <string name="settings_coordinate_format">Format des coordonnées</string>
     <string name="coordinate_format_decimal">Degrés décimaux</string>
     <string name="coordinate_format_decimal_example">47.123456°</string>

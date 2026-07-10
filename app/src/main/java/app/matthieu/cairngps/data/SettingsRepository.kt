@@ -22,6 +22,7 @@ class SettingsRepository(context: Context) {
 
     private object Keys {
         val COORDINATE_FORMAT = stringPreferencesKey("coordinate_format")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 
     /** Cold flow that emits the current settings and every subsequent change. */
@@ -30,10 +31,17 @@ class SettingsRepository(context: Context) {
             coordinateFormat = prefs[Keys.COORDINATE_FORMAT]
                 ?.let { runCatching { CoordinateFormat.valueOf(it) }.getOrNull() }
                 ?: CoordinateFormat.DECIMAL,
+            themeMode = prefs[Keys.THEME_MODE]
+                ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
+                ?: ThemeMode.DARK,
         )
     }
 
     suspend fun setCoordinateFormat(format: CoordinateFormat) {
         dataStore.edit { prefs -> prefs[Keys.COORDINATE_FORMAT] = format.name }
+    }
+
+    suspend fun setThemeMode(mode: ThemeMode) {
+        dataStore.edit { prefs -> prefs[Keys.THEME_MODE] = mode.name }
     }
 }

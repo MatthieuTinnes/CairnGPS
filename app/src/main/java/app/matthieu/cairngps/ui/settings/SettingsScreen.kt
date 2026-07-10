@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.ThemeMode
 
 /** Route: wires up the shared [SettingsViewModel] and renders the settings UI. */
 @Composable
@@ -43,6 +44,8 @@ fun SettingsRoute(
     SettingsScreen(
         coordinateFormat = settings.coordinateFormat,
         onCoordinateFormatChange = viewModel::setCoordinateFormat,
+        themeMode = settings.themeMode,
+        onThemeModeChange = viewModel::setThemeMode,
         onBack = onBack,
         modifier = modifier,
     )
@@ -53,6 +56,8 @@ fun SettingsRoute(
 private fun SettingsScreen(
     coordinateFormat: CoordinateFormat,
     onCoordinateFormatChange: (CoordinateFormat) -> Unit,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -83,6 +88,25 @@ private fun SettingsScreen(
                 .padding(innerPadding)
                 .padding(vertical = 8.dp),
         ) {
+            SectionHeader(stringResource(R.string.settings_theme))
+            Column(Modifier.selectableGroup()) {
+                ThemeModeOption(
+                    title = stringResource(R.string.theme_system),
+                    selected = themeMode == ThemeMode.SYSTEM,
+                    onSelect = { onThemeModeChange(ThemeMode.SYSTEM) },
+                )
+                ThemeModeOption(
+                    title = stringResource(R.string.theme_light),
+                    selected = themeMode == ThemeMode.LIGHT,
+                    onSelect = { onThemeModeChange(ThemeMode.LIGHT) },
+                )
+                ThemeModeOption(
+                    title = stringResource(R.string.theme_dark),
+                    selected = themeMode == ThemeMode.DARK,
+                    onSelect = { onThemeModeChange(ThemeMode.DARK) },
+                )
+            }
+
             SectionHeader(stringResource(R.string.settings_coordinate_format))
             Column(Modifier.selectableGroup()) {
                 CoordinateFormatOption(
@@ -145,5 +169,31 @@ private fun CoordinateFormatOption(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+@Composable
+private fun ThemeModeOption(
+    title: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                onClick = onSelect,
+                role = Role.RadioButton,
+            )
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(start = 16.dp),
+        )
     }
 }

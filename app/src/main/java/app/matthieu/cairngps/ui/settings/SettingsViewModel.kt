@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.ThemeMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -28,6 +29,10 @@ class SettingsViewModel(
 
     fun setCoordinateFormat(format: CoordinateFormat) {
         viewModelScope.launch { repository.setCoordinateFormat(format) }
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { repository.setThemeMode(mode) }
     }
 
     companion object {
