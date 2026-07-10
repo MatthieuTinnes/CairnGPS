@@ -1,8 +1,11 @@
 package app.matthieu.cairngps.ui.waypoints
 
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +55,7 @@ import app.matthieu.cairngps.ui.location.formatAltitude
 import app.matthieu.cairngps.ui.location.formatCoordinate
 import app.matthieu.cairngps.ui.location.formatCoordinatesForClipboard
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import java.util.Locale
 
 /**
  * Route: loads the waypoint identified by [waypointId] and renders its full detail. Navigates back
@@ -184,6 +188,13 @@ private fun WaypointDetailScreen(
                 Text(stringResource(R.string.action_copy_coordinates))
             }
 
+            OutlinedButton(
+                onClick = { openInMaps(context, waypoint) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.action_open_in_maps))
+            }
+
             TextButton(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -264,5 +275,22 @@ private fun copyCoordinates(context: Context, waypoint: Waypoint) {
     // Android 13+ shows its own "copied" confirmation UI, so only toast on older versions.
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
         Toast.makeText(context, R.string.coordinates_copied, Toast.LENGTH_SHORT).show()
+    }
+}
+
+/**
+ * Ouvre le repère dans une app de cartographie via une URI `geo:`. Android présente le sélecteur
+ * de toutes les apps géo installées (Google Maps, Organic Maps, OsmAnd…), sans coder pour chacune.
+ */
+private fun openInMaps(context: Context, waypoint: Waypoint) {
+    // Locale.US force le point décimal : une virgule casserait l'URI geo:.
+    val coordinates = "%.6f,%.6f".format(Locale.US, waypoint.latitude, waypoint.longitude)
+    // q=lat,lon(label) place un marqueur nommé au point ; le nom doit être encodé.
+    val uri = Uri.parse("geo:$coordinates?q=$coordinates(${Uri.encode(waypoint.name)})")
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+    } catch (_: ActivityNotFoundException) {
+        // resolveActivity est peu fiable sous Android 11+ (visibilité des packages), d'où le catch.
+        Toast.makeText(context, R.string.no_maps_app, Toast.LENGTH_SHORT).show()
     }
 }

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guide de développement pour Claude Code. À lire avant toute modification du code.
+Utilise codebase-memory-mcp pour explorer et rechercher dans la codebase
 
 ## Vue d'ensemble
 

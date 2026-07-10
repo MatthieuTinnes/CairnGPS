@@ -59,6 +59,8 @@
     <string name="label_satellites_used">Satellites fixés</string>
     <string name="label_saved_at">Enregistré le</string>
     <string name="action_copy_coordinates">Copier les coordonnées</string>
+    <string name="action_open_in_maps">Ouvrir dans une carte</string>
+    <string name="no_maps_app">Aucune application de carte installée</string>
     <string name="action_delete">Supprimer</string>
     <string name="waypoint_delete_dialog_title">Supprimer ce repère ?</string>
     <string name="waypoint_delete_dialog_message">Cette action est définitive.</string>
