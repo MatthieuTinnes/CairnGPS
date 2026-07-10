@@ -2,19 +2,22 @@ package app.matthieu.cairngps.data
 
 import android.Manifest
 import android.content.Context
+import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.core.content.getSystemService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.callbackFlow
 
 /**
  * Single source of truth for raw device location.
@@ -30,10 +33,6 @@ class LocationRepository(context: Context) {
         requireNotNull(context.applicationContext.getSystemService()) {
             "LocationManager service is unavailable on this device"
         }
-
-    /** Whether the GPS provider is currently enabled by the user. */
-    val isGpsEnabled: Boolean
-        get() = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
 
     /**
      * Cold [Flow] of GPS fixes. A new registration is created for each collector and torn down
@@ -73,6 +72,72 @@ class LocationRepository(context: Context) {
         awaitClose { locationManager.removeUpdates(listener) }
     }
         // Location callbacks fire on the main looper; hop off it and keep only the latest fix
+        // if a slow collector falls behind.
+        .conflate()
+        .flowOn(Dispatchers.Default)
+
+    /**
+     * Cold [Flow] of GNSS satellite snapshots, one [List] per [GnssStatus] update (~1 Hz while
+     * the GPS engine is running). Registration is created per collector and torn down when
+     * collection stops, so unregistering follows the collector's lifecycle (typically ON_STOP).
+     *
+     * The GNSS engine only produces [GnssStatus] updates while at least one location request is
+     * active — a status callback alone never powers the chip. This flow therefore also holds its
+     * own [GPS_PROVIDER][LocationManager.GPS_PROVIDER] request (fixes discarded) so that satellite
+     * data keeps flowing even when no other screen is collecting [locationUpdates].
+     *
+     * Nothing is emitted until the GPS engine delivers its first status: collectors should treat
+     * the absence of a value as "waiting for satellite data".
+     *
+     * The caller MUST hold [Manifest.permission.ACCESS_FINE_LOCATION] before collecting.
+     */
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    fun satelliteUpdates(): Flow<List<SatelliteInfo>> = callbackFlow {
+        val callback = object : GnssStatus.Callback() {
+            override fun onSatelliteStatusChanged(status: GnssStatus) {
+                trySend(status.toSatelliteInfoList())
+            }
+        }
+
+        // Keep-alive location request: without it the GNSS engine stays off and the status
+        // callback never fires. The fixes themselves are ignored here.
+        val keepAliveListener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {}
+            override fun onProviderEnabled(provider: String) {}
+            override fun onProviderDisabled(provider: String) {}
+
+            @Deprecated("Deprecated in API 29, still abstract on older levels")
+            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+        }
+        locationManager.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            1_000L,
+            0f,
+            keepAliveListener,
+            Looper.getMainLooper(),
+        )
+
+        val mainHandler = Handler(Looper.getMainLooper())
+        val registered = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            locationManager.registerGnssStatusCallback(
+                { command -> mainHandler.post(command) },
+                callback,
+            )
+        } else {
+            // Handler overload is the only pre-API 30 option; deprecated but fully functional.
+            @Suppress("DEPRECATION")
+            locationManager.registerGnssStatusCallback(callback, mainHandler)
+        }
+        // Registration can fail if the GNSS engine is unavailable; the flow then completes
+        // without emitting and the UI stays in its waiting state.
+        if (!registered) close()
+
+        awaitClose {
+            locationManager.unregisterGnssStatusCallback(callback)
+            locationManager.removeUpdates(keepAliveListener)
+        }
+    }
+        // Status callbacks fire on the main looper; hop off it and keep only the latest snapshot
         // if a slow collector falls behind.
         .conflate()
         .flowOn(Dispatchers.Default)

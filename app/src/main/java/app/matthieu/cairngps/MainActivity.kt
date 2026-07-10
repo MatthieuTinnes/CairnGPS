@@ -4,20 +4,47 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.matthieu.cairngps.ui.location.HomeRoute
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
+import app.matthieu.cairngps.ui.satellites.SatellitesRoute
 import app.matthieu.cairngps.ui.settings.SettingsRoute
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 
 private object Routes {
     const val HOME = "home"
+    const val SATELLITES = "satellites"
     const val SETTINGS = "settings"
+}
+
+/**
+ * Top-level destinations reachable from the bottom navigation bar. Icons use text glyphs to avoid
+ * pulling in the large material-icons-extended artifact (same choice as the rest of the UI).
+ */
+private enum class TopLevelTab(
+    val route: String,
+    val glyph: String,
+    @StringRes val labelRes: Int,
+) {
+    HOME(Routes.HOME, "📍", R.string.tab_home),
+    SATELLITES(Routes.SATELLITES, "🛰", R.string.tab_satellites),
 }
 
 class MainActivity : ComponentActivity() {
@@ -32,24 +59,79 @@ class MainActivity : ComponentActivity() {
             CairnGpsTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     LocationPermissionGate {
-                        val navController = rememberNavController()
-                        NavHost(navController = navController, startDestination = Routes.HOME) {
-                            composable(Routes.HOME) {
-                                HomeRoute(
-                                    locationRepository = app.locationRepository,
-                                    settingsRepository = app.settingsRepository,
-                                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                                )
-                            }
-                            composable(Routes.SETTINGS) {
-                                SettingsRoute(
-                                    repository = app.settingsRepository,
-                                    onBack = { navController.popBackStack() },
-                                )
-                            }
-                        }
+                        MainScaffold(app)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainScaffold(app: CairnApplication) {
+    val navController = rememberNavController()
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    // The bottom bar is only shown on top-level tabs; secondary screens (Settings) take the full
+    // height and rely on their own back navigation.
+    val showBottomBar = TopLevelTab.entries.any { it.route == currentRoute }
+
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar {
+                    TopLevelTab.entries.forEach { tab ->
+                        val selected = currentRoute == tab.route
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (!selected) {
+                                    navController.navigate(tab.route) {
+                                        // Standard bottom-nav behaviour: keep a single instance per
+                                        // tab and preserve each tab's state across switches.
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            icon = {
+                                Text(tab.glyph, style = MaterialTheme.typography.titleLarge)
+                            },
+                            label = { Text(stringResource(tab.labelRes)) },
+                        )
+                    }
+                }
+            }
+        },
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Routes.HOME,
+            // Offset content above the bottom bar and mark those insets consumed so the per-screen
+            // Scaffolds don't add the navigation-bar inset a second time.
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
+        ) {
+            composable(Routes.HOME) {
+                HomeRoute(
+                    locationRepository = app.locationRepository,
+                    settingsRepository = app.settingsRepository,
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                )
+            }
+            composable(Routes.SATELLITES) {
+                SatellitesRoute(
+                    locationRepository = app.locationRepository,
+                )
+            }
+            composable(Routes.SETTINGS) {
+                SettingsRoute(
+                    repository = app.settingsRepository,
+                    onBack = { navController.popBackStack() },
+                )
             }
         }
     }

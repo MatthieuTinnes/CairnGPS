@@ -24,3 +24,13 @@ val QualityGood = Color(0xFF4CAF50)
 val QualityMedium = Color(0xFFFFA726)
 val QualityPoor = Color(0xFFE53935)
 val QualityUnknown = Color(0xFF6E756B)
+
+// One distinct hue per GNSS constellation, all bright enough to read on the dark background.
+val ConstellationGps = Color(0xFF5C9CE6)
+val ConstellationGlonass = Color(0xFFE57373)
+val ConstellationGalileo = Color(0xFF4DB6AC)
+val ConstellationBeidou = Color(0xFFFFB74D)
+val ConstellationQzss = Color(0xFFBA68C8)
+val ConstellationSbas = Color(0xFFA1887F)
+val ConstellationIrnss = Color(0xFFFFF176)
+val ConstellationUnknown = Color(0xFF6E756B)

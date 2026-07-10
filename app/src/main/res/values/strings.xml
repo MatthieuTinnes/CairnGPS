@@ -24,6 +24,10 @@
     <string name="unit_meters">m</string>
     <string name="unit_kmh">km/h</string>
 
+    <!-- Bottom navigation tabs -->
+    <string name="tab_home">Position</string>
+    <string name="tab_satellites">Satellites</string>
+
     <!-- Actions -->
     <string name="hint_tap_to_copy">Appuyer pour copier</string>
     <string name="coordinates_copied">Coordonnées copiées</string>
@@ -43,4 +47,17 @@
     <string name="quality_medium">Moyenne</string>
     <string name="quality_poor">Faible</string>
     <string name="quality_unknown">Inconnue</string>
+
+    <!-- Satellites screen -->
+    <string name="satellites_title">Satellites</string>
+    <string name="action_open_satellites">Satellites</string>
+    <string name="sats_waiting">En attente des données satellites…</string>
+    <string name="sats_in_view">En vue</string>
+    <string name="sats_used_in_fix">Fixés</string>
+    <string name="sats_constellation_summary">%1$d en vue, %2$d fixés</string>
+    <string name="label_constellations">Constellations</string>
+    <string name="label_satellite_list">Satellites en vue</string>
+    <string name="sat_used_in_fix_marker">Utilisé dans le fix</string>
+    <string name="sat_elevation_azimuth">él. %1$d° · az. %2$d°</string>
+    <string name="unit_dbhz">dB-Hz</string>
 </resources>
