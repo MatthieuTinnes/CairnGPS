@@ -1,23 +1,12 @@
 package app.matthieu.cairngps.ui.location
 
+import app.matthieu.cairngps.data.CoordinateFormat
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 /** Placeholder shown for any value before the first GPS fix arrives. */
 const val DASH: String = "—"
-
-/** How latitude/longitude are rendered. */
-enum class CoordinateFormat {
-    /** Decimal degrees, e.g. `47.123456°`. */
-    DECIMAL,
-
-    /** Degrees / minutes / seconds, e.g. `47°07'24.4"N`. */
-    DMS,
-    ;
-
-    fun toggled(): CoordinateFormat = if (this == DECIMAL) DMS else DECIMAL
-}
 
 /** Quality bucket for a horizontal accuracy radius, used to drive the visual indicator. */
 enum class AccuracyQuality { GOOD, MEDIUM, POOR, UNKNOWN }

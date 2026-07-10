@@ -25,9 +25,18 @@
     <string name="unit_kmh">km/h</string>
 
     <!-- Actions -->
-    <string name="action_toggle_format">Changer le format</string>
-    <string name="action_copy_coordinates">Copier les coordonnées</string>
+    <string name="hint_tap_to_copy">Appuyer pour copier</string>
     <string name="coordinates_copied">Coordonnées copiées</string>
+    <string name="action_open_settings">Paramètres</string>
+    <string name="action_back">Retour</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_coordinate_format">Format des coordonnées</string>
+    <string name="coordinate_format_decimal">Degrés décimaux</string>
+    <string name="coordinate_format_decimal_example">47.123456°</string>
+    <string name="coordinate_format_dms">Degrés, minutes, secondes</string>
+    <string name="coordinate_format_dms_example">47°07\'24.4\"N</string>
 
     <!-- Accuracy quality -->
     <string name="quality_good">Bonne</string>

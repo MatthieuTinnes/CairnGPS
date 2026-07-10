@@ -22,22 +22,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,7 +44,10 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
+import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.QualityGood
 import app.matthieu.cairngps.ui.theme.QualityMedium
 import app.matthieu.cairngps.ui.theme.QualityPoor
@@ -60,32 +61,62 @@ import app.matthieu.cairngps.ui.theme.QualityUnknown
 @SuppressLint("MissingPermission")
 @Composable
 fun HomeRoute(
-    repository: LocationRepository,
+    locationRepository: LocationRepository,
+    settingsRepository: SettingsRepository,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val viewModel: LocationViewModel = viewModel(factory = LocationViewModel.factory(repository))
+    val viewModel: LocationViewModel =
+        viewModel(factory = LocationViewModel.factory(locationRepository))
+    val settingsViewModel: SettingsViewModel =
+        viewModel(factory = SettingsViewModel.factory(settingsRepository))
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
     LifecycleStartEffect(Unit) {
         viewModel.startTracking()
         onStopOrDispose { viewModel.stopTracking() }
     }
 
-    HomeScreen(uiState = uiState, modifier = modifier)
+    HomeScreen(
+        uiState = uiState,
+        coordinateFormat = settings.coordinateFormat,
+        onOpenSettings = onOpenSettings,
+        modifier = modifier,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeScreen(
     uiState: LocationUiState,
+    coordinateFormat: CoordinateFormat,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var format by rememberSaveable { mutableStateOf(CoordinateFormat.DECIMAL) }
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    val settingsLabel = stringResource(R.string.action_open_settings)
+                    IconButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier.semantics { contentDescription = settingsLabel },
+                    ) {
+                        // Text glyph avoids depending on the large material-icons-extended artifact.
+                        Text(
+                            text = "⚙",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    }
+                },
+            )
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -99,8 +130,7 @@ private fun HomeScreen(
 
             CoordinatesCard(
                 uiState = uiState,
-                format = format,
-                onToggleFormat = { format = format.toggled() },
+                format = coordinateFormat,
                 onCopy = { copyCoordinates(context, uiState) },
             )
 
@@ -135,10 +165,10 @@ private fun StatusLine(hasFix: Boolean) {
 private fun CoordinatesCard(
     uiState: LocationUiState,
     format: CoordinateFormat,
-    onToggleFormat: () -> Unit,
     onCopy: () -> Unit,
 ) {
-    DataCard {
+    // Tapping anywhere on the card copies the coordinates (only meaningful once we have a fix).
+    DataCard(onClick = onCopy, enabled = uiState.hasFix) {
         CardTitle(stringResource(R.string.label_coordinates))
         Spacer(Modifier.height(12.dp))
 
@@ -152,24 +182,15 @@ private fun CoordinatesCard(
             value = formatCoordinate(uiState.fix?.longitude, isLatitude = false, format = format),
         )
 
-        Spacer(Modifier.height(16.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            OutlinedButton(
-                onClick = onToggleFormat,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(stringResource(R.string.action_toggle_format))
-            }
-            FilledTonalButton(
-                onClick = onCopy,
-                enabled = uiState.hasFix,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(stringResource(R.string.action_copy_coordinates))
-            }
+        if (uiState.hasFix) {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.hint_tap_to_copy),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -275,14 +296,25 @@ private fun QualityIndicator(quality: AccuracyQuality) {
     }
 }
 
-/** A rounded surface card with consistent padding for a single data group. */
+/**
+ * A rounded surface card with consistent padding for a single data group.
+ * When [onClick] is provided the whole card becomes tappable (disabled while [enabled] is false).
+ */
 @Composable
 private fun DataCard(
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp), content = content)
+    if (onClick != null) {
+        Card(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(20.dp), content = content)
+        }
+    } else {
+        Card(modifier = modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(20.dp), content = content)
+        }
     }
 }
 
