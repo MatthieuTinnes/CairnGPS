@@ -1,9 +1,11 @@
 package app.matthieu.cairngps
 
 import android.app.Application
+import app.matthieu.cairngps.data.AppDatabase
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.WaypointRepository
 
 /**
  * Application-scoped container. Holds the singleton repositories so they survive configuration
@@ -17,4 +19,8 @@ class CairnApplication : Application() {
     val compassRepository: CompassRepository by lazy { CompassRepository(this) }
 
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(this) }
+
+    private val database: AppDatabase by lazy { AppDatabase.getInstance(this) }
+
+    val waypointRepository: WaypointRepository by lazy { WaypointRepository(database.waypointDao()) }
 }

@@ -18,10 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import app.matthieu.cairngps.ui.compass.CompassRoute
 import app.matthieu.cairngps.ui.location.HomeRoute
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
@@ -29,13 +31,20 @@ import app.matthieu.cairngps.ui.satellites.ConstellationInfoScreen
 import app.matthieu.cairngps.ui.satellites.SatellitesRoute
 import app.matthieu.cairngps.ui.settings.SettingsRoute
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
+import app.matthieu.cairngps.ui.waypoints.WaypointDetailRoute
+import app.matthieu.cairngps.ui.waypoints.WaypointsRoute
 
 private object Routes {
     const val HOME = "home"
     const val COMPASS = "compass"
     const val SATELLITES = "satellites"
+    const val WAYPOINTS = "waypoints"
     const val CONSTELLATION_INFO = "constellation_info"
     const val SETTINGS = "settings"
+
+    const val WAYPOINT_ID_ARG = "waypointId"
+    const val WAYPOINT_DETAIL = "waypoint_detail/{$WAYPOINT_ID_ARG}"
+    fun waypointDetail(id: Long): String = "waypoint_detail/$id"
 }
 
 /**
@@ -50,6 +59,7 @@ private enum class TopLevelTab(
     HOME(Routes.HOME, "📍", R.string.tab_home),
     COMPASS(Routes.COMPASS, "🧭", R.string.tab_compass),
     SATELLITES(Routes.SATELLITES, "🛰", R.string.tab_satellites),
+    WAYPOINTS(Routes.WAYPOINTS, "🚩", R.string.tab_waypoints),
 }
 
 class MainActivity : ComponentActivity() {
@@ -124,6 +134,7 @@ private fun MainScaffold(app: CairnApplication) {
                 HomeRoute(
                     locationRepository = app.locationRepository,
                     settingsRepository = app.settingsRepository,
+                    waypointRepository = app.waypointRepository,
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 )
             }
@@ -137,6 +148,23 @@ private fun MainScaffold(app: CairnApplication) {
                 SatellitesRoute(
                     locationRepository = app.locationRepository,
                     onOpenInfo = { navController.navigate(Routes.CONSTELLATION_INFO) },
+                )
+            }
+            composable(Routes.WAYPOINTS) {
+                WaypointsRoute(
+                    waypointRepository = app.waypointRepository,
+                    onOpenWaypoint = { id -> navController.navigate(Routes.waypointDetail(id)) },
+                )
+            }
+            composable(
+                Routes.WAYPOINT_DETAIL,
+                arguments = listOf(navArgument(Routes.WAYPOINT_ID_ARG) { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getLong(Routes.WAYPOINT_ID_ARG) ?: return@composable
+                WaypointDetailRoute(
+                    waypointId = id,
+                    waypointRepository = app.waypointRepository,
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(Routes.CONSTELLATION_INFO) {

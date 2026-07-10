@@ -20,15 +20,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,7 +54,9 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
+import app.matthieu.cairngps.ui.waypoints.defaultWaypointName
 import app.matthieu.cairngps.ui.theme.QualityGood
 import app.matthieu.cairngps.ui.theme.QualityMedium
 import app.matthieu.cairngps.ui.theme.QualityPoor
@@ -63,11 +72,12 @@ import app.matthieu.cairngps.ui.theme.QualityUnknown
 fun HomeRoute(
     locationRepository: LocationRepository,
     settingsRepository: SettingsRepository,
+    waypointRepository: WaypointRepository,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: LocationViewModel =
-        viewModel(factory = LocationViewModel.factory(locationRepository))
+        viewModel(factory = LocationViewModel.factory(locationRepository, waypointRepository))
     val settingsViewModel: SettingsViewModel =
         viewModel(factory = SettingsViewModel.factory(settingsRepository))
 
@@ -83,6 +93,7 @@ fun HomeRoute(
         uiState = uiState,
         coordinateFormat = settings.coordinateFormat,
         onOpenSettings = onOpenSettings,
+        onSaveWaypoint = viewModel::saveWaypoint,
         modifier = modifier,
     )
 }
@@ -93,9 +104,22 @@ private fun HomeScreen(
     uiState: LocationUiState,
     coordinateFormat: CoordinateFormat,
     onOpenSettings: () -> Unit,
+    onSaveWaypoint: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    var showSaveDialog by remember { mutableStateOf(false) }
+
+    if (showSaveDialog) {
+        SaveWaypointDialog(
+            onDismiss = { showSaveDialog = false },
+            onConfirm = { name ->
+                showSaveDialog = false
+                onSaveWaypoint(name)
+                Toast.makeText(context, R.string.waypoint_saved, Toast.LENGTH_SHORT).show()
+            },
+        )
+    }
 
     Scaffold(
         modifier = modifier,
@@ -146,8 +170,55 @@ private fun HomeScreen(
             }
 
             AccuracyCard(uiState = uiState)
+
+            Button(
+                onClick = { showSaveDialog = true },
+                // Nothing meaningful to capture until the first fix arrives.
+                enabled = uiState.hasFix,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.action_save_waypoint))
+            }
         }
     }
+}
+
+/** Dialog asking for a waypoint name, pre-filled with a date/time default the user can edit. */
+@Composable
+private fun SaveWaypointDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    val namePrefix = stringResource(R.string.waypoint_default_name_prefix)
+    // Snapshot the default name once, at the moment the dialog opens.
+    var name by remember { mutableStateOf(defaultWaypointName(namePrefix)) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.waypoint_save_dialog_title)) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                singleLine = true,
+                label = { Text(stringResource(R.string.waypoint_name_label)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(name.trim()) },
+                enabled = name.isNotBlank(),
+            ) {
+                Text(stringResource(R.string.action_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
 }
 
 @Composable

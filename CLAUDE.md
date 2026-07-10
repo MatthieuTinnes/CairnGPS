@@ -60,7 +60,20 @@ lisible en plein soleil et économe en batterie.
 
 ## Stockage
 
-**Phase actuelle : stockage simple.** Utiliser `DataStore` (Preferences).
+Deux mécanismes complémentaires, chacun pour un usage précis :
+
+- **Room** : LA base de données de l'app pour toutes les **données métier persistées**
+  (repères aujourd'hui ; sessions, records, succès plus tard réutiliseront cette même base).
+    - Base unique `AppDatabase` (singleton, construite via `AppDatabase.getInstance`), exposée
+      par `CairnApplication`. Nom de fichier : `cairn.db`.
+    - Une entité par table (`@Entity`), un DAO par entité (méthodes `suspend` pour les écritures,
+      `Flow` pour les lectures observables), et un `Repository` par domaine qui expose le DAO.
+      Les ViewModels/Composables ne touchent jamais au DAO ni à `AppDatabase` directement.
+    - Ajouter une nouvelle feature persistée = ajouter son entité + DAO à `AppDatabase`, incrémenter
+      `version` et fournir une migration. Ne pas créer de base séparée.
+    - Processeur d'annotations : **KSP** (pas kapt).
+- **DataStore (Preferences)** : réservé aux **préférences utilisateur** simples (ex. format des
+  coordonnées), pas aux données métier.
 
 
 ## Qualité
