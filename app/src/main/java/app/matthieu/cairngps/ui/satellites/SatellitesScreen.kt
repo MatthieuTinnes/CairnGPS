@@ -73,6 +73,7 @@ private const val CN0_FULL_SCALE_DBHZ = 45f
 fun SatellitesRoute(
     locationRepository: LocationRepository,
     onOpenInfo: () -> Unit,
+    onOpenGlobe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: SatellitesViewModel =
@@ -87,6 +88,7 @@ fun SatellitesRoute(
     SatellitesScreen(
         uiState = uiState,
         onOpenInfo = onOpenInfo,
+        onOpenGlobe = onOpenGlobe,
         modifier = modifier,
     )
 }
@@ -96,6 +98,7 @@ fun SatellitesRoute(
 private fun SatellitesScreen(
     uiState: SatellitesUiState,
     onOpenInfo: () -> Unit,
+    onOpenGlobe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -104,6 +107,17 @@ private fun SatellitesScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.satellites_title)) },
                 actions = {
+                    val globeLabel = stringResource(R.string.action_open_satellite_globe)
+                    IconButton(
+                        onClick = onOpenGlobe,
+                        modifier = Modifier.semantics { contentDescription = globeLabel },
+                    ) {
+                        // Text glyph avoids depending on the large material-icons-extended artifact.
+                        Text(
+                            text = "🌐",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    }
                     val infoLabel = stringResource(R.string.action_open_constellation_info)
                     IconButton(
                         onClick = onOpenInfo,

@@ -123,6 +123,13 @@
     <string name="sat_elevation_azimuth">él. %1$d° · az. %2$d°</string>
     <string name="unit_dbhz">dB-Hz</string>
 
+    <!-- 3D satellite globe -->
+    <string name="action_open_satellite_globe">Vue 3D des satellites</string>
+    <string name="satellite_globe_title">Satellites en 3D</string>
+    <string name="globe_auto_rotate">Rotation auto</string>
+    <string name="globe_show_in_view">Non fixés</string>
+    <string name="globe_no_fixed_satellites">Aucun satellite fixé pour le moment</string>
+
     <!-- Constellation info page -->
     <string name="action_open_constellation_info">À propos des constellations</string>
     <string name="constellation_info_title">Les constellations GNSS</string>

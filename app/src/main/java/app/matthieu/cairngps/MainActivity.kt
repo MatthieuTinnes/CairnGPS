@@ -40,6 +40,7 @@ import app.matthieu.cairngps.ui.history.SessionDetailRoute
 import app.matthieu.cairngps.ui.location.HomeRoute
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
 import app.matthieu.cairngps.ui.satellites.ConstellationInfoScreen
+import app.matthieu.cairngps.ui.satellites.SatelliteGlobeRoute
 import app.matthieu.cairngps.ui.satellites.SatellitesRoute
 import app.matthieu.cairngps.ui.settings.SettingsRoute
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
@@ -53,6 +54,7 @@ private object Routes {
     const val ACHIEVEMENTS = "achievements"
     const val RECORDS = "records"
     const val CONSTELLATION_INFO = "constellation_info"
+    const val SATELLITE_GLOBE = "satellite_globe"
     const val SETTINGS = "settings"
 
     const val WAYPOINT_ID_ARG = "waypointId"
@@ -181,6 +183,13 @@ private fun MainScaffold(app: CairnApplication) {
                     SatellitesRoute(
                         locationRepository = app.locationRepository,
                         onOpenInfo = { navController.navigate(Routes.CONSTELLATION_INFO) },
+                        onOpenGlobe = { navController.navigate(Routes.SATELLITE_GLOBE) },
+                    )
+                }
+                composable(Routes.SATELLITE_GLOBE) {
+                    SatelliteGlobeRoute(
+                        locationRepository = app.locationRepository,
+                        onBack = { navController.popBackStack() },
                     )
                 }
                 composable(Routes.HISTORY) {
