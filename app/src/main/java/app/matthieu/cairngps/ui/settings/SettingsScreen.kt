@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
 
@@ -46,6 +47,8 @@ fun SettingsRoute(
         onCoordinateFormatChange = viewModel::setCoordinateFormat,
         themeMode = settings.themeMode,
         onThemeModeChange = viewModel::setThemeMode,
+        northReference = settings.northReference,
+        onNorthReferenceChange = viewModel::setNorthReference,
         onBack = onBack,
         modifier = modifier,
     )
@@ -58,6 +61,8 @@ private fun SettingsScreen(
     onCoordinateFormatChange: (CoordinateFormat) -> Unit,
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    northReference: NorthReference,
+    onNorthReferenceChange: (NorthReference) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -120,6 +125,20 @@ private fun SettingsScreen(
                     example = stringResource(R.string.coordinate_format_dms_example),
                     selected = coordinateFormat == CoordinateFormat.DMS,
                     onSelect = { onCoordinateFormatChange(CoordinateFormat.DMS) },
+                )
+            }
+
+            SectionHeader(stringResource(R.string.settings_north_reference))
+            Column(Modifier.selectableGroup()) {
+                ThemeModeOption(
+                    title = stringResource(R.string.compass_north_magnetic),
+                    selected = northReference == NorthReference.MAGNETIC,
+                    onSelect = { onNorthReferenceChange(NorthReference.MAGNETIC) },
+                )
+                ThemeModeOption(
+                    title = stringResource(R.string.compass_north_true),
+                    selected = northReference == NorthReference.TRUE,
+                    onSelect = { onNorthReferenceChange(NorthReference.TRUE) },
                 )
             }
         }

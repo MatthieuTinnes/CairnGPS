@@ -16,6 +16,12 @@ enum class ThemeMode {
     DARK,
 }
 
+/** Reference the compass expresses headings against. Persisted as an app-wide preference. */
+enum class NorthReference {
+    MAGNETIC,
+    TRUE,
+}
+
 /**
  * User-configurable application settings.
  *
@@ -24,4 +30,5 @@ enum class ThemeMode {
 data class AppSettings(
     val coordinateFormat: CoordinateFormat = CoordinateFormat.DECIMAL,
     val themeMode: ThemeMode = ThemeMode.DARK,
+    val northReference: NorthReference = NorthReference.MAGNETIC,
 )

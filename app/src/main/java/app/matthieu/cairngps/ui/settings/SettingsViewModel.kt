@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +34,10 @@ class SettingsViewModel(
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { repository.setThemeMode(mode) }
+    }
+
+    fun setNorthReference(reference: NorthReference) {
+        viewModelScope.launch { repository.setNorthReference(reference) }
     }
 
     companion object {

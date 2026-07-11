@@ -45,6 +45,7 @@
     <string name="settings_coordinate_format">Format des coordonnées</string>
     <string name="coordinate_format_decimal">Degrés décimaux</string>
     <string name="coordinate_format_decimal_example">47.123456°</string>
+    <string name="settings_north_reference">Nord de la boussole</string>
     <string name="coordinate_format_dms">Degrés, minutes, secondes</string>
     <string name="coordinate_format_dms_example">47°07\'24.4\"N</string>
 

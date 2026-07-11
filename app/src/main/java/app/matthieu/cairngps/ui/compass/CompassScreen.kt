@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -53,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 import app.matthieu.cairngps.ui.theme.CairnStone
@@ -71,10 +71,12 @@ import kotlin.math.sin
 fun CompassRoute(
     compassRepository: CompassRepository,
     locationRepository: LocationRepository,
+    settingsRepository: SettingsRepository,
     modifier: Modifier = Modifier,
 ) {
-    val viewModel: CompassViewModel =
-        viewModel(factory = CompassViewModel.factory(compassRepository, locationRepository))
+    val viewModel: CompassViewModel = viewModel(
+        factory = CompassViewModel.factory(compassRepository, locationRepository, settingsRepository),
+    )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LifecycleStartEffect(Unit) {
@@ -84,7 +86,6 @@ fun CompassRoute(
 
     CompassScreen(
         uiState = uiState,
-        onUseTrueNorthChange = viewModel::setUseTrueNorth,
         modifier = modifier,
     )
 }
@@ -93,7 +94,6 @@ fun CompassRoute(
 @Composable
 private fun CompassScreen(
     uiState: CompassUiState,
-    onUseTrueNorthChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -115,11 +115,6 @@ private fun CompassScreen(
                         CalibrationBanner()
                     }
                     CompassDial(uiState)
-                    NorthReferenceToggle(
-                        useTrueNorth = uiState.useTrueNorth,
-                        trueNorthAvailable = uiState.trueNorthAvailable,
-                        onUseTrueNorthChange = onUseTrueNorthChange,
-                    )
                     DeclinationInfo(uiState)
                 }
             }
@@ -230,28 +225,6 @@ private fun CompassDial(uiState: CompassUiState) {
         } else {
             CircularProgressIndicator()
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NorthReferenceToggle(
-    useTrueNorth: Boolean,
-    trueNorthAvailable: Boolean,
-    onUseTrueNorthChange: (Boolean) -> Unit,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(
-            selected = !useTrueNorth,
-            onClick = { onUseTrueNorthChange(false) },
-            label = { Text(stringResource(R.string.compass_north_magnetic)) },
-        )
-        FilterChip(
-            selected = useTrueNorth,
-            onClick = { onUseTrueNorthChange(true) },
-            enabled = trueNorthAvailable,
-            label = { Text(stringResource(R.string.compass_north_true)) },
-        )
     }
 }
 
@@ -404,7 +377,6 @@ private fun CompassScreenPreview() {
                 declinationDegrees = 1.5f,
                 needsCalibration = true,
             ),
-            onUseTrueNorthChange = {},
         )
     }
 }

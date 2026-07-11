@@ -163,6 +163,7 @@ private fun MainScaffold(app: CairnApplication) {
                 CompassRoute(
                     compassRepository = app.compassRepository,
                     locationRepository = app.locationRepository,
+                    settingsRepository = app.settingsRepository,
                 )
             }
             composable(Routes.SATELLITES) {

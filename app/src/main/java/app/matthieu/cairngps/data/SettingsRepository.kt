@@ -23,6 +23,7 @@ class SettingsRepository(context: Context) {
     private object Keys {
         val COORDINATE_FORMAT = stringPreferencesKey("coordinate_format")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val NORTH_REFERENCE = stringPreferencesKey("north_reference")
     }
 
     /** Cold flow that emits the current settings and every subsequent change. */
@@ -34,6 +35,9 @@ class SettingsRepository(context: Context) {
             themeMode = prefs[Keys.THEME_MODE]
                 ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
                 ?: ThemeMode.DARK,
+            northReference = prefs[Keys.NORTH_REFERENCE]
+                ?.let { runCatching { NorthReference.valueOf(it) }.getOrNull() }
+                ?: NorthReference.MAGNETIC,
         )
     }
 
@@ -43,5 +47,9 @@ class SettingsRepository(context: Context) {
 
     suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { prefs -> prefs[Keys.THEME_MODE] = mode.name }
+    }
+
+    suspend fun setNorthReference(reference: NorthReference) {
+        dataStore.edit { prefs -> prefs[Keys.NORTH_REFERENCE] = reference.name }
     }
 }

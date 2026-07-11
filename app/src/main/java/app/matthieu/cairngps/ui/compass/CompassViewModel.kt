@@ -11,6 +11,8 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.CompassReading
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.NorthReference
+import app.matthieu.cairngps.data.SettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +33,7 @@ import kotlin.math.roundToInt
 class CompassViewModel(
     private val compassRepository: CompassRepository,
     private val locationRepository: LocationRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -44,7 +47,18 @@ class CompassViewModel(
     private var smoothedMagnetic: Float? = null
     private var lastAccuracy: Int = SensorManager.SENSOR_STATUS_ACCURACY_HIGH
     private var declination: Float? = null
-    private var useTrueNorth: Boolean = false
+
+    // North reference is a persisted preference (set from the Settings screen), not local UI state.
+    private var northReference: NorthReference = NorthReference.MAGNETIC
+
+    init {
+        settingsRepository.settings
+            .onEach { settings ->
+                northReference = settings.northReference
+                publish()
+            }
+            .launchIn(viewModelScope)
+    }
 
     /**
      * Starts listening to the compass sensor. Idempotent while already tracking. Tied to the screen
@@ -76,14 +90,6 @@ class CompassViewModel(
         smoothedMagnetic = null
     }
 
-    /** Switches between magnetic and true (geographic) north. Ignored when declination is unknown. */
-    fun setUseTrueNorth(value: Boolean) {
-        val effective = value && declination != null
-        if (effective == useTrueNorth) return
-        useTrueNorth = effective
-        publish()
-    }
-
     private fun onReading(reading: CompassReading) {
         smoothedMagnetic = lowPass(reading.azimuthMagneticDegrees, smoothedMagnetic)
         lastAccuracy = reading.accuracy
@@ -91,6 +97,10 @@ class CompassViewModel(
     }
 
     private fun publish() {
+        // True north requires both the user preference and a known declination; falls back to
+        // magnetic when no GPS position was available to compute the declination.
+        val useTrueNorth = northReference == NorthReference.TRUE && declination != null
+
         val magnetic = smoothedMagnetic
         if (magnetic == null) {
             // No heading yet: keep the declination/north-reference facts visible while we wait.
@@ -156,11 +166,12 @@ class CompassViewModel(
         fun factory(
             compassRepository: CompassRepository,
             locationRepository: LocationRepository,
+            settingsRepository: SettingsRepository,
         ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return CompassViewModel(compassRepository, locationRepository) as T
+                    return CompassViewModel(compassRepository, locationRepository, settingsRepository) as T
                 }
             }
     }
