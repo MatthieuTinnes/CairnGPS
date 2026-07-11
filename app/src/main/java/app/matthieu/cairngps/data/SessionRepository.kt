@@ -21,4 +21,7 @@ class SessionRepository(private val dao: SessionDao) {
 
     /** Removes the session with [id]. Waypoints attached to it keep existing (sessionId → null). */
     suspend fun delete(id: Long) = dao.deleteById(id)
+
+    /** Renames the session with [id]. */
+    suspend fun rename(id: Long, name: String) = dao.rename(id, name)
 }

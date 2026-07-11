@@ -24,4 +24,8 @@ interface SessionDao {
     /** Deletes the session with the given id; a no-op if none matches. */
     @Query("DELETE FROM sessions WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /** Renames the session with [id]; a no-op if none matches. */
+    @Query("UPDATE sessions SET name = :name WHERE id = :id")
+    suspend fun rename(id: Long, name: String)
 }

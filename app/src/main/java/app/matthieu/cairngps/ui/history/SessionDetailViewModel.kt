@@ -59,6 +59,14 @@ class SessionDetailViewModel(
         }
     }
 
+    /** Renames the current session to [name]. */
+    fun rename(name: String) {
+        viewModelScope.launch {
+            sessionRepository.rename(sessionId, name)
+            _uiState.update { state -> state.copy(session = state.session?.copy(name = name)) }
+        }
+    }
+
     companion object {
         /** Factory that injects the repositories and the session id to load. */
         fun factory(

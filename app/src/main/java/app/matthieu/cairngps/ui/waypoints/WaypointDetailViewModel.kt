@@ -54,6 +54,14 @@ class WaypointDetailViewModel(
         }
     }
 
+    /** Renames the current waypoint to [name]. */
+    fun rename(name: String) {
+        viewModelScope.launch {
+            repository.rename(waypointId, name)
+            _uiState.update { state -> state.copy(waypoint = state.waypoint?.copy(name = name)) }
+        }
+    }
+
     companion object {
         /** Factory that injects the repositories and the waypoint id to load. */
         fun factory(

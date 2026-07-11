@@ -70,6 +70,8 @@
     <string name="waypoint_delete_dialog_title">Supprimer ce repère ?</string>
     <string name="waypoint_delete_dialog_message">Cette action est définitive.</string>
     <string name="waypoint_parent_session">Trace parente</string>
+    <string name="action_rename">Renommer</string>
+    <string name="waypoint_rename_dialog_title">Renommer le repère</string>
 
     <!-- Historique screen -->
     <string name="history_tab_waypoints">Repères</string>
@@ -98,6 +100,8 @@
     <string name="session_waypoints_empty">Aucun repère rattaché à cette trace.</string>
     <string name="session_delete_dialog_title">Supprimer cette trace ?</string>
     <string name="session_delete_dialog_message">Cette action est définitive. Les repères rattachés seront conservés.</string>
+    <string name="session_rename_dialog_title">Renommer la trace</string>
+    <string name="session_name_label">Nom de la trace</string>
 
     <!-- Accuracy quality -->
     <string name="quality_good">Bonne</string>

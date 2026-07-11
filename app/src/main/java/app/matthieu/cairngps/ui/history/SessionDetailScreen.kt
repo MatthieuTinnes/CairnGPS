@@ -41,6 +41,7 @@ import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatDuration
 import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.ui.waypoints.RenameDialog
 import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
 /**
@@ -72,6 +73,7 @@ fun SessionDetailRoute(
         onBack = onBack,
         onOpenWaypoint = onOpenWaypoint,
         onDelete = viewModel::delete,
+        onRename = viewModel::rename,
         modifier = modifier,
     )
 }
@@ -84,9 +86,11 @@ private fun SessionDetailScreen(
     onBack: () -> Unit,
     onOpenWaypoint: (Long) -> Unit,
     onDelete: () -> Unit,
+    onRename: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
         DeleteConfirmDialog(
@@ -94,6 +98,19 @@ private fun SessionDetailScreen(
             onConfirm = {
                 showDeleteDialog = false
                 onDelete()
+            },
+        )
+    }
+
+    if (showRenameDialog && session != null) {
+        RenameDialog(
+            title = stringResource(R.string.session_rename_dialog_title),
+            label = stringResource(R.string.session_name_label),
+            initialName = session.name,
+            onDismiss = { showRenameDialog = false },
+            onConfirm = { newName ->
+                showRenameDialog = false
+                onRename(newName)
             },
         )
     }
@@ -111,6 +128,17 @@ private fun SessionDetailScreen(
                     ) {
                         // Text glyph avoids depending on the large material-icons-extended artifact.
                         Text(text = "←", style = MaterialTheme.typography.headlineSmall)
+                    }
+                },
+                actions = {
+                    if (session != null) {
+                        val renameLabel = stringResource(R.string.action_rename)
+                        IconButton(
+                            onClick = { showRenameDialog = true },
+                            modifier = Modifier.semantics { contentDescription = renameLabel },
+                        ) {
+                            Text(text = "✎", style = MaterialTheme.typography.headlineSmall)
+                        }
                     }
                 },
             )

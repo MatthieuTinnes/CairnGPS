@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -89,6 +90,7 @@ fun WaypointDetailRoute(
         session = uiState.session,
         onBack = onBack,
         onDelete = viewModel::delete,
+        onRename = viewModel::rename,
         onOpenSession = onOpenSession,
         modifier = modifier,
     )
@@ -101,11 +103,13 @@ private fun WaypointDetailScreen(
     session: Session?,
     onBack: () -> Unit,
     onDelete: () -> Unit,
+    onRename: (String) -> Unit,
     onOpenSession: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
         DeleteConfirmDialog(
@@ -113,6 +117,19 @@ private fun WaypointDetailScreen(
             onConfirm = {
                 showDeleteDialog = false
                 onDelete()
+            },
+        )
+    }
+
+    if (showRenameDialog && waypoint != null) {
+        RenameDialog(
+            title = stringResource(R.string.waypoint_rename_dialog_title),
+            label = stringResource(R.string.waypoint_name_label),
+            initialName = waypoint.name,
+            onDismiss = { showRenameDialog = false },
+            onConfirm = { newName ->
+                showRenameDialog = false
+                onRename(newName)
             },
         )
     }
@@ -130,6 +147,17 @@ private fun WaypointDetailScreen(
                     ) {
                         // Text glyph avoids depending on the large material-icons-extended artifact.
                         Text(text = "←", style = MaterialTheme.typography.headlineSmall)
+                    }
+                },
+                actions = {
+                    if (waypoint != null) {
+                        val renameLabel = stringResource(R.string.action_rename)
+                        IconButton(
+                            onClick = { showRenameDialog = true },
+                            modifier = Modifier.semantics { contentDescription = renameLabel },
+                        ) {
+                            Text(text = "✎", style = MaterialTheme.typography.headlineSmall)
+                        }
                     }
                 },
             )
@@ -247,6 +275,45 @@ private fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                     text = stringResource(R.string.action_delete),
                     color = MaterialTheme.colorScheme.error,
                 )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
+
+/** Dialog to edit a saved item's name, pre-filled with its current value. */
+@Composable
+fun RenameDialog(
+    title: String,
+    label: String,
+    initialName: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var name by remember { mutableStateOf(initialName) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                singleLine = true,
+                label = { Text(label) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(name.trim()) },
+                enabled = name.isNotBlank(),
+            ) {
+                Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {

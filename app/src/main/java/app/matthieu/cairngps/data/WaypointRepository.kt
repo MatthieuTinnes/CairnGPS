@@ -29,4 +29,7 @@ class WaypointRepository(private val dao: WaypointDao) {
     suspend fun attachToSession(ids: List<Long>, sessionId: Long) {
         if (ids.isNotEmpty()) dao.attachToSession(ids, sessionId)
     }
+
+    /** Renames the waypoint with [id]. */
+    suspend fun rename(id: Long, name: String) = dao.rename(id, name)
 }

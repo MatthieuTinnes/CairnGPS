@@ -32,4 +32,8 @@ interface WaypointDao {
     /** Attaches every waypoint in [ids] to session [sessionId]; a no-op for an empty list. */
     @Query("UPDATE waypoints SET sessionId = :sessionId WHERE id IN (:ids)")
     suspend fun attachToSession(ids: List<Long>, sessionId: Long)
+
+    /** Renames the waypoint with [id]; a no-op if none matches. */
+    @Query("UPDATE waypoints SET name = :name WHERE id = :id")
+    suspend fun rename(id: Long, name: String)
 }
