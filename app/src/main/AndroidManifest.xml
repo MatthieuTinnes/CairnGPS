@@ -5,11 +5,19 @@
     <!-- GPS location. ACCESS_FINE_LOCATION is required for the GPS_PROVIDER and
          for access to the raw satellite (GNSS) data we will need later. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- The app is useless without a GPS chip; declare it as required hardware. -->
     <uses-feature
         android:name="android.hardware.location.gps"
         android:required="true" />
+
+    <!-- Foreground service keeping a recording alive (and its notification visible) while the
+         app is backgrounded. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Runtime permission on API 33+ to show the recording notification. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".CairnApplication"
@@ -31,6 +39,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".service.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
     </application>
 
 </manifest>

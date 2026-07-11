@@ -1,7 +1,5 @@
 package app.matthieu.cairngps.ui.recording
 
-import android.Manifest
-import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,7 +16,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -55,9 +52,17 @@ private val ticker: Flow<Unit> = flow {
     }
 }
 
-/** Wraps [RecordingRepository] for the Position screen's recording card. */
+/**
+ * Wraps [RecordingRepository] for the Position screen's recording card.
+ *
+ * Starting/stopping a recording is not done here: it goes through
+ * [app.matthieu.cairngps.service.RecordingService], which owns the recording's lifecycle so it
+ * can keep it (and its notification) alive while the app is backgrounded. This view model only
+ * mirrors [RecordingRepository.state] for display, which updates the same way regardless of which
+ * caller (the recording card's Stop button, or the notification's) triggered the stop.
+ */
 class RecordingViewModel(
-    private val recordingRepository: RecordingRepository,
+    recordingRepository: RecordingRepository,
 ) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -74,15 +79,6 @@ class RecordingViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = RecordingUiState(),
         )
-
-    /** Starts a recording. Must only be called once location permission has been granted. */
-    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-    fun start() = recordingRepository.start()
-
-    /** Stops the current recording, persisting it as a [app.matthieu.cairngps.data.Session]. */
-    fun stop() {
-        viewModelScope.launch { recordingRepository.stop() }
-    }
 
     companion object {
         /** Factory that injects the [RecordingRepository] without needing a DI framework. */

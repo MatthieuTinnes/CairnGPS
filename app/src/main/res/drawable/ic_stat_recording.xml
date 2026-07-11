@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+    <!-- Monochrome status-bar icon (per notification icon guidelines: solid white, no gradient).
+         A simple location pin, reused as the "recording in progress" glyph. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,2c-4.2,0 -7.6,3.4 -7.6,7.6c0,5.7 7.6,12.4 7.6,12.4s7.6,-6.7 7.6,-12.4C19.6,5.4 16.2,2 12,2zM12,12.1c-1.4,0 -2.5,-1.1 -2.5,-2.5s1.1,-2.5 2.5,-2.5s2.5,1.1 2.5,2.5S13.4,12.1 12,12.1z" />
+</vector>

@@ -1,10 +1,14 @@
 package app.matthieu.cairngps.ui.location
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +51,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,6 +62,7 @@ import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.service.RecordingService
 import app.matthieu.cairngps.ui.recording.RecordingUiState
 import app.matthieu.cairngps.ui.recording.RecordingViewModel
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
@@ -94,10 +100,19 @@ fun HomeRoute(
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val recordingUiState by recordingViewModel.uiState.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+
     LifecycleStartEffect(Unit) {
         viewModel.startTracking()
         onStopOrDispose { viewModel.stopTracking() }
     }
+
+    // Showing the recording notification needs POST_NOTIFICATIONS at runtime on API 33+. The
+    // recording itself works either way, so the service is started regardless of the outcome —
+    // only the notification's visibility depends on it.
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { RecordingService.start(context) }
 
     HomeScreen(
         uiState = uiState,
@@ -105,8 +120,19 @@ fun HomeRoute(
         recordingUiState = recordingUiState,
         onOpenSettings = onOpenSettings,
         onSaveWaypoint = viewModel::saveWaypoint,
-        onStartRecording = { recordingViewModel.start() },
-        onStopRecording = { recordingViewModel.stop() },
+        onStartRecording = {
+            // Recording start/stop is owned by RecordingService, not the ViewModel: only it can
+            // keep the recording (and its notification) alive while the app is backgrounded.
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                RecordingService.start(context)
+            }
+        },
+        onStopRecording = { RecordingService.stop(context) },
         modifier = modifier,
     )
 }

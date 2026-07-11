@@ -37,6 +37,8 @@ data class RecordingState(
     val maxSpeed: Float = 0f, // m/s
     val elevationGain: Double = 0.0, // D+, meters
     val elevationLoss: Double = 0.0, // D-, meters
+    val currentAltitude: Double? = null, // meters, from the last accepted fix; null until then
+    val currentSpeed: Float? = null, // m/s, from the last accepted fix; null until then
 )
 
 /**
@@ -177,6 +179,8 @@ class RecordingRepository(
             maxSpeed = maxOf(current.maxSpeed, fix.speed),
             elevationGain = elevationGain,
             elevationLoss = elevationLoss,
+            currentAltitude = fix.altitude,
+            currentSpeed = fix.speed,
         )
     }
 

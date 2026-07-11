@@ -87,6 +87,9 @@
     <string name="recording_max_speed">Vitesse max</string>
     <string name="recording_elevation_gain">D+</string>
     <string name="recording_elevation_loss">D−</string>
+    <string name="recording_notification_channel_name">Enregistrement</string>
+    <string name="recording_notification_title_fmt">Enregistrement en cours · %1$s</string>
+    <string name="recording_notification_content">Alt %1$s m · %2$s km/h · %3$s km</string>
 
     <!-- Session (trace) detail -->
     <string name="session_detail_title">Trace</string>
