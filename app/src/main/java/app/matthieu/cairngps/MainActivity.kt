@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +32,9 @@ import androidx.navigation.navArgument
 import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.ThemeMode
 import app.matthieu.cairngps.ui.compass.CompassRoute
+import app.matthieu.cairngps.ui.gamification.AchievementsRoute
+import app.matthieu.cairngps.ui.gamification.RecordsRoute
+import app.matthieu.cairngps.ui.gamification.UnlockBanner
 import app.matthieu.cairngps.ui.history.HistoryRoute
 import app.matthieu.cairngps.ui.history.SessionDetailRoute
 import app.matthieu.cairngps.ui.location.HomeRoute
@@ -45,6 +50,8 @@ private object Routes {
     const val COMPASS = "compass"
     const val SATELLITES = "satellites"
     const val HISTORY = "history"
+    const val ACHIEVEMENTS = "achievements"
+    const val RECORDS = "records"
     const val CONSTELLATION_INFO = "constellation_info"
     const val SETTINGS = "settings"
 
@@ -70,6 +77,7 @@ private enum class TopLevelTab(
     COMPASS(Routes.COMPASS, "🧭", R.string.tab_compass),
     SATELLITES(Routes.SATELLITES, "🛰", R.string.tab_satellites),
     HISTORY(Routes.HISTORY, "🗺", R.string.tab_history),
+    ACHIEVEMENTS(Routes.ACHIEVEMENTS, "🏆", R.string.tab_achievements),
 }
 
 class MainActivity : ComponentActivity() {
@@ -110,113 +118,136 @@ private fun MainScaffold(app: CairnApplication) {
     // height and rely on their own back navigation.
     val showBottomBar = TopLevelTab.entries.any { it.route == currentRoute }
 
-    Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                NavigationBar {
-                    TopLevelTab.entries.forEach { tab ->
-                        val selected = currentRoute == tab.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (!selected) {
-                                    navController.navigate(tab.route) {
-                                        // Standard bottom-nav behaviour: keep a single instance per
-                                        // tab and preserve each tab's state across switches.
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+    // The unlock banner is mounted here, above the NavHost, so it floats over every screen
+    // (including the bottom bar) regardless of which tab triggered the achievement.
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            bottomBar = {
+                if (showBottomBar) {
+                    NavigationBar {
+                        TopLevelTab.entries.forEach { tab ->
+                            val selected = currentRoute == tab.route
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    if (!selected) {
+                                        navController.navigate(tab.route) {
+                                            // Standard bottom-nav behaviour: keep a single instance
+                                            // per tab and preserve each tab's state across switches.
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
-                                }
-                            },
-                            icon = {
-                                Text(tab.glyph, style = MaterialTheme.typography.titleLarge)
-                            },
-                            label = { Text(stringResource(tab.labelRes)) },
-                        )
+                                },
+                                icon = {
+                                    Text(tab.glyph, style = MaterialTheme.typography.titleLarge)
+                                },
+                                label = { Text(stringResource(tab.labelRes)) },
+                            )
+                        }
                     }
                 }
-            }
-        },
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.HOME,
-            // Offset content above the bottom bar and mark those insets consumed so the per-screen
-            // Scaffolds don't add the navigation-bar inset a second time.
-            modifier = Modifier
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding),
-        ) {
-            composable(Routes.HOME) {
-                HomeRoute(
-                    locationRepository = app.locationRepository,
-                    settingsRepository = app.settingsRepository,
-                    waypointRepository = app.waypointRepository,
-                    recordingRepository = app.recordingRepository,
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                )
-            }
-            composable(Routes.COMPASS) {
-                CompassRoute(
-                    compassRepository = app.compassRepository,
-                    locationRepository = app.locationRepository,
-                    settingsRepository = app.settingsRepository,
-                )
-            }
-            composable(Routes.SATELLITES) {
-                SatellitesRoute(
-                    locationRepository = app.locationRepository,
-                    onOpenInfo = { navController.navigate(Routes.CONSTELLATION_INFO) },
-                )
-            }
-            composable(Routes.HISTORY) {
-                HistoryRoute(
-                    waypointRepository = app.waypointRepository,
-                    sessionRepository = app.sessionRepository,
-                    onOpenWaypoint = { id -> navController.navigate(Routes.waypointDetail(id)) },
-                    onOpenSession = { id -> navController.navigate(Routes.sessionDetail(id)) },
-                )
-            }
-            composable(
-                Routes.WAYPOINT_DETAIL,
-                arguments = listOf(navArgument(Routes.WAYPOINT_ID_ARG) { type = NavType.LongType }),
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getLong(Routes.WAYPOINT_ID_ARG) ?: return@composable
-                WaypointDetailRoute(
-                    waypointId = id,
-                    waypointRepository = app.waypointRepository,
-                    sessionRepository = app.sessionRepository,
-                    onBack = { navController.popBackStack() },
-                    onOpenSession = { sessionId -> navController.navigate(Routes.sessionDetail(sessionId)) },
-                )
-            }
-            composable(
-                Routes.SESSION_DETAIL,
-                arguments = listOf(navArgument(Routes.SESSION_ID_ARG) { type = NavType.LongType }),
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getLong(Routes.SESSION_ID_ARG) ?: return@composable
-                SessionDetailRoute(
-                    sessionId = id,
-                    sessionRepository = app.sessionRepository,
-                    waypointRepository = app.waypointRepository,
-                    onBack = { navController.popBackStack() },
-                    onOpenWaypoint = { waypointId -> navController.navigate(Routes.waypointDetail(waypointId)) },
-                )
-            }
-            composable(Routes.CONSTELLATION_INFO) {
-                ConstellationInfoScreen(
-                    onBack = { navController.popBackStack() },
-                )
-            }
-            composable(Routes.SETTINGS) {
-                SettingsRoute(
-                    repository = app.settingsRepository,
-                    onBack = { navController.popBackStack() },
-                )
+            },
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = Routes.HOME,
+                // Offset content above the bottom bar and mark those insets consumed so the
+                // per-screen Scaffolds don't add the navigation-bar inset a second time.
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
+            ) {
+                composable(Routes.HOME) {
+                    HomeRoute(
+                        locationRepository = app.locationRepository,
+                        settingsRepository = app.settingsRepository,
+                        waypointRepository = app.waypointRepository,
+                        recordingRepository = app.recordingRepository,
+                        onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    )
+                }
+                composable(Routes.COMPASS) {
+                    CompassRoute(
+                        compassRepository = app.compassRepository,
+                        locationRepository = app.locationRepository,
+                        settingsRepository = app.settingsRepository,
+                    )
+                }
+                composable(Routes.SATELLITES) {
+                    SatellitesRoute(
+                        locationRepository = app.locationRepository,
+                        onOpenInfo = { navController.navigate(Routes.CONSTELLATION_INFO) },
+                    )
+                }
+                composable(Routes.HISTORY) {
+                    HistoryRoute(
+                        waypointRepository = app.waypointRepository,
+                        sessionRepository = app.sessionRepository,
+                        onOpenWaypoint = { id -> navController.navigate(Routes.waypointDetail(id)) },
+                        onOpenSession = { id -> navController.navigate(Routes.sessionDetail(id)) },
+                    )
+                }
+                composable(
+                    Routes.WAYPOINT_DETAIL,
+                    arguments = listOf(navArgument(Routes.WAYPOINT_ID_ARG) { type = NavType.LongType }),
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getLong(Routes.WAYPOINT_ID_ARG) ?: return@composable
+                    WaypointDetailRoute(
+                        waypointId = id,
+                        waypointRepository = app.waypointRepository,
+                        sessionRepository = app.sessionRepository,
+                        onBack = { navController.popBackStack() },
+                        onOpenSession = { sessionId -> navController.navigate(Routes.sessionDetail(sessionId)) },
+                    )
+                }
+                composable(
+                    Routes.SESSION_DETAIL,
+                    arguments = listOf(navArgument(Routes.SESSION_ID_ARG) { type = NavType.LongType }),
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getLong(Routes.SESSION_ID_ARG) ?: return@composable
+                    SessionDetailRoute(
+                        sessionId = id,
+                        sessionRepository = app.sessionRepository,
+                        waypointRepository = app.waypointRepository,
+                        onBack = { navController.popBackStack() },
+                        onOpenWaypoint = { waypointId -> navController.navigate(Routes.waypointDetail(waypointId)) },
+                    )
+                }
+                composable(Routes.ACHIEVEMENTS) {
+                    AchievementsRoute(
+                        achievementsRepository = app.achievementsRepository,
+                        recordsRepository = app.recordsRepository,
+                        sessionRepository = app.sessionRepository,
+                        onOpenRecords = { navController.navigate(Routes.RECORDS) },
+                    )
+                }
+                composable(Routes.RECORDS) {
+                    RecordsRoute(
+                        recordsRepository = app.recordsRepository,
+                        settingsRepository = app.settingsRepository,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(Routes.CONSTELLATION_INFO) {
+                    ConstellationInfoScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(Routes.SETTINGS) {
+                    SettingsRoute(
+                        repository = app.settingsRepository,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
             }
         }
+        UnlockBanner(
+            unlockedEvents = app.gamificationManager.unlockedEvents,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
     }
 }

@@ -29,6 +29,7 @@
     <string name="tab_compass">Boussole</string>
     <string name="tab_satellites">Satellites</string>
     <string name="tab_history">Historique</string>
+    <string name="tab_achievements">Succès</string>
 
     <!-- Actions -->
     <string name="hint_tap_to_copy">Appuyer pour copier</string>
@@ -175,4 +176,79 @@
         <item>O</item>
         <item>NO</item>
     </string-array>
+
+    <!-- Gamification : succès & records -->
+    <string name="achievements_open_records">Records</string>
+    <string name="achievements_loading">Chargement des succès…</string>
+    <string name="achievements_progress_fmt">%1$s / %2$s</string>
+    <string name="achievement_unlocked_on_fmt">Débloqué le %1$s</string>
+    <string name="achievement_unlocked_banner_title">Succès débloqué !</string>
+
+    <!-- Familles de succès -->
+    <string name="achievement_family_altitude">Altitude franchie</string>
+    <string name="achievement_family_speed">Vitesse atteinte</string>
+    <string name="achievement_family_satellites">Satellites simultanés</string>
+    <string name="achievement_family_distance">Distance cumulée</string>
+    <string name="achievement_family_sessions">Nombre de sessions</string>
+    <string name="achievement_family_geo">Franchissements géographiques</string>
+
+    <!-- Succès : altitude franchie -->
+    <string name="achievement_altitude_1000_title">Premier sommet</string>
+    <string name="achievement_altitude_1000_desc">Atteindre 1000 m d\'altitude.</string>
+    <string name="achievement_altitude_2000_title">Prise de hauteur</string>
+    <string name="achievement_altitude_2000_desc">Atteindre 2000 m d\'altitude.</string>
+    <string name="achievement_altitude_3000_title">Grand alpiniste</string>
+    <string name="achievement_altitude_3000_desc">Atteindre 3000 m d\'altitude.</string>
+
+    <!-- Succès : vitesse atteinte -->
+    <string name="achievement_speed_30_title">En roue libre</string>
+    <string name="achievement_speed_30_desc">Atteindre 30 km/h.</string>
+    <string name="achievement_speed_50_title">Bon rythme</string>
+    <string name="achievement_speed_50_desc">Atteindre 50 km/h.</string>
+    <string name="achievement_speed_100_title">Pied au plancher</string>
+    <string name="achievement_speed_100_desc">Atteindre 100 km/h.</string>
+
+    <!-- Succès : satellites fixés simultanément -->
+    <string name="achievement_satellites_8_title">Bon signal</string>
+    <string name="achievement_satellites_8_desc">Fixer 8 satellites simultanément.</string>
+    <string name="achievement_satellites_12_title">Ciel dégagé</string>
+    <string name="achievement_satellites_12_desc">Fixer 12 satellites simultanément.</string>
+    <string name="achievement_satellites_20_title">Précision maximale</string>
+    <string name="achievement_satellites_20_desc">Fixer 20 satellites simultanément.</string>
+
+    <!-- Succès : distance cumulée -->
+    <string name="achievement_distance_10_title">Premiers pas</string>
+    <string name="achievement_distance_10_desc">Parcourir 10 km au total.</string>
+    <string name="achievement_distance_50_title">Grand marcheur</string>
+    <string name="achievement_distance_50_desc">Parcourir 50 km au total.</string>
+    <string name="achievement_distance_100_title">Centurion</string>
+    <string name="achievement_distance_100_desc">Parcourir 100 km au total.</string>
+
+    <!-- Succès : nombre de sessions -->
+    <string name="achievement_sessions_1_title">Première sortie</string>
+    <string name="achievement_sessions_1_desc">Enregistrer une première session.</string>
+    <string name="achievement_sessions_10_title">Habitué du terrain</string>
+    <string name="achievement_sessions_10_desc">Enregistrer 10 sessions.</string>
+    <string name="achievement_sessions_50_title">Vétéran</string>
+    <string name="achievement_sessions_50_desc">Enregistrer 50 sessions.</string>
+
+    <!-- Succès : franchissements géographiques -->
+    <string name="achievement_geo_45th_parallel_title">Vers le nord</string>
+    <string name="achievement_geo_45th_parallel_desc">Franchir le 45e parallèle nord.</string>
+    <string name="achievement_geo_equator_title">Les deux hémisphères</string>
+    <string name="achievement_geo_equator_desc">Avoir été repéré au nord et au sud de l\'équateur.</string>
+    <string name="achievement_geo_greenwich_title">D\'un méridien à l\'autre</string>
+    <string name="achievement_geo_greenwich_desc">Avoir été repéré à l\'est et à l\'ouest du méridien de Greenwich.</string>
+
+    <!-- Écran Records -->
+    <string name="records_title">Records</string>
+    <string name="record_max_speed">Vitesse maximale</string>
+    <string name="record_max_altitude">Altitude maximale</string>
+    <string name="record_min_altitude">Altitude minimale</string>
+    <string name="record_northernmost">Point le plus au nord</string>
+    <string name="record_southernmost">Point le plus au sud</string>
+    <string name="record_easternmost">Point le plus à l\'est</string>
+    <string name="record_westernmost">Point le plus à l\'ouest</string>
+    <string name="record_max_elevation_gain">Plus long dénivelé positif</string>
+    <string name="record_max_distance">Plus longue distance</string>
 </resources>

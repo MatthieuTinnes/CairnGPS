@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // ProcessLifecycleOwner: gates GamificationManager's live GPS subscription to app-foreground.
+    implementation(libs.androidx.lifecycle.process)
 
     // Navigation & persistence
     implementation(libs.androidx.navigation.compose)

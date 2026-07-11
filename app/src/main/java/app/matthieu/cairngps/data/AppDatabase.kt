@@ -11,8 +11,8 @@ import androidx.room.migration.Migration
  * Bump [version] and provide a migration whenever the schema changes.
  */
 @Database(
-    entities = [Waypoint::class, Session::class],
-    version = 2,
+    entities = [Waypoint::class, Session::class, RecordEntry::class, AchievementState::class],
+    version = 3,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,6 +20,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun waypointDao(): WaypointDao
 
     abstract fun sessionDao(): SessionDao
+
+    abstract fun recordDao(): RecordDao
+
+    abstract fun achievementDao(): AchievementDao
 
     companion object {
         @Volatile
@@ -59,6 +63,30 @@ abstract class AppDatabase : RoomDatabase() {
             )
         }
 
+        /**
+         * Adds the `records` and `achievements` tables backing the gamification layer: cross-
+         * session extremes (records) and unlocked-achievement state, respectively. Neither table
+         * references existing ones, so this migration only creates tables — no data movement.
+         */
+        private val MIGRATION_2_3 = Migration(2, 3) { db ->
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `records` (" +
+                    "`type` TEXT NOT NULL, " +
+                    "`value` REAL NOT NULL, " +
+                    "`latitude` REAL, " +
+                    "`longitude` REAL, " +
+                    "`achievedAt` INTEGER NOT NULL, " +
+                    "`sessionId` INTEGER, " +
+                    "PRIMARY KEY(`type`))",
+            )
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `achievements` (" +
+                    "`id` TEXT NOT NULL, " +
+                    "`unlockedAt` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`id`))",
+            )
+        }
+
         /** Returns the process-wide database singleton, building it on first access. */
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
@@ -71,7 +99,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "cairn.db",
             )
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }
