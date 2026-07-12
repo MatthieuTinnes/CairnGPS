@@ -19,6 +19,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +36,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -93,6 +95,17 @@ import app.matthieu.cairngps.ui.theme.RecChipBorder
 import app.matthieu.cairngps.ui.theme.RecChipText
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.ValueMuted
+
+private const val DASH_COORD_DECIMAL = "--.------°"
+private const val DASH_COORD_DMS = "--°--'--.-\"-"
+private const val DASH_SPEED = "--,-"
+private const val DASH_ALTITUDE = "-- --"
+private const val DASH_ACCURACY = "± -- m"
+
+private fun coordinateDash(format: CoordinateFormat): String = when (format) {
+    CoordinateFormat.DECIMAL -> DASH_COORD_DECIMAL
+    CoordinateFormat.DMS -> DASH_COORD_DMS
+}
 
 /**
  * Screen route. Wires up the [LocationViewModel] and binds GPS tracking to the screen lifecycle:
@@ -289,19 +302,19 @@ private fun BottomActionsRow(
     ) {
         Button(
             onClick = onSaveWaypoint,
-            // Nothing meaningful to capture until the first fix arrives.
             enabled = hasFix,
             shape = RoundedCornerShape(16.dp),
+
+            contentPadding = PaddingValues(5.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = CairnGreenDark,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 disabledContainerColor = CairnGreenDark,
                 disabledContentColor = MaterialTheme.colorScheme.onSurface,
             ),
-            // 52 dp: touch targets stay glove-friendly for outdoor use (see CLAUDE.md).
             modifier = Modifier
                 .weight(1f)
-                .height(52.dp),
+                .height(60.dp),
         ) {
             Sym(icon = Glyph.AddLocationAlt, contentDescription = null, tint = OnGreenButton)
             Spacer(Modifier.width(8.dp))
@@ -311,13 +324,14 @@ private fun BottomActionsRow(
         Button(
             onClick = if (isRecording) onStopRecording else onStartRecording,
             shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(5.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (isIdleWithoutFix) IdleButtonBg else CairnAmber,
-                contentColor = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
+                contentColor = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else OnAmberButton,
             ),
             modifier = Modifier
                 .weight(1f)
-                .height(52.dp),
+                .height(60.dp),
         ) {
             Sym(
                 icon = if (isRecording) Glyph.Stop else Glyph.PlayArrow,
@@ -530,8 +544,16 @@ private fun CoordinatesCard(
     format: CoordinateFormat,
     onCopy: () -> Unit,
 ) {
-    val latitude = formatCoordinate(uiState.fix?.latitude, isLatitude = true, format = format)
-    val longitude = formatCoordinate(uiState.fix?.longitude, isLatitude = false, format = format)
+    val latitude = if (uiState.hasFix) {
+        formatCoordinate(uiState.fix?.latitude, isLatitude = true, format = format)
+    } else {
+        coordinateDash(format)
+    }
+    val longitude = if (uiState.hasFix) {
+        formatCoordinate(uiState.fix?.longitude, isLatitude = false, format = format)
+    } else {
+        coordinateDash(format)
+    }
     val latitudeLabel = stringResource(R.string.label_latitude)
     val longitudeLabel = stringResource(R.string.label_longitude)
     // No fix yet: render the dashes in the design's darker, deliberately "empty" grey rather than
@@ -567,9 +589,10 @@ private fun AltitudeCard(uiState: LocationUiState, modifier: Modifier = Modifier
         CardTitle(stringResource(R.string.label_altitude))
         Spacer(Modifier.height(8.dp))
         BigValue(
-            value = formatAltitude(uiState.fix?.altitude),
+            value = if (uiState.hasFix) formatAltitude(uiState.fix?.altitude) else DASH_ALTITUDE,
             unit = stringResource(R.string.unit_meters),
-            valueColor = if (uiState.hasFix) Color.Unspecified else DashText,
+            valueColor = if (uiState.hasFix) Color.Unspecified else DashMuted,
+            unitColor = if (uiState.hasFix) MaterialTheme.colorScheme.tertiary else ValueMuted,
         )
     }
 }
@@ -583,13 +606,14 @@ private fun SpeedCard(uiState: LocationUiState) {
                 CardTitle(stringResource(R.string.label_speed))
                 Spacer(Modifier.height(4.dp))
                 BigValue(
-                    value = formatSpeedKmh(uiState.fix?.speed),
+                    value = if (uiState.hasFix) formatSpeedKmh(uiState.fix?.speed) else DASH_SPEED,
                     unit = stringResource(R.string.unit_kmh),
-                    valueColor = if (uiState.hasFix) Color.Unspecified else DashText,
+                    valueColor = if (uiState.hasFix) Color.Unspecified else DashMuted,
+                    unitColor = if (uiState.hasFix) MaterialTheme.colorScheme.tertiary else ValueMuted,
                 )
             }
             Text(
-                text = if (uiState.hasFix) "${formatSpeedMs(uiState.fix?.speed)} m/s" else DASH,
+                text = if (uiState.hasFix) "${formatSpeedMs(uiState.fix?.speed)} m/s" else "$DASH_SPEED m/s",
                 style = MaterialTheme.typography.bodyMedium,
                 fontFamily = MonoFontFamily,
                 color = if (uiState.hasFix) ValueMuted else DashMuted,
@@ -633,7 +657,7 @@ private fun AccuracyRow(accuracyMeters: Float?, letter: String) {
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = if (accuracyMeters != null) "±${formatAccuracy(accuracyMeters)} m" else DASH,
+            text = if (accuracyMeters != null) "±${formatAccuracy(accuracyMeters)} m" else DASH_ACCURACY,
             style = MaterialTheme.typography.titleMedium,
             fontFamily = MonoFontFamily,
             color = if (accuracyMeters != null) Color.Unspecified else DashText,
@@ -678,12 +702,25 @@ private fun DataCard(
     enabled: Boolean = true,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
+    // Material3's default Card container pulls from the surfaceContainer* roles, which Compose
+    // derives from primary/neutral tones rather than our explicit colorScheme.surface — so left
+    // at its default it drifts from the design's flat #161C18. Force it back to colorScheme.surface
+    // (which *is* DarkSurface / #161C18, set explicitly in Theme.kt) to match the mock exactly.
+    // The disabled variant needs the same override: CoordinatesCard is disabled while there's no
+    // fix, and without this it would fall back to Material3's dimmed disabled container, making it
+    // look different from the other (always-enabled) cards — the design keeps every card the same
+    // flat color regardless of fix state.
+    val colors = CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.surface,
+        disabledContainerColor = MaterialTheme.colorScheme.surface,
+        disabledContentColor = MaterialTheme.colorScheme.onSurface,
+    )
     if (onClick != null) {
-        Card(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth()) {
+        Card(onClick = onClick, enabled = enabled, colors = colors, modifier = modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp), content = content)
         }
     } else {
-        Card(modifier = modifier.fillMaxWidth()) {
+        Card(colors = colors, modifier = modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp), content = content)
         }
     }
@@ -700,7 +737,12 @@ private fun CardTitle(text: String) {
 
 /** A large numeric value with a smaller trailing unit, baseline-aligned. */
 @Composable
-private fun BigValue(value: String, unit: String, valueColor: Color = Color.Unspecified) {
+private fun BigValue(
+    value: String,
+    unit: String,
+    valueColor: Color = Color.Unspecified,
+    unitColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
     Row(verticalAlignment = Alignment.Bottom) {
         Text(
             text = value,
@@ -712,7 +754,7 @@ private fun BigValue(value: String, unit: String, valueColor: Color = Color.Unsp
         Text(
             text = unit,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = unitColor,
             modifier = Modifier.padding(bottom = 6.dp),
         )
     }

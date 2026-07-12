@@ -1,9 +1,12 @@
 package app.matthieu.cairngps.ui.theme
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -106,13 +109,7 @@ fun Sym(
     tint: Color = LocalContentColor.current,
 ) {
     val sizeSp = with(LocalDensity.current) { size.toSp() }
-    Text(
-        text = icon.toString(),
-        fontFamily = if (filled) MaterialSymbolsFilled else MaterialSymbolsOutlined,
-        fontSize = sizeSp,
-        lineHeight = sizeSp,
-        color = tint,
-        textAlign = TextAlign.Center,
+    Box(
         modifier = modifier
             .size(size)
             .then(
@@ -122,5 +119,15 @@ fun Sym(
                     Modifier.clearAndSetSemantics {}
                 },
             ),
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = icon.toString(),
+            fontFamily = if (filled) MaterialSymbolsFilled else MaterialSymbolsOutlined,
+            fontSize = sizeSp,
+            color = tint,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.wrapContentSize(unbounded = true),
+        )
+    }
 }
