@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -69,16 +70,22 @@ import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.ui.common.SegmentedToggle
 import app.matthieu.cairngps.ui.location.formatShortDistance
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnStone
+import app.matthieu.cairngps.ui.theme.CompassDialBorder
+import app.matthieu.cairngps.ui.theme.CompassDialFill
+import app.matthieu.cairngps.ui.theme.CompassTickMajor
+import app.matthieu.cairngps.ui.theme.CompassTickMinor
+import app.matthieu.cairngps.ui.theme.DarkBackground
+import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
-import app.matthieu.cairngps.ui.theme.QualityPoor
+import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
+import app.matthieu.cairngps.ui.theme.ValueMuted
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -221,13 +228,9 @@ private fun CompassDial(uiState: CompassUiState) {
     val roseLabels = stringArrayResource(R.array.compass_rose_labels)
     val cardinals = stringArrayResource(R.array.compass_cardinals)
 
-    val tickColor = MaterialTheme.colorScheme.onSurfaceVariant
     val cardinalColor = MaterialTheme.colorScheme.onSurface
-    val northColor = QualityPoor
-    val southColor = CairnStone
     val indexColor = CairnAmber
     val targetColor = CairnGreen
-    val hubColor = MaterialTheme.colorScheme.surface
     val textMeasurer = rememberTextMeasurer()
 
     Box(
@@ -242,13 +245,9 @@ private fun CompassDial(uiState: CompassUiState) {
                 heading = uiState.headingDegrees,
                 targetBearing = uiState.bearingToTargetDegrees,
                 roseLabels = roseLabels,
-                tickColor = tickColor,
                 cardinalColor = cardinalColor,
-                northColor = northColor,
-                southColor = southColor,
                 indexColor = indexColor,
                 targetColor = targetColor,
-                hubColor = hubColor,
                 textMeasurer = textMeasurer,
             )
         }
@@ -261,22 +260,25 @@ private fun CompassDial(uiState: CompassUiState) {
                     // stay centered (and the cardinal below lines up under the middle digit).
                     text = buildAnnotatedString {
                         val degree = SpanStyle(
-                            fontSize = 20.sp,
+                            fontSize = 34.sp,
                             baselineShift = BaselineShift.Superscript,
                         )
                         withStyle(degree.copy(color = Color.Transparent)) { append("°") }
                         append("${uiState.headingDegrees.roundToInt() % 360}")
                         withStyle(degree) { append("°") }
                     },
-                    fontSize = 38.sp,
+                    fontSize = 64.sp,
                     fontFamily = MonoFontFamily,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = cardinals.getOrElse(uiState.cardinalIndex) { "" },
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 2.sp,
+                    color = CairnStone,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
             }
         } else {
@@ -315,7 +317,10 @@ private fun DeclinationInfo(uiState: CompassUiState) {
  */
 @Composable
 private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+    ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (uiState.hasTarget) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -325,7 +330,7 @@ private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
                             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = OnGreenButton)
                     }
                     Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -380,11 +385,10 @@ private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
-            TextButton(onClick = onChangeTarget, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.compass_change_target))
-            }
         }
+    }
+    TextButton(onClick = onChangeTarget, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.compass_change_target))
     }
 }
 
@@ -436,20 +440,18 @@ private fun TargetPickerDialog(
 
 /**
  * Draws the compass rose rotated by `-heading` so its north mark points to real (magnetic or true)
- * north, with the needle's red half pointing north. A fixed index at the top marks the heading,
- * and — when a navigation target is set — an amber tick on the ring marks its bearing.
+ * north. There is no needle — matching the design (1c), the current heading is read from the
+ * fixed numeric readout and the fixed amber index at the top; the rose underneath just carries
+ * the tick marks, cardinal letters and degree numbers. When a navigation target is set, a green
+ * dot on the ring marks its bearing.
  */
 private fun DrawScope.drawCompassRose(
     heading: Float,
     targetBearing: Float?,
     roseLabels: Array<String>,
-    tickColor: Color,
     cardinalColor: Color,
-    northColor: Color,
-    southColor: Color,
     indexColor: Color,
     targetColor: Color,
-    hubColor: Color,
     textMeasurer: TextMeasurer,
 ) {
     // Reserve a margin at the edge for the fixed heading index, so it sits clear of the ticks.
@@ -457,102 +459,74 @@ private fun DrawScope.drawCompassRose(
     val radius = size.minDimension / 2f - indexMargin
     val center = Offset(size.width / 2f, size.height / 2f)
 
-    // Outer ring.
+    // Solid puck fill behind the whole dial, with a thin border — matching the design's flat
+    // circle rather than a bare stroked ring.
+    drawCircle(color = CompassDialFill, radius = radius, center = center)
     drawCircle(
-        color = tickColor.copy(alpha = 0.25f),
+        color = CompassDialBorder,
         radius = radius,
-        center = center,
-        style = Stroke(width = 2.dp.toPx()),
-    )
-
-    rotate(degrees = -heading, pivot = center) {
-        // Tick marks every 15°, longer and thicker on the 45° marks.
-        for (deg in 0 until 360 step 15) {
-            val isMajor = deg % 45 == 0
-            val rad = Math.toRadians(deg.toDouble())
-            val sinV = sin(rad).toFloat()
-            val cosV = cos(rad).toFloat()
-            val outer = radius - 4.dp.toPx()
-            val inner = outer - (if (isMajor) 18.dp.toPx() else 9.dp.toPx())
-            drawLine(
-                color = tickColor,
-                start = Offset(center.x + inner * sinV, center.y - inner * cosV),
-                end = Offset(center.x + outer * sinV, center.y - outer * cosV),
-                strokeWidth = (if (isMajor) 3f else 1.5f).dp.toPx(),
-            )
-        }
-
-        // Cardinal letters at N/E/S/O (roseLabels order), N highlighted like the needle.
-        roseLabels.forEachIndexed { i, label ->
-            val rad = Math.toRadians(i * 90.0)
-            val labelRadius = radius - 42.dp.toPx()
-            val x = center.x + labelRadius * sin(rad).toFloat()
-            val y = center.y - labelRadius * cos(rad).toFloat()
-            val layout = textMeasurer.measure(
-                text = label,
-                style = TextStyle(
-                    color = if (i == 0) northColor else cardinalColor,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                ),
-            )
-            drawText(
-                textLayoutResult = layout,
-                topLeft = Offset(x - layout.size.width / 2f, y - layout.size.height / 2f),
-            )
-        }
-
-        // The two-tone needle: red half toward north, stone half toward south.
-        val needleLength = radius - 60.dp.toPx()
-        val halfWidth = 9.dp.toPx()
-        drawPath(
-            Path().apply {
-                moveTo(center.x, center.y - needleLength)
-                lineTo(center.x - halfWidth, center.y)
-                lineTo(center.x + halfWidth, center.y)
-                close()
-            },
-            color = northColor,
-        )
-        drawPath(
-            Path().apply {
-                moveTo(center.x, center.y + needleLength)
-                lineTo(center.x - halfWidth, center.y)
-                lineTo(center.x + halfWidth, center.y)
-                close()
-            },
-            color = southColor,
-        )
-
-        // Target bearing tick: a small filled dot on the ring, rotating with it since it's drawn
-        // inside the same `rotate` block as the ticks/needle (its screen position still tracks the
-        // true/magnetic bearing regardless of which way the device currently points).
-        if (targetBearing != null) {
-            val rad = Math.toRadians(targetBearing.toDouble())
-            val tickRadius = radius - 4.dp.toPx()
-            drawCircle(
-                color = targetColor,
-                radius = 7.dp.toPx(),
-                center = Offset(
-                    center.x + tickRadius * sin(rad).toFloat(),
-                    center.y - tickRadius * cos(rad).toFloat(),
-                ),
-            )
-        }
-    }
-
-    // Solid hub behind the center readout so the heading and cardinal stay legible over the needle.
-    val hubRadius = 58.dp.toPx()
-    drawCircle(color = hubColor, radius = hubRadius, center = center)
-    drawCircle(
-        color = tickColor.copy(alpha = 0.3f),
-        radius = hubRadius,
         center = center,
         style = Stroke(width = 1.5.dp.toPx()),
     )
 
+    rotate(degrees = -heading, pivot = center) {
+        // Tick marks every 5°, longer/thicker and paired with a label on the 30° marks.
+        for (i in 0 until 72) {
+            val deg = i * 5
+            val isMajor = i % 6 == 0
+            val rad = Math.toRadians(deg.toDouble())
+            val sinV = sin(rad).toFloat()
+            val cosV = cos(rad).toFloat()
+            val outer = radius - 4.dp.toPx()
+            val inner = outer - (if (isMajor) 18.dp.toPx() else 10.dp.toPx())
+            drawLine(
+                color = if (isMajor) CompassTickMajor else CompassTickMinor,
+                start = Offset(center.x + inner * sinV, center.y - inner * cosV),
+                end = Offset(center.x + outer * sinV, center.y - outer * cosV),
+                strokeWidth = (if (isMajor) 2.5f else 1f).dp.toPx(),
+            )
+
+            // Cardinal letters at N/E/S/O (roseLabels order); the other 30° marks get their
+            // degree number instead, smaller and muted.
+            if (isMajor) {
+                val cardinalIndex = deg / 90
+                val isCardinal = deg % 90 == 0
+                val labelRadius = radius - 42.dp.toPx()
+                val x = center.x + labelRadius * sinV
+                val y = center.y - labelRadius * cosV
+                val layout = textMeasurer.measure(
+                    text = if (isCardinal) roseLabels[cardinalIndex] else deg.toString(),
+                    style = TextStyle(
+                        color = if (deg == 0) indexColor else if (isCardinal) cardinalColor else ValueMuted,
+                        fontSize = if (isCardinal) 19.sp else 11.sp,
+                        fontWeight = if (isCardinal) FontWeight.Bold else FontWeight.Medium,
+                    ),
+                )
+                drawText(
+                    textLayoutResult = layout,
+                    topLeft = Offset(x - layout.size.width / 2f, y - layout.size.height / 2f),
+                )
+            }
+        }
+
+        // Target bearing marker: a small filled dot on the ring, haloed with the background color
+        // for contrast, rotating with it since it's drawn inside the same `rotate` block as the
+        // ticks (its screen position still tracks the true/magnetic bearing regardless of which
+        // way the device currently points).
+        if (targetBearing != null) {
+            val rad = Math.toRadians(targetBearing.toDouble())
+            val tickRadius = radius - 4.dp.toPx()
+            val dotCenter = Offset(
+                center.x + tickRadius * sin(rad).toFloat(),
+                center.y - tickRadius * cos(rad).toFloat(),
+            )
+            drawCircle(color = DarkBackground, radius = 8.dp.toPx(), center = dotCenter)
+            drawCircle(color = targetColor, radius = 7.dp.toPx(), center = dotCenter)
+        }
+    }
+
     // Fixed heading index, drawn last so it stays on top of the ticks. Points down at the ring from
-    // the reserved margin; amber to read clearly and stand apart from the red north needle.
+    // the reserved margin.
     drawPath(
         Path().apply {
             moveTo(center.x, center.y - radius)

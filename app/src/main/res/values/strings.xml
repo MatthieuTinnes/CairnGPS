@@ -34,7 +34,7 @@
     <string name="tab_home">Position</string>
     <string name="tab_compass">Naviguer</string>
     <string name="tab_satellites">Satellites</string>
-    <string name="tab_history">Historique</string>
+    <string name="tab_history">Carnet</string>
     <string name="tab_achievements">Succès</string>
     <string name="tab_profile">Profil</string>
 
@@ -74,7 +74,7 @@
     <string name="label_measurements">Mesures</string>
     <string name="label_satellites_used">Satellites fixés</string>
     <string name="label_saved_at">Enregistré le</string>
-    <string name="action_copy_coordinates">Copier les coordonnées</string>
+    <string name="waypoint_created_at_fmt">Enregistré le %1$s</string>
     <string name="action_open_in_maps">Ouvrir dans une carte</string>
     <string name="no_maps_app">Aucune application de carte installée</string>
     <string name="action_delete">Supprimer</string>
@@ -86,7 +86,7 @@
 
     <!-- Historique screen -->
     <string name="history_tab_waypoints">Repères</string>
-    <string name="history_tab_tracks">Traces</string>
+    <string name="history_tab_tracks">Sessions</string>
     <string name="sessions_empty">Aucune trace enregistrée pour le moment.\n\nDepuis l\'écran Position, appuyez sur « Démarrer » pour commencer une trace.</string>
     <string name="label_altitude_min">Altitude min</string>
     <string name="label_altitude_max">Altitude max</string>
@@ -108,10 +108,18 @@
 
     <!-- Session (trace) detail -->
     <string name="session_detail_title">Trace</string>
-    <string name="session_waypoints_label">Repères de la trace</string>
-    <string name="session_waypoints_empty">Aucun repère rattaché à cette trace.</string>
+    <string name="session_waypoints_label">Repères de la session</string>
+    <string name="session_waypoints_empty">Aucun repère rattaché à cette session.</string>
     <string name="session_delete_dialog_title">Supprimer cette trace ?</string>
     <string name="session_delete_dialog_message">Cette action est définitive. Les repères rattachés seront conservés.</string>
+    <string name="session_departure_fmt">● départ %1$s</string>
+    <string name="session_arrival_fmt">○ arrivée %1$s</string>
+    <string name="session_stat_distance">km</string>
+    <string name="session_stat_duration">durée</string>
+    <string name="session_stat_elevation_gain">m D+</string>
+    <string name="session_stat_elevation_loss">m D−</string>
+    <string name="session_stat_max_speed">km/h max</string>
+    <string name="session_stat_avg_speed">km/h moy</string>
     <string name="session_rename_dialog_title">Renommer la trace</string>
     <string name="session_name_label">Nom de la trace</string>
     <string name="label_altitude_profile">Profil d\'altitude</string>
@@ -132,42 +140,38 @@
     <string name="sats_status_chip_fmt">%1$d vus · %2$d fix</string>
     <string name="label_constellations">Constellations</string>
     <string name="label_satellite_list">Satellites en vue</string>
-    <string name="sat_used_in_fix_marker">Utilisé dans le fix</string>
     <string name="sat_elevation_azimuth">él. %1$d° · az. %2$d°</string>
     <string name="unit_dbhz">dB-Hz</string>
 
     <!-- 3D satellite globe -->
-    <string name="action_open_satellite_globe">Vue 3D des satellites</string>
+    <string name="action_open_satellite_globe">Globe 3D</string>
     <string name="satellite_globe_title">Satellites en 3D</string>
-    <string name="globe_auto_rotate">Rotation auto</string>
-    <string name="globe_show_in_view">Non fixés</string>
     <string name="globe_no_fixed_satellites">Aucun satellite fixé pour le moment</string>
 
     <!-- Constellation info page -->
-    <string name="action_open_constellation_info">À propos des constellations</string>
+    <string name="action_open_constellation_info">Constellations</string>
     <string name="constellation_info_title">Les constellations GNSS</string>
     <string name="constellation_info_intro">Un récepteur GNSS combine les signaux de plusieurs constellations de satellites pour calculer votre position. Plus il y a de systèmes visibles, meilleurs sont la précision et le temps de fixation.</string>
 
     <string name="constellation_gps_region">États-Unis</string>
-    <string name="constellation_gps_desc">Le premier système mondial, opérationnel depuis les années 1990 et toujours la référence. Une trentaine de satellites à ~20 200 km d\'altitude assurent une couverture mondiale.</string>
+    <string name="constellation_gps_stats">31 satellites · MEO 20 180 km · L1 C/A, L2C, L5</string>
+    <string name="constellation_gps_desc">Le système historique, couverture mondiale. La bande L5 améliore la précision en montagne et en canyon urbain.</string>
 
     <string name="constellation_glonass_region">Russie</string>
-    <string name="constellation_glonass_desc">Le système russe à couverture mondiale. Ses orbites très inclinées offrent une bonne réception aux hautes latitudes.</string>
+    <string name="constellation_glonass_stats">24 satellites · MEO 19 130 km · L1OF, L2OF</string>
+    <string name="constellation_glonass_desc">Orbites très inclinées : meilleure visibilité aux latitudes élevées, utile en haute montagne nordique.</string>
 
     <string name="constellation_galileo_region">Union européenne</string>
-    <string name="constellation_galileo_desc">Le système civil européen, opérationnel depuis 2016. Il vise une grande précision et reste interopérable avec le GPS.</string>
+    <string name="constellation_galileo_stats">28 satellites · MEO 23 222 km · E1, E5a, E5b</string>
+    <string name="constellation_galileo_desc">Le plus précis en usage civil (&lt; 1 m avec E5). Service de retour de détresse intégré.</string>
 
     <string name="constellation_beidou_region">Chine</string>
-    <string name="constellation_beidou_desc">Le système chinois, mondial depuis 2020. L\'une des plus grandes constellations, combinant satellites en orbite moyenne et géostationnaire.</string>
+    <string name="constellation_beidou_stats">44 satellites · MEO + IGSO + GEO · B1, B2, B3</string>
+    <string name="constellation_beidou_desc">Constellation hybride : des satellites géostationnaires complètent la couverture en Asie-Pacifique.</string>
 
-    <string name="constellation_qzss_region">Japon · régional</string>
-    <string name="constellation_qzss_desc">Complète le GPS au-dessus de l\'Asie-Pacifique. Ses orbites « quasi-zénithales » améliorent la réception dans les rues encaissées et en montagne.</string>
-
-    <string name="constellation_irnss_region">Inde · régional</string>
-    <string name="constellation_irnss_desc">Le système régional indien (NavIC), qui couvre l\'Inde et les zones environnantes.</string>
-
-    <string name="constellation_sbas_region">Augmentation</string>
-    <string name="constellation_sbas_desc">Pas une constellation de navigation à part entière : des satellites géostationnaires (EGNOS en Europe, WAAS aux États-Unis…) diffusent des corrections qui améliorent la précision et la fiabilité.</string>
+    <string name="constellation_qzss_region">Japon</string>
+    <string name="constellation_qzss_stats">4 satellites · orbite quasi-zénithale · L1, L2, L5, L6</string>
+    <string name="constellation_qzss_desc">Régional : passe près du zénith au-dessus du Japon, fiabilise le fix entre les immeubles et les vallées.</string>
 
     <!-- Compass screen -->
     <string name="compass_title">Boussole</string>
@@ -285,7 +289,7 @@
     <string name="profile_stat_sessions">sessions</string>
     <string name="profile_stat_achievements">succès</string>
     <string name="profile_last_achievement_label">Dernier succès</string>
-    <string name="profile_hub_history_subtitle_fmt">%1$d sessions enregistrées</string>
+    <string name="profile_hub_history_subtitle_fmt">%1$d repères · %2$d sessions</string>
     <string name="profile_hub_achievements_subtitle_fmt">%1$d / %2$d débloqués</string>
     <string name="profile_hub_records_subtitle">Vos meilleures performances</string>
 </resources>

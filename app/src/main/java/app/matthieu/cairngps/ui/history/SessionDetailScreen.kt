@@ -1,17 +1,24 @@
 package app.matthieu.cairngps.ui.history
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
@@ -37,15 +46,22 @@ import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.location.formatAltitude
 import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatDuration
 import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.SoftError
 import app.matthieu.cairngps.ui.theme.Sym
+import app.matthieu.cairngps.ui.theme.WaypointIconBg
 import app.matthieu.cairngps.ui.waypoints.RenameDialog
-import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
+import app.matthieu.cairngps.ui.waypoints.formatTimeOfDay
+import app.matthieu.cairngps.ui.waypoints.formatWaypointShortDate
 
 /**
  * Route: loads the session identified by [sessionId] and renders its full detail, including the
@@ -124,7 +140,22 @@ private fun SessionDetailScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(session?.name ?: stringResource(R.string.session_detail_title)) },
+                title = {
+                    Column {
+                        Text(
+                            text = session?.name ?: stringResource(R.string.session_detail_title),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        if (session != null) {
+                            Text(
+                                text = "${formatTimeOfDay(session.startTimestamp)} → ${formatTimeOfDay(session.endTimestamp)}",
+                                fontSize = 12.5.sp,
+                                color = LabelMuted,
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
                     IconButton(onClick = onBack) {
@@ -133,6 +164,10 @@ private fun SessionDetailScreen(
                 },
                 actions = {
                     if (session != null) {
+                        val deleteLabel = stringResource(R.string.action_delete)
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Sym(icon = Glyph.Delete, contentDescription = deleteLabel, tint = SoftError)
+                        }
                         val renameLabel = stringResource(R.string.action_rename)
                         IconButton(onClick = { showRenameDialog = true }) {
                             Sym(icon = Glyph.Edit, contentDescription = renameLabel)
@@ -154,61 +189,100 @@ private fun SessionDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Only shown when a track was sampled: sessions recorded before this feature existed
-            // (or too short to have sampled any point) simply have no profile to draw.
+            // (or too short to have sampled any point) simply have no route/profile to draw.
             if (track.isNotEmpty()) {
-                InfoCard(stringResource(R.string.label_altitude_profile)) {
-                    AltitudeProfile(track = track, modifier = Modifier.fillMaxWidth())
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                ) {
+                    SessionRouteTrace(
+                        track = track,
+                        startTimestamp = session.startTimestamp,
+                        endTimestamp = session.endTimestamp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                    )
                 }
             }
 
-            InfoCard(stringResource(R.string.label_measurements)) {
-                InfoRow(
-                    stringResource(R.string.recording_distance),
-                    "${formatDistanceKm(session.distanceMeters)} km",
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                SessionStatTile(
+                    formatDistanceKm(session.distanceMeters),
+                    stringResource(R.string.session_stat_distance),
+                    Modifier.weight(1f),
                 )
-                InfoRow(
-                    stringResource(R.string.recording_duration),
-                    formatDuration(session.durationMillis),
+                SessionStatTile(
+                    formatDuration(session.durationMillis, showSecondsPastOneHour = false),
+                    stringResource(R.string.session_stat_duration),
+                    Modifier.weight(1f),
                 )
-                InfoRow(
-                    stringResource(R.string.recording_avg_speed),
-                    "${formatSpeedKmh(session.averageSpeed)} ${stringResource(R.string.unit_kmh)}",
+                SessionStatTile(
+                    "+${formatElevation(session.elevationGain)}",
+                    stringResource(R.string.session_stat_elevation_gain),
+                    Modifier.weight(1f),
                 )
-                InfoRow(
-                    stringResource(R.string.recording_max_speed),
-                    "${formatSpeedKmh(session.maxSpeed)} ${stringResource(R.string.unit_kmh)}",
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                SessionStatTile(
+                    "−${formatElevation(session.elevationLoss)}",
+                    stringResource(R.string.session_stat_elevation_loss),
+                    Modifier.weight(1f),
                 )
-                InfoRow(
-                    stringResource(R.string.recording_elevation_gain),
-                    "+${formatElevation(session.elevationGain)} ${stringResource(R.string.unit_meters)}",
+                SessionStatTile(
+                    formatSpeedKmh(session.maxSpeed),
+                    stringResource(R.string.session_stat_max_speed),
+                    Modifier.weight(1f),
                 )
-                InfoRow(
-                    stringResource(R.string.recording_elevation_loss),
-                    "-${formatElevation(session.elevationLoss)} ${stringResource(R.string.unit_meters)}",
-                )
-                InfoRow(
-                    stringResource(R.string.label_altitude_min),
-                    "${formatElevation(session.minAltitude)} ${stringResource(R.string.unit_meters)}",
-                )
-                InfoRow(
-                    stringResource(R.string.label_altitude_max),
-                    "${formatElevation(session.maxAltitude)} ${stringResource(R.string.unit_meters)}",
+                SessionStatTile(
+                    formatSpeedKmh(session.averageSpeed),
+                    stringResource(R.string.session_stat_avg_speed),
+                    Modifier.weight(1f),
                 )
             }
 
-            InfoCard(stringResource(R.string.label_saved_at)) {
+            if (track.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                ) {
+                    Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp)) {
+                        Text(
+                            text = stringResource(R.string.label_altitude_profile).uppercase(),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.2.sp,
+                            color = LabelMuted,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+                        )
+                        AltitudeProfile(track = track, modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = formatWaypointTimestamp(session.startTimestamp),
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = "${stringResource(R.string.session_waypoints_label).uppercase()} · ${waypoints.size}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.2.sp,
+                    color = LabelMuted,
+                    modifier = Modifier.padding(start = 4.dp),
                 )
-            }
-
-            InfoCard(stringResource(R.string.session_waypoints_label)) {
                 if (waypoints.isEmpty()) {
                     Text(
                         text = stringResource(R.string.session_waypoints_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp),
                     )
                 } else {
                     waypoints.forEach { waypoint ->
@@ -216,32 +290,66 @@ private fun SessionDetailScreen(
                     }
                 }
             }
+        }
+    }
+}
 
-            TextButton(
-                onClick = { showDeleteDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Sym(icon = Glyph.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.action_delete),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
+/** One tile of the 3x2 session stats grid (screen 1j). */
+@Composable
+private fun SessionStatTile(value: String, label: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            Text(text = value, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, fontFamily = MonoFontFamily)
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                color = LabelMuted,
+                modifier = Modifier.padding(top = 2.dp),
+            )
         }
     }
 }
 
 @Composable
 private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = waypoint.name, style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = formatWaypointTimestamp(waypoint.timestamp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(WaypointIconBg, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = CairnGreen, size = 19.dp)
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = waypoint.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = CairnGreen)
+                Text(
+                    text = "${formatAltitude(waypoint.altitude)} m · " +
+                        "%.4f, %.4f".format(waypoint.latitude, waypoint.longitude) + " · " +
+                        formatWaypointShortDate(waypoint.timestamp),
+                    fontSize = 12.sp,
+                    fontFamily = MonoFontFamily,
+                    color = LabelMuted,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = LabelMuted)
         }
     }
 }
@@ -256,7 +364,7 @@ private fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
             TextButton(onClick = onConfirm) {
                 Text(
                     text = stringResource(R.string.action_delete),
-                    color = MaterialTheme.colorScheme.error,
+                    color = SoftError,
                 )
             }
         },
@@ -266,41 +374,4 @@ private fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
             }
         },
     )
-}
-
-@Composable
-private fun InfoCard(title: String, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = title.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            content()
-        }
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontFamily = MonoFontFamily,
-        )
-    }
 }

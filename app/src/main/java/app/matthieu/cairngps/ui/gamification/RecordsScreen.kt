@@ -7,14 +7,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -23,7 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
@@ -37,7 +41,11 @@ import app.matthieu.cairngps.ui.location.formatCoordinate
 import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.CairnStone
+import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
@@ -117,25 +125,32 @@ private val RecordType.glyph: Char
 
 @Composable
 private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateFormat) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 18.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Sym(icon = item.type.glyph, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Sym(icon = item.type.glyph, contentDescription = null, tint = CairnGreen)
                 Spacer(Modifier.width(14.dp))
                 Column {
-                    Text(text = stringResource(item.labelRes), style = MaterialTheme.typography.bodyLarge)
+                    Text(text = stringResource(item.labelRes), fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold)
                     val achievedAt = item.entry?.achievedAt
                     if (achievedAt != null) {
                         Text(
                             text = formatWaypointTimestamp(achievedAt),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                            color = LabelMuted,
+                            modifier = Modifier.padding(top = 1.dp),
                         )
                     }
                 }
@@ -143,14 +158,15 @@ private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateForm
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = formatRecordValue(item, coordinateFormat),
-                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
                     fontFamily = MonoFontFamily,
                 )
                 secondaryCoordinate(item, coordinateFormat)?.let { secondary ->
                     Text(
                         text = secondary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        color = CairnStone,
                         fontFamily = MonoFontFamily,
                     )
                 }

@@ -3,6 +3,7 @@ package app.matthieu.cairngps.ui.common
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,7 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
+import app.matthieu.cairngps.ui.theme.CairnStone
+import app.matthieu.cairngps.ui.theme.DarkOnSurface
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.OnGreenButton
+import app.matthieu.cairngps.ui.theme.OutlineSubtle
 import app.matthieu.cairngps.ui.theme.Sym
 
 /**
@@ -41,7 +47,7 @@ fun SegmentedToggle(
         modifier = modifier
             .height(40.dp)
             .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp))
+            .border(1.dp, OutlineSubtle, RoundedCornerShape(20.dp))
             .selectableGroup(),
     ) {
         options.forEachIndexed { index, label ->
@@ -50,7 +56,7 @@ fun SegmentedToggle(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                    .background(if (selected) CairnGreenDark else Color.Transparent)
                     .selectable(selected = selected, onClick = { onSelect(index) }, role = Role.RadioButton)
                     .padding(horizontal = 14.dp),
                 horizontalArrangement = Arrangement.Center,
@@ -60,20 +66,24 @@ fun SegmentedToggle(
                     Sym(
                         icon = Glyph.Check,
                         contentDescription = null,
-                        size = 16.dp,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        size = 18.dp,
+                        tint = OnGreenButton,
                     )
                     Spacer(Modifier.width(6.dp))
                 }
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 14.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color = if (selected) DarkOnSurface else CairnStone,
+                )
+            }
+            if (index != options.lastIndex) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp)
+                        .background(OutlineSubtle),
                 )
             }
         }

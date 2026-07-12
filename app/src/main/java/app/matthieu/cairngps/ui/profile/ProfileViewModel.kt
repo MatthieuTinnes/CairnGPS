@@ -6,22 +6,25 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.gamification.Achievements
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-/** Combines sessions and unlocked achievements into the Profil hub's lifetime totals. */
+/** Combines sessions, waypoints and unlocked achievements into the Profil hub's lifetime totals. */
 class ProfileViewModel(
     sessionRepository: SessionRepository,
     achievementsRepository: AchievementsRepository,
+    waypointRepository: WaypointRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<ProfileUiState> = combine(
         sessionRepository.sessions(),
         achievementsRepository.unlocked(),
-    ) { sessions, unlocked ->
+        waypointRepository.waypoints(),
+    ) { sessions, unlocked, waypoints ->
         val lastUnlockedState = unlocked.maxByOrNull { it.unlockedAt }
         val lastUnlockedDef = lastUnlockedState?.let { state ->
             Achievements.ALL.firstOrNull { it.id == state.id }
@@ -29,6 +32,7 @@ class ProfileViewModel(
         ProfileUiState(
             totalDistanceMeters = sessions.sumOf { it.distanceMeters },
             sessionCount = sessions.size,
+            waypointCount = waypoints.size,
             unlockedCount = unlocked.size,
             totalAchievements = Achievements.ALL.size,
             lastUnlocked = lastUnlockedDef,
@@ -45,11 +49,12 @@ class ProfileViewModel(
         fun factory(
             sessionRepository: SessionRepository,
             achievementsRepository: AchievementsRepository,
+            waypointRepository: WaypointRepository,
         ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return ProfileViewModel(sessionRepository, achievementsRepository) as T
+                    return ProfileViewModel(sessionRepository, achievementsRepository, waypointRepository) as T
                 }
             }
     }

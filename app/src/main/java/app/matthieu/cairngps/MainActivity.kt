@@ -215,6 +215,7 @@ private fun MainScaffold(app: CairnApplication) {
                     ProfileRoute(
                         sessionRepository = app.sessionRepository,
                         achievementsRepository = app.achievementsRepository,
+                        waypointRepository = app.waypointRepository,
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                         onOpenHistory = { navController.navigate(Routes.HISTORY) },
                         onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },

@@ -4,19 +4,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -27,26 +32,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.common.SegmentedToggle
 import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatDuration
 import app.matthieu.cairngps.ui.location.formatElevation
+import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.Sym
+import app.matthieu.cairngps.ui.theme.ValueMuted
 import app.matthieu.cairngps.ui.waypoints.WaypointsListContent
 import app.matthieu.cairngps.ui.waypoints.WaypointsUiState
 import app.matthieu.cairngps.ui.waypoints.WaypointsViewModel
-import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
+import app.matthieu.cairngps.ui.waypoints.formatWaypointShortDateTime
 
 /**
- * Route: "Carnet" — tabbed between saved waypoints ("Repères") and recorded traces ("Traces").
+ * Route: "Carnet" — tabbed between saved waypoints ("Repères") and recorded sessions ("Sessions").
  * Each tab owns its own ViewModel/list; this composable only owns the shared [Scaffold] chrome and
  * the tab selection. Reached from the Profil hub, so it carries its own back button.
  */
@@ -70,6 +83,7 @@ fun HistoryRoute(
     HistoryScreen(
         waypointsUiState = waypointsUiState,
         sessionsUiState = sessionsUiState,
+        sessionRepository = sessionRepository,
         onOpenWaypoint = onOpenWaypoint,
         onOpenSession = onOpenSession,
         onBack = onBack,
@@ -87,6 +101,7 @@ private enum class HistoryTab(@StringRes val labelRes: Int) {
 private fun HistoryScreen(
     waypointsUiState: WaypointsUiState,
     sessionsUiState: SessionsUiState,
+    sessionRepository: SessionRepository,
     onOpenWaypoint: (Long) -> Unit,
     onOpenSession: (Long) -> Unit,
     onBack: () -> Unit,
@@ -113,15 +128,19 @@ private fun HistoryScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            PrimaryTabRow(selectedTabIndex = selectedTab.ordinal) {
-                HistoryTab.entries.forEach { tab ->
-                    Tab(
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
-                        text = { Text(stringResource(tab.labelRes)) },
-                    )
-                }
-            }
+            val waypointCount = waypointsUiState.waypoints.orEmpty().size
+            val sessionCount = sessionsUiState.sessions.orEmpty().size
+            SegmentedToggle(
+                options = HistoryTab.entries.map { tab ->
+                    val count = if (tab == HistoryTab.WAYPOINTS) waypointCount else sessionCount
+                    "${stringResource(tab.labelRes)} · $count"
+                },
+                selectedIndex = selectedTab.ordinal,
+                onSelect = { index -> selectedTab = HistoryTab.entries[index] },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            )
 
             when (selectedTab) {
                 HistoryTab.WAYPOINTS -> WaypointsListContent(
@@ -132,6 +151,7 @@ private fun HistoryScreen(
 
                 HistoryTab.TRACKS -> SessionsListContent(
                     uiState = sessionsUiState,
+                    sessionRepository = sessionRepository,
                     onOpenSession = onOpenSession,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -143,6 +163,7 @@ private fun HistoryScreen(
 @Composable
 private fun SessionsListContent(
     uiState: SessionsUiState,
+    sessionRepository: SessionRepository,
     onOpenSession: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -160,35 +181,59 @@ private fun SessionsListContent(
         LazyColumn(
             modifier = modifier,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(uiState.sessions.orEmpty(), key = { it.id }) { session ->
-                SessionRow(session = session, onClick = { onOpenSession(session.id) })
+                SessionRow(
+                    session = session,
+                    sessionRepository = sessionRepository,
+                    onClick = { onOpenSession(session.id) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SessionRow(session: Session, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+private fun SessionRow(session: Session, sessionRepository: SessionRepository, onClick: () -> Unit) {
+    val track by sessionRepository.trackForSession(session.id)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = session.name, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = formatWaypointTimestamp(session.startTimestamp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = "${formatDistanceKm(session.distanceMeters)} km · " +
-                    "${formatDuration(session.durationMillis)} · " +
-                    "D+ ${formatElevation(session.elevationGain)} m",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            RouteSparkline(track = track, modifier = Modifier.size(width = 52.dp, height = 34.dp))
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = session.name, fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "${formatDistanceKm(session.distanceMeters)} km · " +
+                        "${formatDuration(session.durationMillis, showSecondsPastOneHour = false)} · " +
+                        "+${formatElevation(session.elevationGain)} m",
+                    fontSize = 12.sp,
+                    fontFamily = MonoFontFamily,
+                    color = LabelMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 3.dp),
+                )
+                Text(
+                    text = formatWaypointShortDateTime(session.startTimestamp),
+                    fontSize = 11.5.sp,
+                    color = ValueMuted,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = LabelMuted)
         }
     }
 }

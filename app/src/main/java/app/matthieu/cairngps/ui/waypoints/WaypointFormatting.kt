@@ -13,9 +13,30 @@ private val dateTimeFormatter: DateTimeFormatter =
 private val defaultNameFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault())
 
+private val shortDateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
+
+private val shortDateTimeFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("d MMM '·' HH:mm", Locale.getDefault())
+
+private val timeOfDayFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
+
 /** Formats a waypoint timestamp as a localized date + time for display. */
 fun formatWaypointTimestamp(epochMillis: Long): String =
     dateTimeFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
+
+/** Compact "12 juil."-style date, no year/time — for list-row meta lines (screen 1h). */
+fun formatWaypointShortDate(epochMillis: Long): String =
+    shortDateFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
+
+/** Compact "12 juil. · 09:02"-style date + time, no year — for session rows (screen 1p). */
+fun formatWaypointShortDateTime(epochMillis: Long): String =
+    shortDateTimeFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
+
+/** Just the "09:02"-style time of day — for the session detail header (screen 1j). */
+fun formatTimeOfDay(epochMillis: Long): String =
+    timeOfDayFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 
 /**
  * A default waypoint name suggested in the save dialog, based on the current date and time,

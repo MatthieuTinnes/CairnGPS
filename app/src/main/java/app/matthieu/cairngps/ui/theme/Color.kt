@@ -48,6 +48,43 @@ val DashText = Color(0xFF5B655C)
 val DashMuted = Color(0xFF485249)
 val IdleButtonBg = Color(0xFF232B25)
 
+// Compass dial (design 1c): the dial's own puck fill/border and its rotating rose's tick tones —
+// distinct from the general palette since the mockup uses fixed literals here rather than
+// theme-adaptive roles.
+val CompassDialFill = Color(0xFF121813)
+val CompassDialBorder = Color(0xFF232B25)
+val CompassTickMajor = Color(0xFF5B655C)
+val CompassTickMinor = Color(0xFF37403A)
+
+// Satellites sky plot (design 1d): fixed literals for the polar chart's fill/rings and the
+// screen's status chip / shortcut button border — distinct from the general palette since the
+// mockup uses fixed values here rather than theme-adaptive roles.
+val SkyPlotFill = Color(0xFF10150F)
+val SkyPlotOuterRing = Color(0xFF2A322C)
+val SkyPlotInnerRing = Color(0xFF232B25)
+val StatusChipBg = Color(0xFF1C231E)
+val OutlineSubtle = Color(0xFF37403A)
+
+// Satellite globe legend (design 1e): chip border — reuses design 1d's status-chip background
+// (StatusChipBg) but with its own border and brighter text, per the mockup.
+val GlobeLegendBorder = Color(0xFF232B25)
+
+// Profile hub last-achievement banner (design 1g): its own amber-tinted surface, distinct from the
+// general palette since the mockup uses fixed literals here rather than theme-adaptive roles.
+val AchievementBannerBg = Color(0xFF2B2410)
+val AchievementBannerBorder = Color(0xFF493C15)
+val AchievementLabelGold = Color(0xFFC9A34A)
+
+// Carnet waypoint row icon circle (design 1h): a distinct muted-green background, different from
+// the CairnGreenDark used for the Compass target card / Profil avatar.
+val WaypointIconBg = Color(0xFF1F2A1C)
+
+// Waypoint detail (design 1i): the navigate button's dark-green content color (distinct from
+// OnGreenButton's lighter tint used elsewhere) and this screen's soft-red delete color (distinct
+// from QualityPoor, used for live GNSS accuracy).
+val OnGreenButtonDark = Color(0xFF12240E)
+val SoftError = Color(0xFFE57373)
+
 // One distinct hue per GNSS constellation, all bright enough to read on the dark background.
 // GLONASS/Galileo/BeiDou/QZSS match the design system's own palette so the sky plot, 3D globe and
 // constellation legend all read as the same hues; SBAS/IRNSS/UNKNOWN aren't in that design (it only

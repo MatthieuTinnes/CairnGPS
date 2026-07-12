@@ -69,16 +69,23 @@ fun formatAccuracy(accuracyMeters: Float?): String =
 fun formatCoordinatesForClipboard(latitude: Double, longitude: Double): String =
     "%.6f, %.6f".format(latitude, longitude)
 
-/** A duration as `H:MM:SS` (or `MM:SS` under an hour). Always defined, unlike a GPS reading. */
-fun formatDuration(durationMs: Long): String {
+/**
+ * A duration as `H:MM:SS` (or `MM:SS` under an hour). Always defined, unlike a GPS reading.
+ *
+ * @param showSecondsPastOneHour Whether to keep the seconds component past the one-hour mark
+ * (`H:MM:SS`) or drop it (`H:MM`). The live recording chip needs the tick for feedback that it's
+ * still running; completed-session summaries (Carnet, session detail) don't, and read cleaner
+ * without it.
+ */
+fun formatDuration(durationMs: Long, showSecondsPastOneHour: Boolean = true): String {
     val totalSeconds = (durationMs / 1000).coerceAtLeast(0)
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
-    return if (hours > 0) {
-        "%d:%02d:%02d".format(hours, minutes, seconds)
-    } else {
-        "%02d:%02d".format(minutes, seconds)
+    return when {
+        hours > 0 && showSecondsPastOneHour -> "%d:%02d:%02d".format(hours, minutes, seconds)
+        hours > 0 -> "%d:%02d".format(hours, minutes)
+        else -> "%02d:%02d".format(minutes, seconds)
     }
 }
 

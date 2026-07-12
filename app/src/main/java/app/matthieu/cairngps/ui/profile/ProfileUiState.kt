@@ -8,6 +8,7 @@ import app.matthieu.cairngps.ui.gamification.AchievementDef
  *
  * @property totalDistanceMeters Sum of every recorded session's distance.
  * @property sessionCount        Total number of recorded sessions.
+ * @property waypointCount       Total number of saved waypoints (repères), for the Carnet subtitle.
  * @property unlockedCount       Number of unlocked achievements.
  * @property totalAchievements   Size of the achievement catalog (denominator for "X / total").
  * @property lastUnlocked        The most recently unlocked achievement, or `null` if none yet.
@@ -16,6 +17,7 @@ import app.matthieu.cairngps.ui.gamification.AchievementDef
 data class ProfileUiState(
     val totalDistanceMeters: Double = 0.0,
     val sessionCount: Int = 0,
+    val waypointCount: Int = 0,
     val unlockedCount: Int = 0,
     val totalAchievements: Int = 0,
     val lastUnlocked: AchievementDef? = null,

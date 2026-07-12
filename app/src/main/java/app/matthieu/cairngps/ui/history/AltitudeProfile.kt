@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,9 +13,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.ui.location.formatElevation
+import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.ValueMuted
 
 /**
  * Elevation-over-time area chart (screen 1j "PROFIL D'ALTITUDE"): a filled curve scaled between
@@ -30,7 +32,7 @@ fun AltitudeProfile(track: List<TrackPoint>, modifier: Modifier = Modifier) {
 
     val minAltitude = track.minOf { it.altitude }
     val maxAltitude = track.maxOf { it.altitude }
-    val lineColor = MaterialTheme.colorScheme.primary
+    val lineColor = CairnGreen
     val fillColor = lineColor.copy(alpha = 0.18f)
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -66,15 +68,15 @@ fun AltitudeProfile(track: List<TrackPoint>, modifier: Modifier = Modifier) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
                 text = "${formatElevation(minAltitude)} m",
-                style = MaterialTheme.typography.labelSmall,
+                fontSize = 11.sp,
                 fontFamily = MonoFontFamily,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = ValueMuted,
             )
             Text(
                 text = "max ${formatElevation(maxAltitude)} m",
-                style = MaterialTheme.typography.labelSmall,
+                fontSize = 11.sp,
                 fontFamily = MonoFontFamily,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = ValueMuted,
             )
         }
     }

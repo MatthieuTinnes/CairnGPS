@@ -1,5 +1,6 @@
 package app.matthieu.cairngps.ui.waypoints
 
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -8,7 +9,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,16 +21,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,13 +47,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import android.annotation.SuppressLint
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.LocationRepository
@@ -58,13 +70,24 @@ import app.matthieu.cairngps.ui.location.formatAccuracy
 import app.matthieu.cairngps.ui.location.formatAltitude
 import app.matthieu.cairngps.ui.location.formatCoordinate
 import app.matthieu.cairngps.ui.location.formatCoordinatesForClipboard
-import app.matthieu.cairngps.ui.location.formatShortDistance
+import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
+import app.matthieu.cairngps.ui.theme.CairnStone
+import app.matthieu.cairngps.ui.theme.CompassDialBorder
+import app.matthieu.cairngps.ui.theme.DarkOnSurface
+import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.OnGreenButton
+import app.matthieu.cairngps.ui.theme.OnGreenButtonDark
+import app.matthieu.cairngps.ui.theme.OutlineSubtle
+import app.matthieu.cairngps.ui.theme.SoftError
 import app.matthieu.cairngps.ui.theme.Sym
 import java.util.Locale
-import androidx.core.net.toUri
+import kotlin.math.roundToInt
 
 /**
  * Route: loads the waypoint identified by [waypointId] and renders its full detail. Navigates back
@@ -171,6 +194,10 @@ private fun WaypointDetailScreen(
                 },
                 actions = {
                     if (waypoint != null) {
+                        val deleteLabel = stringResource(R.string.action_delete)
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Sym(icon = Glyph.Delete, contentDescription = deleteLabel, tint = SoftError)
+                        }
                         val renameLabel = stringResource(R.string.action_rename)
                         IconButton(onClick = { showRenameDialog = true }) {
                             Sym(icon = Glyph.Edit, contentDescription = renameLabel)
@@ -191,70 +218,146 @@ private fun WaypointDetailScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            InfoCard(stringResource(R.string.label_coordinates)) {
-                InfoRow(
-                    stringResource(R.string.label_latitude),
-                    formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DECIMAL),
-                )
-                InfoRow(
-                    stringResource(R.string.label_longitude),
-                    formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DECIMAL),
-                )
-                Spacer(Modifier.height(4.dp))
-                InfoRow(
-                    stringResource(R.string.label_latitude),
-                    formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DMS),
-                )
-                InfoRow(
-                    stringResource(R.string.label_longitude),
-                    formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DMS),
-                )
-            }
-
-            InfoCard(stringResource(R.string.label_measurements)) {
-                InfoRow(
-                    stringResource(R.string.label_altitude),
-                    "${formatAltitude(waypoint.altitude)} ${stringResource(R.string.unit_meters)}",
-                )
-                InfoRow(
-                    stringResource(R.string.label_speed),
-                    "${formatSpeedKmh(waypoint.speed)} ${stringResource(R.string.unit_kmh)}",
-                )
-                InfoRow(
-                    stringResource(R.string.label_accuracy),
-                    "±${formatAccuracy(waypoint.horizontalAccuracy)} ${stringResource(R.string.unit_meters)}",
-                )
-                InfoRow(
-                    stringResource(R.string.label_satellites_used),
-                    waypoint.satellitesUsedInFix?.toString() ?: DASH,
-                )
-                if (currentDistanceMeters != null) {
-                    InfoRow(
-                        stringResource(R.string.label_current_distance),
-                        formatShortDistance(currentDistanceMeters),
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .background(CairnGreenDark, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = OnGreenButton, size = 26.dp)
+                }
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    Text(text = waypoint.name, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.waypoint_created_at_fmt, formatWaypointTimestamp(waypoint.timestamp)),
+                        fontSize = 13.sp,
+                        color = LabelMuted,
                     )
                 }
             }
 
-            InfoCard(stringResource(R.string.label_saved_at)) {
-                Text(
-                    text = formatWaypointTimestamp(waypoint.timestamp),
-                    style = MaterialTheme.typography.bodyLarge,
+            Card(
+                onClick = { copyCoordinates(context, waypoint) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                    Text(
+                        text = stringResource(R.string.label_coordinates).uppercase(),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp,
+                        color = LabelMuted,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DECIMAL) +
+                            "\n" +
+                            formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DECIMAL),
+                        fontSize = 24.sp,
+                        lineHeight = 32.sp,
+                        fontFamily = MonoFontFamily,
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp, bottom = 10.dp)
+                            .height(1.dp)
+                            .background(CompassDialBorder),
+                    )
+                    Text(
+                        text = formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DMS) +
+                            " · " +
+                            formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DMS),
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                        fontFamily = MonoFontFamily,
+                        color = CairnStone,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                MeasurementTile(
+                    label = stringResource(R.string.label_altitude),
+                    value = formatAltitude(waypoint.altitude),
+                    unit = stringResource(R.string.unit_meters),
+                    modifier = Modifier.weight(1f),
+                )
+                val (distanceValue, distanceUnit) = when {
+                    currentDistanceMeters == null -> DASH to stringResource(R.string.unit_meters)
+                    currentDistanceMeters >= 1000.0 -> formatDistanceKm(currentDistanceMeters) to "km"
+                    else -> currentDistanceMeters.roundToInt().toString() to stringResource(R.string.unit_meters)
+                }
+                MeasurementTile(
+                    label = stringResource(R.string.label_current_distance),
+                    value = distanceValue,
+                    unit = distanceUnit,
+                    modifier = Modifier.weight(1f),
                 )
             }
 
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            ) {
+                Column(
+                    modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_measurements).uppercase(),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.2.sp,
+                        color = LabelMuted,
+                    )
+                    MeasurementRow(
+                        stringResource(R.string.label_speed),
+                        "${formatSpeedKmh(waypoint.speed)} ${stringResource(R.string.unit_kmh)}",
+                        valueColor = DarkOnSurface,
+                    )
+                    MeasurementRow(
+                        stringResource(R.string.label_accuracy),
+                        "±${formatAccuracy(waypoint.horizontalAccuracy)} ${stringResource(R.string.unit_meters)}",
+                    )
+                    MeasurementRow(
+                        stringResource(R.string.label_satellites_used),
+                        waypoint.satellitesUsedInFix?.toString() ?: DASH,
+                    )
+                }
+            }
+
             if (session != null) {
-                Card(onClick = { onOpenSession(session.id) }, modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                Card(
+                    onClick = { onOpenSession(session.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            text = stringResource(R.string.waypoint_parent_session).uppercase(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(text = session.name, style = MaterialTheme.typography.bodyLarge)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.waypoint_parent_session).uppercase(),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.2.sp,
+                                color = LabelMuted,
+                                modifier = Modifier.padding(bottom = 4.dp),
+                            )
+                            Text(text = session.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CairnGreen)
+                        }
+                        Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = CairnGreen)
                     }
                 }
             }
@@ -264,36 +367,64 @@ private fun WaypointDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = CairnGreen, contentColor = OnGreenButtonDark),
             ) {
                 Sym(icon = Glyph.Navigation, contentDescription = null, filled = true)
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.action_navigate_to_waypoint))
+                Text(
+                    text = stringResource(R.string.action_navigate_to_waypoint),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
 
-            OutlinedButton(
-                onClick = { copyCoordinates(context, waypoint) },
-                modifier = Modifier.fillMaxWidth(),
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .border(width = 1.dp, color = OutlineSubtle, shape = RoundedCornerShape(16.dp))
+                    .clickable { openInMaps(context, waypoint) },
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(R.string.action_copy_coordinates))
-            }
-
-            OutlinedButton(
-                onClick = { openInMaps(context, waypoint) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.action_open_in_maps))
-            }
-
-            TextButton(
-                onClick = { showDeleteDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Sym(icon = Glyph.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Sym(icon = Glyph.Map, contentDescription = null, tint = DarkOnSurface, size = 20.dp)
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.action_delete),
-                    color = MaterialTheme.colorScheme.error,
+                    text = stringResource(R.string.action_open_in_maps),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DarkOnSurface,
                 )
+            }
+        }
+    }
+}
+
+/** One tile of the altitude/distance grid below the coordinates card (screen 1i). */
+@Composable
+private fun MeasurementTile(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
+            Text(
+                text = label.uppercase(),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.2.sp,
+                color = LabelMuted,
+            )
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.padding(top = 4.dp),
+            ) {
+                Text(text = value, fontSize = 28.sp, fontFamily = MonoFontFamily)
+                Spacer(Modifier.width(6.dp))
+                Text(text = unit, fontSize = 14.sp, color = CairnStone)
             }
         }
     }
@@ -309,7 +440,7 @@ private fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
             TextButton(onClick = onConfirm) {
                 Text(
                     text = stringResource(R.string.action_delete),
-                    color = MaterialTheme.colorScheme.error,
+                    color = SoftError,
                 )
             }
         },
@@ -360,40 +491,12 @@ fun RenameDialog(
     )
 }
 
+/** One "label ... value" baseline row inside the Mesures card (screen 1i). */
 @Composable
-private fun InfoCard(title: String, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = title.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            content()
-        }
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontFamily = MonoFontFamily,
-        )
+private fun MeasurementRow(label: String, value: String, valueColor: Color = CairnStone) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(text = label, fontSize = 14.sp, color = CairnStone, modifier = Modifier.weight(1f))
+        Text(text = value, fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = MonoFontFamily, color = valueColor)
     }
 }
 

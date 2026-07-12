@@ -2,6 +2,8 @@ package app.matthieu.cairngps.ui.satellites
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -14,9 +16,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,7 +29,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,9 +37,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -46,12 +50,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,7 +65,10 @@ import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.domain.EcefPosition
 import app.matthieu.cairngps.domain.SatelliteGeometry
+import app.matthieu.cairngps.ui.theme.DarkOnSurface
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.GlobeLegendBorder
+import app.matthieu.cairngps.ui.theme.StatusChipBg
 import app.matthieu.cairngps.ui.theme.Sym
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,9 +76,6 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
-
-/** Slow automatic yaw rotation, in degrees per second. */
-private const val AUTO_ROTATE_DEG_PER_SECOND = 4f
 
 /** Reuses the same C/N0 full-scale value as the satellites list for size/opacity modulation. */
 private const val GLOBE_CN0_FULL_SCALE_DBHZ = 45f
@@ -114,9 +118,6 @@ private fun SatelliteGlobeScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showAllInView by rememberSaveable { mutableStateOf(false) }
-    var autoRotate by rememberSaveable { mutableStateOf(false) }
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -152,32 +153,30 @@ private fun SatelliteGlobeScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilterChip(
-                        selected = autoRotate,
-                        onClick = { autoRotate = !autoRotate },
-                        label = { Text(stringResource(R.string.globe_auto_rotate)) },
-                    )
-                    FilterChip(
-                        selected = showAllInView,
-                        onClick = { showAllInView = !showAllInView },
-                        label = { Text(stringResource(R.string.globe_show_in_view)) },
-                    )
-                }
                 GlobeCanvas(
                     observer = observer,
                     satellites = uiState.satellites,
-                    showAllInView = showAllInView,
-                    autoRotate = autoRotate,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
                 )
+                val present = uiState.satellites
+                    .filter { it.info.usedInFix }
+                    .map { it.info.constellation }
+                    .distinct()
+                    .sortedBy { it.ordinal }
+                if (present.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                    ) {
+                        present.forEach { constellation ->
+                            GlobeLegendChip(constellation)
+                        }
+                    }
+                }
             }
         }
     }
@@ -201,6 +200,33 @@ private fun GlobeWaiting(message: String, modifier: Modifier = Modifier) {
     }
 }
 
+/** Constellation legend chip below the globe (screen 1e). */
+@Composable
+private fun GlobeLegendChip(constellation: Constellation) {
+    Row(
+        modifier = Modifier
+            .height(30.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(StatusChipBg)
+            .border(width = 1.dp, color = GlobeLegendBorder, shape = RoundedCornerShape(15.dp))
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(constellation.color(), CircleShape),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = constellation.displayName,
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.Medium,
+            color = DarkOnSurface,
+        )
+    }
+}
+
 /**
  * The interactive 3D view: wireframe Earth with its landmass base map, observer marker and
  * satellites, drawn with a manual orthographic projection on a plain Compose [Canvas]
@@ -210,8 +236,6 @@ private fun GlobeWaiting(message: String, modifier: Modifier = Modifier) {
 private fun GlobeCanvas(
     observer: LocationData,
     satellites: List<GlobeSatellite>,
-    showAllInView: Boolean,
-    autoRotate: Boolean,
     modifier: Modifier = Modifier,
 ) {
     // Camera state. Initialized so the observer's position faces the viewer on first composition.
@@ -222,9 +246,7 @@ private fun GlobeCanvas(
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var selectedKey by remember { mutableStateOf<Pair<Constellation, Int>?>(null) }
 
-    val displayed = remember(satellites, showAllInView) {
-        if (showAllInView) satellites else satellites.filter { it.info.usedInFix }
-    }
+    val displayed = remember(satellites) { satellites.filter { it.info.usedInFix } }
     val selected = displayed.firstOrNull { (it.info.constellation to it.info.svid) == selectedKey }
 
     // Fit the view to the farthest displayed shell (min 2 Earth radii so the globe never
@@ -249,17 +271,6 @@ private fun GlobeCanvas(
     val observerEcef = remember(observer.latitude, observer.longitude) {
         // Sub-point on the ground: the marker sits on the sphere's surface, not at altitude.
         SatelliteGeometry.geodeticToEcef(observer.latitude, observer.longitude, 0.0)
-    }
-
-    LaunchedEffect(autoRotate) {
-        if (!autoRotate) return@LaunchedEffect
-        var lastFrameNanos = withFrameNanos { it }
-        while (true) {
-            withFrameNanos { now ->
-                yawDeg = (yawDeg + (now - lastFrameNanos) / 1e9f * AUTO_ROTATE_DEG_PER_SECOND) % 360f
-                lastFrameNanos = now
-            }
-        }
     }
 
     // Latest values for the tap detector, whose pointerInput(Unit) lambda would otherwise
