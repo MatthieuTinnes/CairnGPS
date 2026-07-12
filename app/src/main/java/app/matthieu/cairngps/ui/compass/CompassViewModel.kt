@@ -3,6 +3,7 @@ package app.matthieu.cairngps.ui.compass
 import android.Manifest
 import android.hardware.GeomagneticField
 import android.hardware.SensorManager
+import android.location.Location
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,15 +11,20 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.CompassReading
 import app.matthieu.cairngps.data.CompassRepository
+import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.Waypoint
+import app.matthieu.cairngps.data.WaypointRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
@@ -34,6 +40,8 @@ class CompassViewModel(
     private val compassRepository: CompassRepository,
     private val locationRepository: LocationRepository,
     private val settingsRepository: SettingsRepository,
+    private val waypointRepository: WaypointRepository,
+    private val navigationTargetRepository: NavigationTargetRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -42,6 +50,7 @@ class CompassViewModel(
     val uiState: StateFlow<CompassUiState> = _uiState.asStateFlow()
 
     private var trackingJob: Job? = null
+    private var locationJob: Job? = null
 
     // Low-pass filter state: the last smoothed *magnetic* azimuth. Null until the first reading.
     private var smoothedMagnetic: Float? = null
@@ -51,6 +60,17 @@ class CompassViewModel(
     // North reference is a persisted preference (set from the Settings screen), not local UI state.
     private var northReference: NorthReference = NorthReference.MAGNETIC
 
+    // Target waypoint (selected from the "Changer de repère cible" picker) and the last known
+    // position, combined to derive the bearing/distance shown on the target card. Neither is tied
+    // to the sensor tracking lifecycle by itself — the target can be picked/loaded at any time —
+    // but the position stream (locationJob) only runs while the screen is visible.
+    private var targetWaypoint: Waypoint? = null
+    private var currentLocation: LocationData? = null
+
+    // Backs the "Changer de repère cible" picker; kept live regardless of screen visibility, like
+    // the settings/target-id observers below, since it's a cheap Room-backed flow.
+    private var waypoints: List<Waypoint> = emptyList()
+
     init {
         settingsRepository.settings
             .onEach { settings ->
@@ -58,14 +78,30 @@ class CompassViewModel(
                 publish()
             }
             .launchIn(viewModelScope)
+
+        navigationTargetRepository.targetWaypointId
+            .onEach { id ->
+                targetWaypoint = id?.let { waypointRepository.get(it) }
+                publish()
+            }
+            .launchIn(viewModelScope)
+
+        waypointRepository.waypoints()
+            .onEach { list ->
+                waypoints = list
+                publish()
+            }
+            .launchIn(viewModelScope)
     }
 
     /**
-     * Starts listening to the compass sensor. Idempotent while already tracking. Tied to the screen
-     * lifecycle (ON_START → ON_STOP) so the sensor is only active while the screen is visible.
+     * Starts listening to the compass sensor (and, for the target bearing/distance, GPS updates).
+     * Idempotent while already tracking. Tied to the screen lifecycle (ON_START → ON_STOP) so
+     * both stay active only while the screen is visible.
      *
      * Needs [Manifest.permission.ACCESS_FINE_LOCATION] to read the last known position for the
-     * declination; the compass itself works without it (declination just stays unavailable).
+     * declination and to track position for the target bearing; the compass itself works without
+     * it (declination and the target bearing just stay unavailable).
      */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun startTracking() {
@@ -76,6 +112,13 @@ class CompassViewModel(
         declination = computeDeclination()
         publish()
 
+        locationJob = locationRepository.locationUpdates()
+            .onEach { location ->
+                currentLocation = location
+                publish()
+            }
+            .launchIn(viewModelScope)
+
         if (!compassRepository.isSensorAvailable) return
 
         trackingJob = compassRepository.headingUpdates()
@@ -83,11 +126,23 @@ class CompassViewModel(
             .launchIn(viewModelScope)
     }
 
-    /** Stops listening and unregisters the sensor. Resets the filter so it re-seeds cleanly. */
+    /** Stops listening and unregisters the sensor/GPS. Resets the filter so it re-seeds cleanly. */
     fun stopTracking() {
         trackingJob?.cancel()
         trackingJob = null
+        locationJob?.cancel()
+        locationJob = null
         smoothedMagnetic = null
+    }
+
+    /** Sets the waypoint to navigate toward, invoked from the target picker. */
+    fun setTarget(waypointId: Long) {
+        navigationTargetRepository.setTarget(waypointId)
+    }
+
+    /** Switches the north reference preference; persisted so it applies across the whole app. */
+    fun setNorthReference(reference: NorthReference) {
+        viewModelScope.launch { settingsRepository.setNorthReference(reference) }
     }
 
     private fun onReading(reading: CompassReading) {
@@ -101,13 +156,33 @@ class CompassViewModel(
         // magnetic when no GPS position was available to compute the declination.
         val useTrueNorth = northReference == NorthReference.TRUE && declination != null
 
+        val target = targetWaypoint
+        val location = currentLocation
+        var targetDistance: Double? = null
+        var targetBearing: Float? = null
+        if (target != null && location != null) {
+            val results = FloatArray(2)
+            Location.distanceBetween(
+                location.latitude, location.longitude,
+                target.latitude, target.longitude,
+                results,
+            )
+            targetDistance = results[0].toDouble()
+            targetBearing = normalize(results[1])
+        }
+
         val magnetic = smoothedMagnetic
         if (magnetic == null) {
-            // No heading yet: keep the declination/north-reference facts visible while we wait.
+            // No heading yet: keep the declination/north-reference/target facts visible while we wait.
             _uiState.value = _uiState.value.copy(
                 hasData = false,
                 useTrueNorth = useTrueNorth,
+                northReference = northReference,
                 declinationDegrees = declination,
+                targetName = target?.name,
+                targetDistanceMeters = targetDistance,
+                bearingToTargetDegrees = targetBearing,
+                waypoints = waypoints,
             )
             return
         }
@@ -118,8 +193,13 @@ class CompassViewModel(
             headingDegrees = heading,
             cardinalIndex = cardinalIndex(heading),
             useTrueNorth = useTrueNorth,
+            northReference = northReference,
             declinationDegrees = declination,
             needsCalibration = needsCalibration(lastAccuracy),
+            targetName = target?.name,
+            targetDistanceMeters = targetDistance,
+            bearingToTargetDegrees = targetBearing,
+            waypoints = waypoints,
         )
     }
 
@@ -167,11 +247,19 @@ class CompassViewModel(
             compassRepository: CompassRepository,
             locationRepository: LocationRepository,
             settingsRepository: SettingsRepository,
+            waypointRepository: WaypointRepository,
+            navigationTargetRepository: NavigationTargetRepository,
         ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return CompassViewModel(compassRepository, locationRepository, settingsRepository) as T
+                    return CompassViewModel(
+                        compassRepository,
+                        locationRepository,
+                        settingsRepository,
+                        waypointRepository,
+                        navigationTargetRepository,
+                    ) as T
                 }
             }
     }

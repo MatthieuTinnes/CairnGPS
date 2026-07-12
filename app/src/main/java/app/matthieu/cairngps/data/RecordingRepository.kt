@@ -94,6 +94,14 @@ class RecordingRepository(
     private var longitudeMax = -180.0
     private var longitudeMin = 180.0
 
+    // Raw track buffer for the in-progress recording, sampled at most once every
+    // TRACK_SAMPLE_INTERVAL_MS and capped/decimated to TRACK_MAX_POINTS on stop() — this backs the
+    // altitude profile / route trace on the session detail screen without growing unbounded on a
+    // multi-hour hike. sessionId is unknown until the session row is inserted, so 0 here is just a
+    // placeholder overwritten by SessionRepository.saveWithTrack.
+    private val trackBuffer = mutableListOf<TrackPoint>()
+    private var lastSampledAtMs: Long = 0L
+
     /** Starts accumulating positions. Idempotent: a no-op while already recording. */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun start() {
@@ -110,6 +118,8 @@ class RecordingRepository(
         longitudeMax = -180.0
         longitudeMin = 180.0
         createdWaypointIds = emptyList()
+        trackBuffer.clear()
+        lastSampledAtMs = 0L
 
         _state.value = RecordingState(isRecording = true, startTimestamp = System.currentTimeMillis())
 
@@ -165,6 +175,19 @@ class RecordingRepository(
         latitudeMin = minOf(latitudeMin, fix.latitude)
         longitudeMax = maxOf(longitudeMax, fix.longitude)
         longitudeMin = minOf(longitudeMin, fix.longitude)
+
+        // Sample into the track buffer at most once every TRACK_SAMPLE_INTERVAL_MS. sessionId is
+        // filled in later by SessionRepository.saveWithTrack once the session row exists.
+        if (fix.timestamp - lastSampledAtMs >= TRACK_SAMPLE_INTERVAL_MS) {
+            lastSampledAtMs = fix.timestamp
+            trackBuffer += TrackPoint(
+                sessionId = 0L,
+                timestamp = fix.timestamp,
+                latitude = fix.latitude,
+                longitude = fix.longitude,
+                altitude = fix.altitude,
+            )
+        }
 
         val averageSpeed = if (movingTimeMs > 0) {
             (movingDistanceMeters / (movingTimeMs / 1000.0)).toFloat()
@@ -268,8 +291,19 @@ class RecordingRepository(
             longitudeMax = longitudeMax.takeIf { it.isFinite() } ?: 0.0,
             longitudeMin = longitudeMin.takeIf { it.isFinite() } ?: 0.0,
         )
-        val sessionId = sessionRepository.save(session)
+        val sessionId = sessionRepository.saveWithTrack(session, decimatedTrack())
         waypointRepository.attachToSession(waypointIds, sessionId)
+    }
+
+    /**
+     * Returns the buffered track, uniformly thinned down to at most [TRACK_MAX_POINTS] so a long
+     * multi-hour recording doesn't write an unbounded number of rows. Uniform decimation (rather
+     * than dropping the tail) keeps the shape of the altitude/route profile intact end-to-end.
+     */
+    private fun decimatedTrack(): List<TrackPoint> {
+        if (trackBuffer.size <= TRACK_MAX_POINTS) return trackBuffer.toList()
+        val stride = trackBuffer.size.toDouble() / TRACK_MAX_POINTS
+        return (0 until TRACK_MAX_POINTS).map { i -> trackBuffer[(i * stride).toInt()] }
     }
 
     private companion object {
@@ -281,6 +315,12 @@ class RecordingRepository(
 
         /** Below this speed the user is considered stationary; excluded from the moving average. */
         const val MOVING_SPEED_THRESHOLD_MS = 0.5f
+
+        /** Minimum spacing between track-buffer samples, so a fast fix rate doesn't bloat memory. */
+        const val TRACK_SAMPLE_INTERVAL_MS = 5_000L
+
+        /** Hard cap on stored track points per session; longer tracks are uniformly decimated. */
+        const val TRACK_MAX_POINTS = 1_000
     }
 }
 

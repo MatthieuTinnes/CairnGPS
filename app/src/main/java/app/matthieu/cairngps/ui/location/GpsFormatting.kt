@@ -85,5 +85,13 @@ fun formatDuration(durationMs: Long): String {
 /** A distance in meters, formatted in km with two decimals for readability during a recording. */
 fun formatDistanceKm(distanceMeters: Double): String = "%.2f".format(distanceMeters / 1000.0)
 
+/**
+ * A distance for a short-range display (target/current-distance cards): whole meters under 1 km,
+ * two-decimal kilometers above — unlike [formatDistanceKm] this includes the unit, since callers
+ * show it standalone rather than next to a separate "km" label.
+ */
+fun formatShortDistance(distanceMeters: Double): String =
+    if (distanceMeters >= 1000.0) "${formatDistanceKm(distanceMeters)} km" else "${distanceMeters.roundToInt()} m"
+
 /** An elevation gain/loss (D+/D-) as whole meters. */
 fun formatElevation(elevationMeters: Double): String = elevationMeters.roundToInt().toString()

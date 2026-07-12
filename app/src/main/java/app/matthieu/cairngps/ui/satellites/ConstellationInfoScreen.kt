@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Constellation
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.Sym
 
 /**
  * Static reference page explaining the GNSS constellations. Reached from the satellites screen; it
@@ -69,15 +71,8 @@ fun ConstellationInfoScreen(
                 title = { Text(stringResource(R.string.constellation_info_title)) },
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.semantics { contentDescription = backLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(
-                            text = "←",
-                            style = MaterialTheme.typography.headlineSmall,
-                        )
+                    IconButton(onClick = onBack) {
+                        Sym(icon = Glyph.ArrowBack, contentDescription = backLabel)
                     }
                 },
             )

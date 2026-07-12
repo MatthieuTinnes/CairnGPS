@@ -9,12 +9,18 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,9 +35,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import app.matthieu.cairngps.R
+import app.matthieu.cairngps.ui.theme.CairnAmber
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.Sym
 
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
 
@@ -91,10 +99,14 @@ private fun LocationPermissionRequest(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(
-            text = "📍",
-            fontSize = 56.sp,
-        )
+        Box(
+            modifier = Modifier
+                .size(96.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Sym(icon = Glyph.LocationOff, contentDescription = null, size = 48.dp, tint = CairnAmber)
+        }
         Spacer(Modifier.height(24.dp))
         Text(
             text = stringResource(R.string.permission_title),
@@ -112,12 +124,21 @@ private fun LocationPermissionRequest(
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(32.dp))
+        // 56 dp: touch targets stay glove-friendly for outdoor use (see CLAUDE.md).
         if (permanentlyDenied) {
-            Button(onClick = onOpenSettings) {
+            Button(
+                onClick = onOpenSettings,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) {
                 Text(stringResource(R.string.permission_open_settings))
             }
         } else {
-            Button(onClick = onRequest) {
+            Button(
+                onClick = onRequest,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) {
+                Sym(icon = Glyph.MyLocation, contentDescription = null, filled = true)
+                Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.permission_grant))
             }
         }

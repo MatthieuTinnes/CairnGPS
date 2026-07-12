@@ -52,7 +52,12 @@ class LocationViewModel(
             }
             launch {
                 locationRepository.satelliteUpdates().collect { satellites ->
-                    _uiState.update { it.copy(satellitesUsedInFix = satellites.count { s -> s.usedInFix }) }
+                    _uiState.update {
+                        it.copy(
+                            satellitesUsedInFix = satellites.count { s -> s.usedInFix },
+                            satellitesVisible = satellites.size,
+                        )
+                    }
                 }
             }
         }

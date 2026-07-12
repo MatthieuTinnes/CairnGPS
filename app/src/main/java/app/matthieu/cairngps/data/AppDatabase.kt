@@ -11,8 +11,14 @@ import androidx.room.migration.Migration
  * Bump [version] and provide a migration whenever the schema changes.
  */
 @Database(
-    entities = [Waypoint::class, Session::class, RecordEntry::class, AchievementState::class],
-    version = 3,
+    entities = [
+        Waypoint::class,
+        Session::class,
+        RecordEntry::class,
+        AchievementState::class,
+        TrackPoint::class,
+    ],
+    version = 4,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -24,6 +30,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recordDao(): RecordDao
 
     abstract fun achievementDao(): AchievementDao
+
+    abstract fun trackPointDao(): TrackPointDao
 
     companion object {
         @Volatile
@@ -87,6 +95,28 @@ abstract class AppDatabase : RoomDatabase() {
             )
         }
 
+        /**
+         * Adds the `track_points` table backing the altitude profile / route trace on the session
+         * detail screen: one row per downsampled fix accepted during a recording, linked to its
+         * `sessions` row via a `CASCADE`-on-delete foreign key (a track is meaningless once its
+         * session is gone, unlike waypoints which survive their session's deletion).
+         */
+        private val MIGRATION_3_4 = Migration(3, 4) { db ->
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `track_points` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`sessionId` INTEGER NOT NULL, " +
+                    "`timestamp` INTEGER NOT NULL, " +
+                    "`latitude` REAL NOT NULL, " +
+                    "`longitude` REAL NOT NULL, " +
+                    "`altitude` REAL NOT NULL, " +
+                    "FOREIGN KEY(`sessionId`) REFERENCES `sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_track_points_sessionId` ON `track_points` (`sessionId`)",
+            )
+        }
+
         /** Returns the process-wide database singleton, building it on first access. */
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
@@ -99,7 +129,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "cairn.db",
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
     }
 }

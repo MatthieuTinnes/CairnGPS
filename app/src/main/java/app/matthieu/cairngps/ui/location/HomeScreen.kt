@@ -9,7 +9,13 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,13 +29,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -43,13 +50,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -67,10 +74,25 @@ import app.matthieu.cairngps.ui.recording.RecordingUiState
 import app.matthieu.cairngps.ui.recording.RecordingViewModel
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.waypoints.defaultWaypointName
+import app.matthieu.cairngps.ui.theme.CairnAmber
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
+import app.matthieu.cairngps.ui.theme.DashMuted
+import app.matthieu.cairngps.ui.theme.DashText
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.IdleButtonBg
+import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.OnAmberButton
+import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.QualityGood
 import app.matthieu.cairngps.ui.theme.QualityMedium
 import app.matthieu.cairngps.ui.theme.QualityPoor
 import app.matthieu.cairngps.ui.theme.QualityUnknown
+import app.matthieu.cairngps.ui.theme.RecChipBg
+import app.matthieu.cairngps.ui.theme.RecChipBorder
+import app.matthieu.cairngps.ui.theme.RecChipText
+import app.matthieu.cairngps.ui.theme.Sym
+import app.matthieu.cairngps.ui.theme.ValueMuted
 
 /**
  * Screen route. Wires up the [LocationViewModel] and binds GPS tracking to the screen lifecycle:
@@ -84,7 +106,6 @@ fun HomeRoute(
     settingsRepository: SettingsRepository,
     waypointRepository: WaypointRepository,
     recordingRepository: RecordingRepository,
-    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: LocationViewModel =
@@ -118,7 +139,6 @@ fun HomeRoute(
         uiState = uiState,
         coordinateFormat = settings.coordinateFormat,
         recordingUiState = recordingUiState,
-        onOpenSettings = onOpenSettings,
         onSaveWaypoint = viewModel::saveWaypoint,
         onStartRecording = {
             // Recording start/stop is owned by RecordingService, not the ViewModel: only it can
@@ -143,7 +163,6 @@ private fun HomeScreen(
     uiState: LocationUiState,
     coordinateFormat: CoordinateFormat,
     recordingUiState: RecordingUiState,
-    onOpenSettings: () -> Unit,
     onSaveWaypoint: (String) -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
@@ -167,20 +186,22 @@ private fun HomeScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = { Text(stringResource(R.string.tab_home)) },
                 actions = {
-                    val settingsLabel = stringResource(R.string.action_open_settings)
-                    IconButton(
-                        onClick = onOpenSettings,
-                        modifier = Modifier.semantics { contentDescription = settingsLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(
-                            text = "⚙",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
+                    if (recordingUiState.isRecording) {
+                        RecordingBadge(elapsedMs = recordingUiState.elapsedMs)
+                        Spacer(Modifier.width(8.dp))
                     }
                 },
+            )
+        },
+        bottomBar = {
+            BottomActionsRow(
+                hasFix = uiState.hasFix,
+                isRecording = recordingUiState.isRecording,
+                onSaveWaypoint = { showSaveDialog = true },
+                onStartRecording = onStartRecording,
+                onStopRecording = onStopRecording,
             )
         },
     ) { innerPadding ->
@@ -188,129 +209,240 @@ private fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = 16.dp),
         ) {
-            StatusLine(hasFix = uiState.hasFix)
-
-            CoordinatesCard(
-                uiState = uiState,
-                format = coordinateFormat,
-                onCopy = { copyCoordinates(context, uiState) },
+            Spacer(Modifier.height(8.dp))
+            StatusLine(
+                hasFix = uiState.hasFix,
+                satellitesUsedInFix = uiState.satellitesUsedInFix,
+                satellitesVisible = uiState.satellitesVisible,
             )
+            Spacer(Modifier.height(8.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AltitudeCard(
-                    uiState = uiState,
-                    modifier = Modifier.weight(1f),
-                )
-                SpeedCard(
-                    uiState = uiState,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            AccuracyCard(uiState = uiState)
-
-            Button(
-                onClick = { showSaveDialog = true },
-                // Nothing meaningful to capture until the first fix arrives.
-                enabled = uiState.hasFix,
-                modifier = Modifier.fillMaxWidth(),
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(stringResource(R.string.action_save_waypoint))
-            }
+                CoordinatesCard(
+                    uiState = uiState,
+                    format = coordinateFormat,
+                    onCopy = { copyCoordinates(context, uiState) },
+                )
 
-            RecordingCard(
-                uiState = recordingUiState,
-                onStart = onStartRecording,
-                onStop = onStopRecording,
-            )
+                SpeedCard(uiState = uiState)
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AltitudeCard(
+                        uiState = uiState,
+                        modifier = Modifier.weight(1f),
+                    )
+                    AccuracyCard(
+                        uiState = uiState,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                if (!uiState.hasFix) {
+                    NoFixHintCard()
+                }
+
+                if (recordingUiState.isRecording) {
+                    SessionCard(uiState = recordingUiState)
+                }
+
+                Spacer(Modifier.height(4.dp))
+            }
         }
     }
 }
 
+/**
+ * The two thumb-reach actions fixed at the bottom of the screen: capturing a waypoint (always
+ * green) and toggling the recording.
+ *
+ * The recording button is amber whenever it does something meaningful — stopping an active
+ * recording, or starting one while a fix is available — but drops to a neutral fill with muted
+ * (CairnStone) icon/text while idle without a fix (design 1b), since starting a recording with no
+ * fix wouldn't capture anything yet. In that same no-fix + idle state, the whole row is rendered
+ * at reduced opacity (design 1b): "Marquer un repère" is truly disabled (no fix to capture) so it
+ * keeps its normal green colors and lets that opacity do the dimming, rather than swapping to a
+ * generic disabled grey.
+ */
 @Composable
-private fun RecordingCard(
-    uiState: RecordingUiState,
-    onStart: () -> Unit,
-    onStop: () -> Unit,
+private fun BottomActionsRow(
+    hasFix: Boolean,
+    isRecording: Boolean,
+    onSaveWaypoint: () -> Unit,
+    onStartRecording: () -> Unit,
+    onStopRecording: () -> Unit,
 ) {
+    val isIdleWithoutFix = !hasFix && !isRecording
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .alpha(if (isIdleWithoutFix) 0.38f else 1f),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Button(
+            onClick = onSaveWaypoint,
+            // Nothing meaningful to capture until the first fix arrives.
+            enabled = hasFix,
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = CairnGreenDark,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                disabledContainerColor = CairnGreenDark,
+                disabledContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+            // 52 dp: touch targets stay glove-friendly for outdoor use (see CLAUDE.md).
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+        ) {
+            Sym(icon = Glyph.AddLocationAlt, contentDescription = null, tint = OnGreenButton)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.action_save_waypoint))
+        }
+
+        Button(
+            onClick = if (isRecording) onStopRecording else onStartRecording,
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isIdleWithoutFix) IdleButtonBg else CairnAmber,
+                contentColor = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+        ) {
+            Sym(
+                icon = if (isRecording) Glyph.Stop else Glyph.PlayArrow,
+                contentDescription = null,
+                filled = true,
+                tint = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else OnAmberButton,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(if (isRecording) R.string.recording_stop else R.string.recording_start))
+        }
+    }
+}
+
+/** The "SESSION EN COURS" card: a 2×3 grid of live recording stats, shown only while recording. */
+@Composable
+private fun SessionCard(uiState: RecordingUiState) {
     DataCard {
-        CardTitle(stringResource(R.string.recording_title))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PulsingDot(color = QualityPoor)
+            Spacer(Modifier.width(8.dp))
+            CardTitle(stringResource(R.string.recording_title))
+        }
         Spacer(Modifier.height(12.dp))
 
-        if (uiState.isRecording) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                RecordingStat(
-                    label = stringResource(R.string.recording_duration),
-                    value = formatDuration(uiState.elapsedMs),
-                )
-                RecordingStat(
-                    label = stringResource(R.string.recording_distance),
-                    value = "${formatDistanceKm(uiState.distanceMeters)} km",
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                RecordingStat(
-                    label = stringResource(R.string.recording_avg_speed),
-                    value = "${formatSpeedKmh(uiState.averageSpeed)} ${stringResource(R.string.unit_kmh)}",
-                )
-                RecordingStat(
-                    label = stringResource(R.string.recording_max_speed),
-                    value = "${formatSpeedKmh(uiState.maxSpeed)} ${stringResource(R.string.unit_kmh)}",
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                RecordingStat(
-                    label = stringResource(R.string.recording_elevation_gain),
-                    value = "+${formatElevation(uiState.elevationGain)} ${stringResource(R.string.unit_meters)}",
-                )
-                RecordingStat(
-                    label = stringResource(R.string.recording_elevation_loss),
-                    value = "-${formatElevation(uiState.elevationLoss)} ${stringResource(R.string.unit_meters)}",
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = onStop,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.recording_stop))
-            }
-        } else {
-            Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.recording_start))
-            }
+        // Two rows of three rather than three rows of two: it reads as a single glanceable block
+        // instead of a list of pairs.
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            RecordingStat(
+                label = stringResource(R.string.recording_distance),
+                value = "${formatDistanceKm(uiState.distanceMeters)} km",
+                modifier = Modifier.weight(1f),
+            )
+            RecordingStat(
+                label = stringResource(R.string.recording_elevation_gain),
+                value = "+${formatElevation(uiState.elevationGain)} ${stringResource(R.string.unit_meters)}",
+                valueColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f),
+            )
+            RecordingStat(
+                label = stringResource(R.string.recording_elevation_loss),
+                value = "-${formatElevation(uiState.elevationLoss)} ${stringResource(R.string.unit_meters)}",
+                valueColor = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            RecordingStat(
+                label = stringResource(R.string.recording_avg_speed),
+                value = "${formatSpeedKmh(uiState.averageSpeed)} ${stringResource(R.string.unit_kmh)}",
+                modifier = Modifier.weight(1f),
+            )
+            RecordingStat(
+                label = stringResource(R.string.recording_max_speed),
+                value = "${formatSpeedKmh(uiState.maxSpeed)} ${stringResource(R.string.unit_kmh)}",
+                modifier = Modifier.weight(1f),
+            )
+            RecordingStat(
+                label = stringResource(R.string.recording_duration),
+                value = formatDuration(uiState.elapsedMs),
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
 
 @Composable
-private fun RecordingStat(label: String, value: String) {
-    Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+private fun RecordingStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    valueColor: Color = Color.Unspecified,
+) {
+    Column(modifier = modifier) {
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = MonoFontFamily,
+            color = valueColor,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = LabelMuted,
+        )
+    }
+}
+
+/** A pulsing colored dot — used for the recording badge and the "session en cours" indicator. */
+@Composable
+private fun PulsingDot(color: Color, size: Dp = 8.dp) {
+    val transition = rememberInfiniteTransition(label = "rec-pulse")
+    val alpha by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "rec-pulse-alpha",
+    )
+    Box(
+        modifier = Modifier
+            .size(size)
+            .background(color.copy(alpha = alpha), CircleShape),
+    )
+}
+
+/** Pill with the live elapsed time, shown in the top bar while recording. */
+@Composable
+private fun RecordingBadge(elapsedMs: Long) {
+    Row(
+        modifier = Modifier
+            .background(RecChipBg, RoundedCornerShape(16.dp))
+            .border(1.dp, RecChipBorder, RoundedCornerShape(16.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PulsingDot(color = QualityPoor)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = formatDuration(elapsedMs),
+            style = MaterialTheme.typography.labelLarge,
+            fontFamily = MonoFontFamily,
+            color = RecChipText,
         )
     }
 }
@@ -354,14 +486,42 @@ private fun SaveWaypointDialog(
 }
 
 @Composable
-private fun StatusLine(hasFix: Boolean) {
-    Text(
-        text = stringResource(if (hasFix) R.string.fix_obtained else R.string.waiting_for_fix),
-        style = MaterialTheme.typography.titleSmall,
-        color = if (hasFix) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-    )
+private fun StatusLine(hasFix: Boolean, satellitesUsedInFix: Int?, satellitesVisible: Int?) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Indeterminate acquisition bar — only meaningful while there's no fix yet.
+        if (!hasFix) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(
+                        color = if (hasFix) QualityGood else DashText,
+                        shape = CircleShape,
+                    ),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = when {
+                    hasFix && satellitesUsedInFix != null ->
+                        stringResource(R.string.fix_obtained_with_satellites, satellitesUsedInFix)
+                    hasFix -> stringResource(R.string.fix_obtained)
+                    satellitesVisible != null ->
+                        stringResource(
+                            R.string.waiting_for_fix_with_satellites,
+                            satellitesVisible,
+                            satellitesUsedInFix ?: 0,
+                        )
+                    else -> stringResource(R.string.waiting_for_fix)
+                },
+                style = MaterialTheme.typography.titleSmall,
+                // Same muted tone whether or not a fix has been acquired — only the dot's color
+                // signals fix status (design 1a/1b).
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+    }
 }
 
 @Composable
@@ -370,50 +530,33 @@ private fun CoordinatesCard(
     format: CoordinateFormat,
     onCopy: () -> Unit,
 ) {
+    val latitude = formatCoordinate(uiState.fix?.latitude, isLatitude = true, format = format)
+    val longitude = formatCoordinate(uiState.fix?.longitude, isLatitude = false, format = format)
+    val latitudeLabel = stringResource(R.string.label_latitude)
+    val longitudeLabel = stringResource(R.string.label_longitude)
+    // No fix yet: render the dashes in the design's darker, deliberately "empty" grey rather than
+    // the normal onSurface tone (design 1b).
+    val valueColor = if (uiState.hasFix) Color.Unspecified else DashText
+
     // Tapping anywhere on the card copies the coordinates (only meaningful once we have a fix).
+    // The design shows the two numbers alone, stacked; the label/value pairing is kept for screen
+    // readers via contentDescription rather than as visible text.
     DataCard(onClick = onCopy, enabled = uiState.hasFix) {
         CardTitle(stringResource(R.string.label_coordinates))
-        Spacer(Modifier.height(12.dp))
-
-        CoordinateRow(
-            label = stringResource(R.string.label_latitude),
-            value = formatCoordinate(uiState.fix?.latitude, isLatitude = true, format = format),
-        )
-        Spacer(Modifier.height(8.dp))
-        CoordinateRow(
-            label = stringResource(R.string.label_longitude),
-            value = formatCoordinate(uiState.fix?.longitude, isLatitude = false, format = format),
-        )
-
-        if (uiState.hasFix) {
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.hint_tap_to_copy),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Composable
-private fun CoordinateRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
+        Spacer(Modifier.height(4.dp))
         Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = latitude,
+            style = MaterialTheme.typography.displaySmall,
+            fontFamily = MonoFontFamily,
+            color = valueColor,
+            modifier = Modifier.semantics { contentDescription = "$latitudeLabel $latitude" },
         )
         Text(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall,
-            fontFamily = FontFamily.Monospace,
+            text = longitude,
+            style = MaterialTheme.typography.displaySmall,
+            fontFamily = MonoFontFamily,
+            color = valueColor,
+            modifier = Modifier.semantics { contentDescription = "$longitudeLabel $longitude" },
         )
     }
 }
@@ -426,75 +569,100 @@ private fun AltitudeCard(uiState: LocationUiState, modifier: Modifier = Modifier
         BigValue(
             value = formatAltitude(uiState.fix?.altitude),
             unit = stringResource(R.string.unit_meters),
+            valueColor = if (uiState.hasFix) Color.Unspecified else DashText,
         )
     }
 }
 
+/** Full-width VITESSE card: the primary km/h reading, with the m/s equivalent alongside it. */
 @Composable
-private fun SpeedCard(uiState: LocationUiState, modifier: Modifier = Modifier) {
-    DataCard(modifier = modifier) {
-        CardTitle(stringResource(R.string.label_speed))
-        Spacer(Modifier.height(8.dp))
-        BigValue(
-            value = formatSpeedKmh(uiState.fix?.speed),
-            unit = stringResource(R.string.unit_kmh),
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = if (uiState.hasFix) "${formatSpeedMs(uiState.fix?.speed)} m/s" else DASH,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun AccuracyCard(uiState: LocationUiState) {
-    val accuracy = uiState.fix?.horizontalAccuracy
-    val quality = accuracyQuality(accuracy)
-
+private fun SpeedCard(uiState: LocationUiState) {
     DataCard {
-        CardTitle(stringResource(R.string.label_accuracy))
-        Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BigValue(
-                value = if (accuracy != null) "±${formatAccuracy(accuracy)}" else DASH,
-                unit = stringResource(R.string.unit_meters),
+        Row(verticalAlignment = Alignment.Bottom) {
+            Column(modifier = Modifier.weight(1f)) {
+                CardTitle(stringResource(R.string.label_speed))
+                Spacer(Modifier.height(4.dp))
+                BigValue(
+                    value = formatSpeedKmh(uiState.fix?.speed),
+                    unit = stringResource(R.string.unit_kmh),
+                    valueColor = if (uiState.hasFix) Color.Unspecified else DashText,
+                )
+            }
+            Text(
+                text = if (uiState.hasFix) "${formatSpeedMs(uiState.fix?.speed)} m/s" else DASH,
+                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = MonoFontFamily,
+                color = if (uiState.hasFix) ValueMuted else DashMuted,
             )
-            Spacer(Modifier.weight(1f))
-            QualityIndicator(quality)
         }
     }
 }
 
+/** PRÉCISION card: horizontal and vertical accuracy, each with its own quality dot. */
 @Composable
-private fun QualityIndicator(quality: AccuracyQuality) {
+private fun AccuracyCard(uiState: LocationUiState, modifier: Modifier = Modifier) {
+    DataCard(modifier = modifier) {
+        CardTitle(stringResource(R.string.label_precision))
+        Spacer(Modifier.height(10.dp))
+        AccuracyRow(
+            accuracyMeters = uiState.fix?.horizontalAccuracy,
+            letter = stringResource(R.string.label_accuracy_h),
+        )
+        Spacer(Modifier.height(8.dp))
+        AccuracyRow(
+            accuracyMeters = uiState.fix?.verticalAccuracy,
+            letter = stringResource(R.string.label_accuracy_v),
+        )
+    }
+}
+
+@Composable
+private fun AccuracyRow(accuracyMeters: Float?, letter: String) {
+    val quality = accuracyQuality(accuracyMeters)
     val color = when (quality) {
         AccuracyQuality.GOOD -> QualityGood
         AccuracyQuality.MEDIUM -> QualityMedium
         AccuracyQuality.POOR -> QualityPoor
         AccuracyQuality.UNKNOWN -> QualityUnknown
     }
-    val labelRes = when (quality) {
-        AccuracyQuality.GOOD -> R.string.quality_good
-        AccuracyQuality.MEDIUM -> R.string.quality_medium
-        AccuracyQuality.POOR -> R.string.quality_poor
-        AccuracyQuality.UNKNOWN -> R.string.quality_unknown
-    }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
-                .size(14.dp)
+                .size(9.dp)
                 .background(color = color, shape = CircleShape),
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = stringResource(labelRes),
-            style = MaterialTheme.typography.labelLarge,
-            color = color,
+            text = if (accuracyMeters != null) "±${formatAccuracy(accuracyMeters)} m" else DASH,
+            style = MaterialTheme.typography.titleMedium,
+            fontFamily = MonoFontFamily,
+            color = if (accuracyMeters != null) Color.Unspecified else DashText,
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = letter,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (accuracyMeters != null) ValueMuted else DashMuted,
+        )
+    }
+}
+
+/** Nudge shown only while no fix is available (design 1b), below the data cards. */
+@Composable
+private fun NoFixHintCard() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Sym(icon = Glyph.WbTwilight, contentDescription = null, tint = CairnAmber)
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = stringResource(R.string.hint_clear_sky),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.tertiary,
         )
     }
 }
@@ -526,7 +694,7 @@ private fun CardTitle(text: String) {
     Text(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = LabelMuted,
     )
 }
 
@@ -537,7 +705,7 @@ private fun BigValue(value: String, unit: String, valueColor: Color = Color.Unsp
         Text(
             text = value,
             style = MaterialTheme.typography.displaySmall,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = MonoFontFamily,
             color = valueColor,
         )
         Spacer(Modifier.width(6.dp))

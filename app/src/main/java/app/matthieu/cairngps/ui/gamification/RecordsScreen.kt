@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -21,9 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,6 +37,9 @@ import app.matthieu.cairngps.ui.location.formatCoordinate
 import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
@@ -79,12 +81,8 @@ private fun RecordsScreen(
                 title = { Text(stringResource(R.string.records_title)) },
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.semantics { contentDescription = backLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(text = "←", style = MaterialTheme.typography.headlineSmall)
+                    IconButton(onClick = onBack) {
+                        Sym(icon = Glyph.ArrowBack, contentDescription = backLabel)
                     }
                 },
             )
@@ -104,6 +102,19 @@ private fun RecordsScreen(
     }
 }
 
+/** Leading glyph per record type, matching the design's records list. */
+private val RecordType.glyph: Char
+    get() = when (this) {
+        RecordType.MAX_SPEED -> Glyph.Speed
+        RecordType.MAX_ALTITUDE, RecordType.MIN_ALTITUDE -> Glyph.Landscape
+        RecordType.MAX_ELEVATION_GAIN -> Glyph.Elevation
+        RecordType.MAX_DISTANCE -> Glyph.Route
+        RecordType.NORTHERNMOST, RecordType.SOUTHERNMOST,
+        RecordType.EASTERNMOST, RecordType.WESTERNMOST,
+        -> Glyph.Public
+        RecordType.MAX_SATELLITES -> Glyph.SatelliteAlt
+    }
+
 @Composable
 private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateFormat) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -114,29 +125,33 @@ private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateForm
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
-                Text(text = stringResource(item.labelRes), style = MaterialTheme.typography.bodyLarge)
-                val achievedAt = item.entry?.achievedAt
-                if (achievedAt != null) {
-                    Text(
-                        text = formatWaypointTimestamp(achievedAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Sym(icon = item.type.glyph, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    Text(text = stringResource(item.labelRes), style = MaterialTheme.typography.bodyLarge)
+                    val achievedAt = item.entry?.achievedAt
+                    if (achievedAt != null) {
+                        Text(
+                            text = formatWaypointTimestamp(achievedAt),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = formatRecordValue(item, coordinateFormat),
                     style = MaterialTheme.typography.titleMedium,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = MonoFontFamily,
                 )
                 secondaryCoordinate(item, coordinateFormat)?.let { secondary ->
                     Text(
                         text = secondary,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = MonoFontFamily,
                     )
                 }
             }

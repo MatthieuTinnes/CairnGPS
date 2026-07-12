@@ -3,9 +3,11 @@ package app.matthieu.cairngps.ui.history
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -26,21 +28,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatDuration
 import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.waypoints.RenameDialog
 import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
@@ -70,6 +73,7 @@ fun SessionDetailRoute(
     SessionDetailScreen(
         session = uiState.session,
         waypoints = uiState.waypoints,
+        track = uiState.track,
         onBack = onBack,
         onOpenWaypoint = onOpenWaypoint,
         onDelete = viewModel::delete,
@@ -83,6 +87,7 @@ fun SessionDetailRoute(
 private fun SessionDetailScreen(
     session: Session?,
     waypoints: List<Waypoint>,
+    track: List<TrackPoint>,
     onBack: () -> Unit,
     onOpenWaypoint: (Long) -> Unit,
     onDelete: () -> Unit,
@@ -122,22 +127,15 @@ private fun SessionDetailScreen(
                 title = { Text(session?.name ?: stringResource(R.string.session_detail_title)) },
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.semantics { contentDescription = backLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(text = "←", style = MaterialTheme.typography.headlineSmall)
+                    IconButton(onClick = onBack) {
+                        Sym(icon = Glyph.ArrowBack, contentDescription = backLabel)
                     }
                 },
                 actions = {
                     if (session != null) {
                         val renameLabel = stringResource(R.string.action_rename)
-                        IconButton(
-                            onClick = { showRenameDialog = true },
-                            modifier = Modifier.semantics { contentDescription = renameLabel },
-                        ) {
-                            Text(text = "✎", style = MaterialTheme.typography.headlineSmall)
+                        IconButton(onClick = { showRenameDialog = true }) {
+                            Sym(icon = Glyph.Edit, contentDescription = renameLabel)
                         }
                     }
                 },
@@ -155,6 +153,14 @@ private fun SessionDetailScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // Only shown when a track was sampled: sessions recorded before this feature existed
+            // (or too short to have sampled any point) simply have no profile to draw.
+            if (track.isNotEmpty()) {
+                InfoCard(stringResource(R.string.label_altitude_profile)) {
+                    AltitudeProfile(track = track, modifier = Modifier.fillMaxWidth())
+                }
+            }
+
             InfoCard(stringResource(R.string.label_measurements)) {
                 InfoRow(
                     stringResource(R.string.recording_distance),
@@ -215,6 +221,8 @@ private fun SessionDetailScreen(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                Sym(icon = Glyph.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.action_delete),
                     color = MaterialTheme.colorScheme.error,
@@ -292,7 +300,7 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = MonoFontFamily,
         )
     }
 }

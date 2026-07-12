@@ -12,10 +12,13 @@ import app.matthieu.cairngps.data.LocationData
  * @property fix The most recent GPS fix, or `null` while none has been received yet.
  * @property satellitesUsedInFix Number of satellites currently used in the fix, or `null` while no
  *                              GNSS status has been received yet. Captured alongside a waypoint.
+ * @property satellitesVisible Number of satellites currently visible (used or not), or `null`
+ *                             while no GNSS status has been received yet.
  */
 data class LocationUiState(
     val fix: LocationData? = null,
     val satellitesUsedInFix: Int? = null,
+    val satellitesVisible: Int? = null,
 ) {
     /** True once at least one fix has been received. */
     val hasFix: Boolean get() = fix != null

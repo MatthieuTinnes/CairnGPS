@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -39,15 +41,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.annotation.SuppressLint
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.Waypoint
@@ -57,26 +58,39 @@ import app.matthieu.cairngps.ui.location.formatAccuracy
 import app.matthieu.cairngps.ui.location.formatAltitude
 import app.matthieu.cairngps.ui.location.formatCoordinate
 import app.matthieu.cairngps.ui.location.formatCoordinatesForClipboard
+import app.matthieu.cairngps.ui.location.formatShortDistance
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.Sym
 import java.util.Locale
 import androidx.core.net.toUri
 
 /**
  * Route: loads the waypoint identified by [waypointId] and renders its full detail. Navigates back
- * automatically once the waypoint has been deleted.
+ * automatically once the waypoint has been deleted. Only ever composed once location permission
+ * has been granted (behind [app.matthieu.cairngps.ui.permission.LocationPermissionGate]).
  */
+@SuppressLint("MissingPermission")
 @Composable
 fun WaypointDetailRoute(
     waypointId: Long,
     waypointRepository: WaypointRepository,
     sessionRepository: SessionRepository,
+    locationRepository: LocationRepository,
     onBack: () -> Unit,
     onOpenSession: (Long) -> Unit,
+    onNavigate: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: WaypointDetailViewModel =
         viewModel(
-            factory = WaypointDetailViewModel.factory(waypointRepository, sessionRepository, waypointId),
+            factory = WaypointDetailViewModel.factory(
+                waypointRepository,
+                sessionRepository,
+                locationRepository,
+                waypointId,
+            ),
         )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -85,13 +99,21 @@ fun WaypointDetailRoute(
         if (uiState.deleted) onBack()
     }
 
+    // One-shot "distance actuelle" snapshot, taken once the waypoint has finished loading (keyed on
+    // its id so it doesn't re-run on every recomposition, e.g. after a rename).
+    LaunchedEffect(uiState.waypoint?.id) {
+        if (uiState.waypoint != null) viewModel.refreshCurrentDistance()
+    }
+
     WaypointDetailScreen(
         waypoint = uiState.waypoint,
         session = uiState.session,
+        currentDistanceMeters = uiState.currentDistanceMeters,
         onBack = onBack,
         onDelete = viewModel::delete,
         onRename = viewModel::rename,
         onOpenSession = onOpenSession,
+        onNavigate = { onNavigate(waypointId) },
         modifier = modifier,
     )
 }
@@ -101,10 +123,12 @@ fun WaypointDetailRoute(
 private fun WaypointDetailScreen(
     waypoint: Waypoint?,
     session: Session?,
+    currentDistanceMeters: Double?,
     onBack: () -> Unit,
     onDelete: () -> Unit,
     onRename: (String) -> Unit,
     onOpenSession: (Long) -> Unit,
+    onNavigate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -141,22 +165,15 @@ private fun WaypointDetailScreen(
                 title = { Text(waypoint?.name ?: stringResource(R.string.waypoint_detail_title)) },
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.semantics { contentDescription = backLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(text = "←", style = MaterialTheme.typography.headlineSmall)
+                    IconButton(onClick = onBack) {
+                        Sym(icon = Glyph.ArrowBack, contentDescription = backLabel)
                     }
                 },
                 actions = {
                     if (waypoint != null) {
                         val renameLabel = stringResource(R.string.action_rename)
-                        IconButton(
-                            onClick = { showRenameDialog = true },
-                            modifier = Modifier.semantics { contentDescription = renameLabel },
-                        ) {
-                            Text(text = "✎", style = MaterialTheme.typography.headlineSmall)
+                        IconButton(onClick = { showRenameDialog = true }) {
+                            Sym(icon = Glyph.Edit, contentDescription = renameLabel)
                         }
                     }
                 },
@@ -211,6 +228,12 @@ private fun WaypointDetailScreen(
                     stringResource(R.string.label_satellites_used),
                     waypoint.satellitesUsedInFix?.toString() ?: DASH,
                 )
+                if (currentDistanceMeters != null) {
+                    InfoRow(
+                        stringResource(R.string.label_current_distance),
+                        formatShortDistance(currentDistanceMeters),
+                    )
+                }
             }
 
             InfoCard(stringResource(R.string.label_saved_at)) {
@@ -236,6 +259,17 @@ private fun WaypointDetailScreen(
                 }
             }
 
+            Button(
+                onClick = onNavigate,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+            ) {
+                Sym(icon = Glyph.Navigation, contentDescription = null, filled = true)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.action_navigate_to_waypoint))
+            }
+
             OutlinedButton(
                 onClick = { copyCoordinates(context, waypoint) },
                 modifier = Modifier.fillMaxWidth(),
@@ -254,6 +288,8 @@ private fun WaypointDetailScreen(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                Sym(icon = Glyph.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.action_delete),
                     color = MaterialTheme.colorScheme.error,
@@ -356,7 +392,7 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = MonoFontFamily,
         )
     }
 }

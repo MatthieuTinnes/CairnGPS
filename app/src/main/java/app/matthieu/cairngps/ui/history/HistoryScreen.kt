@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
@@ -37,15 +38,17 @@ import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatDuration
 import app.matthieu.cairngps.ui.location.formatElevation
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.waypoints.WaypointsListContent
 import app.matthieu.cairngps.ui.waypoints.WaypointsUiState
 import app.matthieu.cairngps.ui.waypoints.WaypointsViewModel
 import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
 /**
- * Route: the single "Historique" navigation destination, tabbed between saved waypoints
- * ("Repères") and recorded traces ("Traces"). Each tab owns its own ViewModel/list; this
- * composable only owns the shared [Scaffold] chrome and the tab selection.
+ * Route: "Carnet" — tabbed between saved waypoints ("Repères") and recorded traces ("Traces").
+ * Each tab owns its own ViewModel/list; this composable only owns the shared [Scaffold] chrome and
+ * the tab selection. Reached from the Profil hub, so it carries its own back button.
  */
 @Composable
 fun HistoryRoute(
@@ -53,6 +56,7 @@ fun HistoryRoute(
     sessionRepository: SessionRepository,
     onOpenWaypoint: (Long) -> Unit,
     onOpenSession: (Long) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val waypointsViewModel: WaypointsViewModel =
@@ -68,6 +72,7 @@ fun HistoryRoute(
         sessionsUiState = sessionsUiState,
         onOpenWaypoint = onOpenWaypoint,
         onOpenSession = onOpenSession,
+        onBack = onBack,
         modifier = modifier,
     )
 }
@@ -84,6 +89,7 @@ private fun HistoryScreen(
     sessionsUiState: SessionsUiState,
     onOpenWaypoint: (Long) -> Unit,
     onOpenSession: (Long) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(HistoryTab.WAYPOINTS) }
@@ -91,7 +97,15 @@ private fun HistoryScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.tab_history)) })
+            TopAppBar(
+                title = { Text(stringResource(R.string.tab_history)) },
+                navigationIcon = {
+                    val backLabel = stringResource(R.string.action_back)
+                    IconButton(onClick = onBack) {
+                        Sym(icon = Glyph.ArrowBack, contentDescription = backLabel)
+                    }
+                },
+            )
         },
     ) { innerPadding ->
         Column(

@@ -9,6 +9,7 @@ import app.matthieu.cairngps.data.AppDatabase
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.GamificationManager
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.RecordsRepository
 import app.matthieu.cairngps.data.SessionRepository
@@ -32,7 +33,11 @@ class CairnApplication : Application() {
 
     val waypointRepository: WaypointRepository by lazy { WaypointRepository(database.waypointDao()) }
 
-    val sessionRepository: SessionRepository by lazy { SessionRepository(database.sessionDao()) }
+    val sessionRepository: SessionRepository by lazy {
+        SessionRepository(database.sessionDao(), database.trackPointDao())
+    }
+
+    val navigationTargetRepository: NavigationTargetRepository by lazy { NavigationTargetRepository() }
 
     val recordingRepository: RecordingRepository by lazy {
         RecordingRepository(locationRepository, sessionRepository, waypointRepository)

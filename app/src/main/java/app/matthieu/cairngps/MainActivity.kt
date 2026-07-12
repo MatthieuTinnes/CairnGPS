@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,17 +40,21 @@ import app.matthieu.cairngps.ui.history.HistoryRoute
 import app.matthieu.cairngps.ui.history.SessionDetailRoute
 import app.matthieu.cairngps.ui.location.HomeRoute
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
+import app.matthieu.cairngps.ui.profile.ProfileRoute
 import app.matthieu.cairngps.ui.satellites.ConstellationInfoScreen
 import app.matthieu.cairngps.ui.satellites.SatelliteGlobeRoute
 import app.matthieu.cairngps.ui.satellites.SatellitesRoute
 import app.matthieu.cairngps.ui.settings.SettingsRoute
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.waypoints.WaypointDetailRoute
 
 private object Routes {
     const val HOME = "home"
     const val COMPASS = "compass"
     const val SATELLITES = "satellites"
+    const val PROFILE = "profile"
     const val HISTORY = "history"
     const val ACHIEVEMENTS = "achievements"
     const val RECORDS = "records"
@@ -67,19 +72,21 @@ private object Routes {
 }
 
 /**
- * Top-level destinations reachable from the bottom navigation bar. Icons use text glyphs to avoid
- * pulling in the large material-icons-extended artifact (same choice as the rest of the UI).
+ * Top-level destinations reachable from the bottom navigation bar. Icons come from the bundled
+ * Material Symbols subset (see [Glyph]), matching the design system.
+ *
+ * Carnet/Succès/Records/Réglages are deliberately not top-level tabs: they're reached through the
+ * Profil hub instead (matching the design), each carrying its own back button.
  */
 private enum class TopLevelTab(
     val route: String,
-    val glyph: String,
+    val glyph: Char,
     @StringRes val labelRes: Int,
 ) {
-    HOME(Routes.HOME, "📍", R.string.tab_home),
-    COMPASS(Routes.COMPASS, "🧭", R.string.tab_compass),
-    SATELLITES(Routes.SATELLITES, "🛰", R.string.tab_satellites),
-    HISTORY(Routes.HISTORY, "🗺", R.string.tab_history),
-    ACHIEVEMENTS(Routes.ACHIEVEMENTS, "🏆", R.string.tab_achievements),
+    HOME(Routes.HOME, Glyph.MyLocation, R.string.tab_home),
+    COMPASS(Routes.COMPASS, Glyph.Explore, R.string.tab_compass),
+    SATELLITES(Routes.SATELLITES, Glyph.SatelliteAlt, R.string.tab_satellites),
+    PROFILE(Routes.PROFILE, Glyph.Person, R.string.tab_profile),
 }
 
 class MainActivity : ComponentActivity() {
@@ -145,9 +152,20 @@ private fun MainScaffold(app: CairnApplication) {
                                     }
                                 },
                                 icon = {
-                                    Text(tab.glyph, style = MaterialTheme.typography.titleLarge)
+                                    Sym(
+                                        icon = tab.glyph,
+                                        contentDescription = null,
+                                        filled = selected,
+                                    )
                                 },
                                 label = { Text(stringResource(tab.labelRes)) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
                             )
                         }
                     }
@@ -169,7 +187,6 @@ private fun MainScaffold(app: CairnApplication) {
                         settingsRepository = app.settingsRepository,
                         waypointRepository = app.waypointRepository,
                         recordingRepository = app.recordingRepository,
-                        onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     )
                 }
                 composable(Routes.COMPASS) {
@@ -177,6 +194,8 @@ private fun MainScaffold(app: CairnApplication) {
                         compassRepository = app.compassRepository,
                         locationRepository = app.locationRepository,
                         settingsRepository = app.settingsRepository,
+                        waypointRepository = app.waypointRepository,
+                        navigationTargetRepository = app.navigationTargetRepository,
                     )
                 }
                 composable(Routes.SATELLITES) {
@@ -192,12 +211,23 @@ private fun MainScaffold(app: CairnApplication) {
                         onBack = { navController.popBackStack() },
                     )
                 }
+                composable(Routes.PROFILE) {
+                    ProfileRoute(
+                        sessionRepository = app.sessionRepository,
+                        achievementsRepository = app.achievementsRepository,
+                        onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                        onOpenHistory = { navController.navigate(Routes.HISTORY) },
+                        onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
+                        onOpenRecords = { navController.navigate(Routes.RECORDS) },
+                    )
+                }
                 composable(Routes.HISTORY) {
                     HistoryRoute(
                         waypointRepository = app.waypointRepository,
                         sessionRepository = app.sessionRepository,
                         onOpenWaypoint = { id -> navController.navigate(Routes.waypointDetail(id)) },
                         onOpenSession = { id -> navController.navigate(Routes.sessionDetail(id)) },
+                        onBack = { navController.popBackStack() },
                     )
                 }
                 composable(
@@ -209,8 +239,17 @@ private fun MainScaffold(app: CairnApplication) {
                         waypointId = id,
                         waypointRepository = app.waypointRepository,
                         sessionRepository = app.sessionRepository,
+                        locationRepository = app.locationRepository,
                         onBack = { navController.popBackStack() },
                         onOpenSession = { sessionId -> navController.navigate(Routes.sessionDetail(sessionId)) },
+                        onNavigate = { targetId ->
+                            app.navigationTargetRepository.setTarget(targetId)
+                            navController.navigate(Routes.COMPASS) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                     )
                 }
                 composable(
@@ -232,6 +271,7 @@ private fun MainScaffold(app: CairnApplication) {
                         recordsRepository = app.recordsRepository,
                         sessionRepository = app.sessionRepository,
                         onOpenRecords = { navController.navigate(Routes.RECORDS) },
+                        onBack = { navController.popBackStack() },
                     )
                 }
                 composable(Routes.RECORDS) {

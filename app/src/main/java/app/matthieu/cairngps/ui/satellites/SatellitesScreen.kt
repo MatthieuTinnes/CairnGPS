@@ -23,8 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -35,9 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -55,6 +52,9 @@ import app.matthieu.cairngps.ui.theme.ConstellationIrnss
 import app.matthieu.cairngps.ui.theme.ConstellationQzss
 import app.matthieu.cairngps.ui.theme.ConstellationSbas
 import app.matthieu.cairngps.ui.theme.ConstellationUnknown
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.theme.Sym
 import kotlin.math.roundToInt
 
 /**
@@ -107,27 +107,9 @@ private fun SatellitesScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.satellites_title)) },
                 actions = {
-                    val globeLabel = stringResource(R.string.action_open_satellite_globe)
-                    IconButton(
-                        onClick = onOpenGlobe,
-                        modifier = Modifier.semantics { contentDescription = globeLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(
-                            text = "🌐",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                    }
-                    val infoLabel = stringResource(R.string.action_open_constellation_info)
-                    IconButton(
-                        onClick = onOpenInfo,
-                        modifier = Modifier.semantics { contentDescription = infoLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(
-                            text = "ℹ",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
+                    if (uiState.hasData) {
+                        StatusChip(inView = uiState.inViewCount, usedInFix = uiState.usedInFixCount)
+                        Spacer(Modifier.width(8.dp))
                     }
                 },
             )
@@ -147,29 +129,33 @@ private fun SatellitesScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item(key = "counts") {
-                    SatelliteCounts(
-                        inView = uiState.inViewCount,
-                        usedInFix = uiState.usedInFixCount,
-                    )
+                item(key = "skyplot") {
+                    SkyPlotCard(satellites = uiState.satellites.orEmpty())
                 }
-                item(key = "constellations") {
-                    ConstellationSummaryCard(summaries = uiState.constellationSummaries)
+                item(key = "shortcuts") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        OutlinedButton(onClick = onOpenGlobe, modifier = Modifier.weight(1f)) {
+                            Sym(icon = Glyph.Public, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.action_open_satellite_globe))
+                        }
+                        OutlinedButton(onClick = onOpenInfo, modifier = Modifier.weight(1f)) {
+                            Sym(icon = Glyph.Info, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.action_open_constellation_info))
+                        }
+                    }
                 }
-                item(key = "list-title") {
-                    Text(
-                        text = stringResource(R.string.label_satellite_list).uppercase(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
-                items(
-                    items = uiState.satellites.orEmpty(),
-                    // Svid is only unique within a constellation; combine both for a stable key.
-                    key = { "${it.constellation.name}-${it.svid}" },
-                ) { satellite ->
-                    SatelliteRow(satellite)
+                uiState.satellitesByConstellation.forEach { (constellation, sats) ->
+                    item(key = "header-${constellation.name}") {
+                        ConstellationGroupHeader(constellation = constellation, count = sats.size)
+                    }
+                    items(items = sats, key = { "${it.constellation.name}-${it.svid}" }) { satellite ->
+                        SatelliteRow(satellite)
+                    }
                 }
             }
         }
@@ -194,89 +180,100 @@ private fun WaitingForGnss(modifier: Modifier = Modifier) {
     }
 }
 
-/** Headline counters: satellites in view vs. used in the current fix. */
+/** "N vus · M fix" pill in the top bar (screen 1d). */
 @Composable
-private fun SatelliteCounts(inView: Int, usedInFix: Int) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.padding(20.dp)) {
-            CountColumn(
-                value = inView,
-                label = stringResource(R.string.sats_in_view),
-                valueColor = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            CountColumn(
-                value = usedInFix,
-                label = stringResource(R.string.sats_used_in_fix),
-                valueColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun CountColumn(
-    value: Int,
-    label: String,
-    valueColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
+private fun StatusChip(inView: Int, usedInFix: Int) {
+    Row(
+        modifier = Modifier
+            .height(32.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = value.toString(),
-            style = MaterialTheme.typography.displayLarge,
-            fontFamily = FontFamily.Monospace,
-            color = valueColor,
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(MaterialTheme.colorScheme.primary, CircleShape),
         )
+        Spacer(Modifier.width(6.dp))
         Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = stringResource(R.string.sats_status_chip_fmt, inView, usedInFix),
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }
 
+/** The sky-plot card: polar az/el plot plus a per-constellation legend row (screen 1d). */
 @Composable
-private fun ConstellationSummaryCard(summaries: List<ConstellationSummary>) {
+private fun SkyPlotCard(satellites: List<SatelliteInfo>) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(R.string.label_constellations).uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            summaries.forEach { summary ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(color = summary.constellation.color(), shape = CircleShape),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = summary.constellation.displayName,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        text = stringResource(
-                            R.string.sats_constellation_summary,
-                            summary.inView,
-                            summary.usedInFix,
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            SkyPlot(satellites = satellites, modifier = Modifier.fillMaxWidth())
+            val present = satellites.map { it.constellation }.distinct().sortedBy { it.ordinal }
+            if (present.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    present.forEach { constellation ->
+                        LegendChip(constellation)
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LegendChip(constellation: Constellation) {
+    Row(
+        modifier = Modifier
+            .height(26.dp)
+            .clip(RoundedCornerShape(13.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(constellation.color(), CircleShape),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(text = constellation.displayName, style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+/** Section header for one constellation's satellites within the flat, grouped list. */
+@Composable
+private fun ConstellationGroupHeader(constellation: Constellation, count: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .background(color = constellation.color(), shape = CircleShape),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = constellation.displayName,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -301,7 +298,7 @@ private fun SatelliteRow(satellite: SatelliteInfo) {
                 Text(
                     text = "${satellite.constellation.displayName} %02d".format(satellite.svid),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = MonoFontFamily,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
                 )
                 Text(
@@ -324,7 +321,7 @@ private fun SatelliteRow(satellite: SatelliteInfo) {
             Text(
                 text = "%.0f".format(satellite.cn0DbHz),
                 style = MaterialTheme.typography.bodyMedium,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = MonoFontFamily,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
             )
             Spacer(Modifier.width(8.dp))
@@ -361,11 +358,10 @@ private fun SignalBar(cn0DbHz: Float, color: Color, modifier: Modifier = Modifie
 @Composable
 private fun UsedInFixMarker(used: Boolean) {
     val label = stringResource(R.string.sat_used_in_fix_marker)
-    Text(
-        text = "✓",
-        style = MaterialTheme.typography.titleMedium,
-        color = if (used) MaterialTheme.colorScheme.primary else Color.Transparent,
-        modifier = if (used) Modifier.semantics { contentDescription = label } else Modifier,
+    Sym(
+        icon = Glyph.Check,
+        contentDescription = if (used) label else null,
+        tint = if (used) MaterialTheme.colorScheme.primary else Color.Transparent,
     )
 }
 

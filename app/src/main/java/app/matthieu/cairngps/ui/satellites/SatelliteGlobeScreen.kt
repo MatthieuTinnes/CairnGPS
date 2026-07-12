@@ -61,6 +61,8 @@ import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.domain.EcefPosition
 import app.matthieu.cairngps.domain.SatelliteGeometry
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.Sym
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.cos
@@ -122,15 +124,8 @@ private fun SatelliteGlobeScreen(
                 title = { Text(stringResource(R.string.satellite_globe_title)) },
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.semantics { contentDescription = backLabel },
-                    ) {
-                        // Text glyph avoids depending on the large material-icons-extended artifact.
-                        Text(
-                            text = "←",
-                            style = MaterialTheme.typography.headlineSmall,
-                        )
+                    IconButton(onClick = onBack) {
+                        Sym(icon = Glyph.ArrowBack, contentDescription = backLabel)
                     }
                 },
             )

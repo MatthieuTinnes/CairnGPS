@@ -38,4 +38,16 @@ data class SatellitesUiState(
                 )
             }
             .sortedBy { it.constellation.ordinal }
+
+    /**
+     * Satellites grouped by constellation, each group internally sorted by svid, and the groups
+     * themselves ordered like [constellationSummaries] — backs the per-constellation sections in
+     * the design's satellite list (screen 1d), replacing one flat list with a header per group.
+     */
+    val satellitesByConstellation: List<Pair<Constellation, List<SatelliteInfo>>>
+        get() = satellites.orEmpty()
+            .groupBy { it.constellation }
+            .toList()
+            .sortedBy { (constellation, _) -> constellation.ordinal }
+            .map { (constellation, sats) -> constellation to sats.sortedBy { it.svid } }
 }

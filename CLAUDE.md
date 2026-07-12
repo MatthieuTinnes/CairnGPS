@@ -9,7 +9,7 @@ couche de **gamification** (succès, records) pour la rendre ludique.
 
 Public visé : usage en extérieur (randonnée, déplacements). L'app doit rester
 lisible en plein soleil et économe en batterie.
-
+Ne pas lancer l'appli après les modif, uniquement vérifier que le build gradle passe. 
 ## Stack technique
 
 - **Langage** : Kotlin
@@ -29,9 +29,6 @@ lisible en plein soleil et économe en batterie.
   Fused n'expose pas. Ne jamais remplacer par Fused, même si ça paraît plus simple.
 - Toujours passer par le `LocationRepository` pour les positions ; aucun accès
   direct au `LocationManager` depuis un ViewModel ou un Composable.
-- **Cycle de vie** : l'écoute GPS et capteurs démarre en `onStart` et s'arrête en
-  `onStop`. Rien ne doit continuer à écouter quand l'écran n'est pas visible
-  (sauf le foreground service dédié, prévu plus tard).
 
 ## Permissions
 
@@ -80,4 +77,4 @@ Deux mécanismes complémentaires, chacun pour un usage précis :
 
 - Gérer les cas limites : absence de fix, permission refusée, capteur indisponible.
 - Commenter uniquement ce qui n'est pas évident (choix GPS_PROVIDER, calculs de
-  dénivelé, conversions).
+  dénivelé, conversions). Ne pas ajouter de commentaire en cas modif pour correction

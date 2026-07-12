@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,11 +20,15 @@ import kotlinx.coroutines.launch
  *
  * @property session   The loaded session, or `null` while loading (or once deleted).
  * @property waypoints Waypoints attached to this session, most recent first.
+ * @property track     Chronologically ordered track points sampled during the recording, backing
+ *                      the altitude profile / route trace. Empty for sessions recorded before this
+ *                      feature existed, or too short to have sampled any point.
  * @property deleted   True after the session has been removed, signalling the screen to navigate back.
  */
 data class SessionDetailUiState(
     val session: Session? = null,
     val waypoints: List<Waypoint> = emptyList(),
+    val track: List<TrackPoint> = emptyList(),
     val deleted: Boolean = false,
 )
 
@@ -44,6 +49,11 @@ class SessionDetailViewModel(
         viewModelScope.launch {
             waypointRepository.waypointsForSession(sessionId).collect { waypoints ->
                 _uiState.update { it.copy(waypoints = waypoints) }
+            }
+        }
+        viewModelScope.launch {
+            sessionRepository.trackForSession(sessionId).collect { track ->
+                _uiState.update { it.copy(track = track) }
             }
         }
     }

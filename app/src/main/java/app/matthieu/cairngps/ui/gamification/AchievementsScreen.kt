@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,15 +33,21 @@ import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.RecordsRepository
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.ui.location.formatElevation
+import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
-/** Route: the "Succès" tab. Owns the [AchievementsViewModel] and opens Records from here. */
+/**
+ * Route: "Succès". Owns the [AchievementsViewModel] and opens Records from here. Reached from the
+ * Profil hub, so it carries its own back button.
+ */
 @Composable
 fun AchievementsRoute(
     achievementsRepository: AchievementsRepository,
     recordsRepository: RecordsRepository,
     sessionRepository: SessionRepository,
     onOpenRecords: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: AchievementsViewModel = viewModel(
@@ -51,19 +58,20 @@ fun AchievementsRoute(
     AchievementsScreen(
         uiState = uiState,
         onOpenRecords = onOpenRecords,
+        onBack = onBack,
         modifier = modifier,
     )
 }
 
-/** Emoji glyph per family — same "text glyph, no icon library" convention as the rest of the UI. */
-private val AchievementFamily.glyph: String
+/** Material Symbols glyph per family. */
+private val AchievementFamily.glyph: Char
     get() = when (this) {
-        AchievementFamily.ALTITUDE -> "⛰"
-        AchievementFamily.SPEED -> "⚡"
-        AchievementFamily.SATELLITES -> "🛰"
-        AchievementFamily.DISTANCE -> "🥾"
-        AchievementFamily.SESSIONS -> "🗺"
-        AchievementFamily.GEO -> "🌍"
+        AchievementFamily.ALTITUDE -> Glyph.Landscape
+        AchievementFamily.SPEED -> Glyph.Speed
+        AchievementFamily.SATELLITES -> Glyph.SatelliteAlt
+        AchievementFamily.DISTANCE -> Glyph.Route
+        AchievementFamily.SESSIONS -> Glyph.Map
+        AchievementFamily.GEO -> Glyph.Public
     }
 
 private val AchievementFamily.titleRes: Int
@@ -81,6 +89,7 @@ private val AchievementFamily.titleRes: Int
 private fun AchievementsScreen(
     uiState: AchievementsUiState,
     onOpenRecords: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -88,6 +97,12 @@ private fun AchievementsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.tab_achievements)) },
+                navigationIcon = {
+                    val backLabel = stringResource(R.string.action_back)
+                    IconButton(onClick = onBack) {
+                        Sym(icon = Glyph.ArrowBack, contentDescription = backLabel)
+                    }
+                },
                 actions = {
                     TextButton(onClick = onOpenRecords) {
                         Text(stringResource(R.string.achievements_open_records))
@@ -125,7 +140,7 @@ private fun AchievementsScreen(
 private fun FamilySection(section: AchievementFamilySection) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = section.family.glyph, style = MaterialTheme.typography.titleLarge)
+            Sym(icon = section.family.glyph, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Text(
                 text = stringResource(section.family.titleRes),
                 style = MaterialTheme.typography.titleMedium,
@@ -165,9 +180,15 @@ private fun AchievementRow(item: AchievementItem) {
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = if (item.isUnlocked) "✅" else "🔒",
-                style = MaterialTheme.typography.titleLarge,
+            Sym(
+                icon = if (item.isUnlocked) Glyph.Check else Glyph.Lock,
+                contentDescription = null,
+                filled = item.isUnlocked,
+                tint = if (item.isUnlocked) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
             Column(
                 modifier = Modifier.padding(start = 16.dp),
