@@ -12,11 +12,8 @@ import app.matthieu.cairngps.data.Waypoint
  *                             selected north reference (magnetic or true).
  * @property cardinalIndex     Index into the 8-point cardinal names (N, NE, E, SE, S, SO, O, NO).
  * @property useTrueNorth      Whether the heading is *currently* expressed relative to true north —
- *                             falls back to magnetic when [northReference] is [NorthReference.TRUE]
- *                             but no declination could be computed yet.
- * @property northReference    The raw user preference (from Réglages or the inline toggle here),
- *                             independent of whether it could actually be applied — the toggle
- *                             itself should reflect intent, not the fallback.
+ *                             falls back to magnetic when the user preference is
+ *                             [NorthReference.TRUE] but no declination could be computed yet.
  * @property declinationDegrees Magnetic declination for the last known position (positive = east),
  *                             or `null` when no GPS position is known — true north is then N/A.
  * @property needsCalibration  True when the magnetometer accuracy is low and the user should do
@@ -35,7 +32,6 @@ data class CompassUiState(
     val headingDegrees: Float = 0f,
     val cardinalIndex: Int = 0,
     val useTrueNorth: Boolean = false,
-    val northReference: NorthReference = NorthReference.MAGNETIC,
     val declinationDegrees: Float? = null,
     val needsCalibration: Boolean = false,
     val targetName: String? = null,
@@ -43,9 +39,6 @@ data class CompassUiState(
     val bearingToTargetDegrees: Float? = null,
     val waypoints: List<Waypoint> = emptyList(),
 ) {
-    /** True north can only be shown when a declination could be computed from a GPS position. */
-    val trueNorthAvailable: Boolean get() = declinationDegrees != null
-
     /** True once a target waypoint is selected, regardless of whether a bearing could be computed. */
     val hasTarget: Boolean get() = targetName != null
 

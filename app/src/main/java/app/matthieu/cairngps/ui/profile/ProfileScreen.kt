@@ -21,6 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -51,8 +52,6 @@ import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
-import app.matthieu.cairngps.ui.theme.DarkOnSurface
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.OnAmberButton
@@ -199,7 +198,7 @@ private fun ProfileScreen(
                                 )
                                 Text(
                                     text = buildAnnotatedString {
-                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = DarkOnSurface)) {
+                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
                                             append(stringResource(lastUnlocked.titleRes))
                                         }
                                         withStyle(SpanStyle(fontWeight = FontWeight.Normal, color = CairnStone)) {
@@ -262,7 +261,7 @@ private fun ProfileHubRow(glyph: Char, iconTint: Color, title: String, subtitle:
             .fillMaxWidth()
             .heightIn(min = 56.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

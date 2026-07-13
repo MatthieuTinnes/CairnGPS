@@ -34,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -76,8 +77,6 @@ import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
 import app.matthieu.cairngps.ui.theme.CompassDialBorder
-import app.matthieu.cairngps.ui.theme.DarkOnSurface
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -242,7 +241,7 @@ private fun WaypointDetailScreen(
                 onClick = { copyCoordinates(context, waypoint) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
                     Text(
@@ -306,7 +305,7 @@ private fun WaypointDetailScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             ) {
                 Column(
                     modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 12.dp),
@@ -322,7 +321,7 @@ private fun WaypointDetailScreen(
                     MeasurementRow(
                         stringResource(R.string.label_speed),
                         "${formatSpeedKmh(waypoint.speed)} ${stringResource(R.string.unit_kmh)}",
-                        valueColor = DarkOnSurface,
+                        valueColor = MaterialTheme.colorScheme.onSurface,
                     )
                     MeasurementRow(
                         stringResource(R.string.label_accuracy),
@@ -340,7 +339,7 @@ private fun WaypointDetailScreen(
                     onClick = { onOpenSession(session.id) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
@@ -389,13 +388,13 @@ private fun WaypointDetailScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Sym(icon = Glyph.Map, contentDescription = null, tint = DarkOnSurface, size = 20.dp)
+                Sym(icon = Glyph.Map, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, size = 20.dp)
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.action_open_in_maps),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = DarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
@@ -408,7 +407,7 @@ private fun MeasurementTile(label: String, value: String, unit: String, modifier
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
             Text(

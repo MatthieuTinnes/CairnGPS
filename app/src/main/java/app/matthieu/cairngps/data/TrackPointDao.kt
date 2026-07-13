@@ -16,8 +16,4 @@ interface TrackPointDao {
     /** Observes the track for [sessionId] ordered chronologically. Re-emits on any table change. */
     @Query("SELECT * FROM track_points WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     fun observeBySession(sessionId: Long): Flow<List<TrackPoint>>
-
-    /** Returns the track for [sessionId] ordered chronologically, as a one-shot read. */
-    @Query("SELECT * FROM track_points WHERE sessionId = :sessionId ORDER BY timestamp ASC")
-    suspend fun getBySession(sessionId: Long): List<TrackPoint>
 }

@@ -52,7 +52,6 @@ import app.matthieu.cairngps.ui.location.formatDuration
 import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
 import app.matthieu.cairngps.ui.theme.CairnGreen
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -194,7 +193,7 @@ private fun SessionDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 ) {
                     SessionRouteTrace(
                         track = track,
@@ -252,7 +251,7 @@ private fun SessionDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 ) {
                     Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp)) {
                         Text(
@@ -300,7 +299,7 @@ private fun SessionStatTile(value: String, label: String, modifier: Modifier = M
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
             Text(text = value, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, fontFamily = MonoFontFamily)
@@ -322,7 +321,7 @@ private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             .fillMaxWidth()
             .heightIn(min = 56.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),

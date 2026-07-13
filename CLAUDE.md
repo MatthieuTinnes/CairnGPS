@@ -9,6 +9,7 @@ couche de **gamification** (succès, records) pour la rendre ludique.
 
 Public visé : usage en extérieur (randonnée, déplacements). L'app doit rester
 lisible en plein soleil et économe en batterie.
+L'app fonctionne en theme sombre et clair.
 Ne pas lancer l'appli après les modif, uniquement vérifier que le build gradle passe. 
 ## Stack technique
 

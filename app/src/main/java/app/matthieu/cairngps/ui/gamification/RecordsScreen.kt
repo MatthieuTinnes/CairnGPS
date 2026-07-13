@@ -17,6 +17,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -43,7 +44,6 @@ import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.location.formatSpeedKmh
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnStone
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -130,7 +130,7 @@ private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateForm
             .fillMaxWidth()
             .heightIn(min = 60.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(
             modifier = Modifier

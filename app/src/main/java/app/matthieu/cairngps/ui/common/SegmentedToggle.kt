@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
-import app.matthieu.cairngps.ui.theme.DarkOnSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.OutlineSubtle
@@ -75,7 +75,7 @@ fun SegmentedToggle(
                     text = label,
                     fontSize = 14.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (selected) DarkOnSurface else CairnStone,
+                    color = if (selected) MaterialTheme.colorScheme.onSurface else CairnStone,
                 )
             }
             if (index != options.lastIndex) {

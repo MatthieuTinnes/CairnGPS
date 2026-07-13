@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Constellation
 import app.matthieu.cairngps.ui.theme.CairnStone
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -137,7 +136,7 @@ private fun ConstellationDocCard(doc: ConstellationDoc) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),

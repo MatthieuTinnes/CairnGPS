@@ -58,7 +58,6 @@ import app.matthieu.cairngps.ui.theme.ConstellationQzss
 import app.matthieu.cairngps.ui.theme.ConstellationSbas
 import app.matthieu.cairngps.ui.theme.ConstellationUnknown
 import app.matthieu.cairngps.ui.theme.DarkOnSurface
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -227,7 +226,7 @@ private fun SkyPlotCard(satellites: List<SatelliteInfo>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -285,7 +284,7 @@ private fun ShortcutButton(icon: Char, label: String, onClick: () -> Unit, modif
     ) {
         Sym(icon = icon, contentDescription = null, tint = CairnGreen, size = 20.dp)
         Spacer(Modifier.width(8.dp))
-        Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DarkOnSurface)
+        Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -295,7 +294,7 @@ private fun ConstellationGroupCard(constellation: Constellation, satellites: Lis
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -341,7 +340,7 @@ private fun SatelliteRow(satellite: SatelliteInfo) {
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             fontFamily = MonoFontFamily,
-            color = DarkOnSurface.copy(alpha = contentAlpha),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
             modifier = Modifier.width(38.dp),
         )
         Spacer(Modifier.width(10.dp))

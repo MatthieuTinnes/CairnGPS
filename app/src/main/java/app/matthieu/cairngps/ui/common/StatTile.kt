@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 
 /**
@@ -21,9 +20,9 @@ import app.matthieu.cairngps.ui.theme.MonoFontFamily
  * altitude/précision blocks, session stats, Profil's totals, Records rows…): an uppercase label
  * over a large monospace value. A single implementation keeps the look consistent everywhere.
  *
- * Container color is pinned to the flat [DarkSurface] literal rather than left as the default
+ * Container color is pinned to [MaterialTheme.colorScheme.surface] rather than left as the default
  * `Card`, whose tonal elevation otherwise tints it with the primary color and drifts it away from
- * the flat `#161C18` every other card in the design uses.
+ * the flat color every other card in the design uses.
  */
 @Composable
 fun StatTile(
@@ -37,7 +36,7 @@ fun StatTile(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {

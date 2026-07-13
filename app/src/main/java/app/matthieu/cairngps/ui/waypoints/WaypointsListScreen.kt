@@ -19,13 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -33,63 +29,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Waypoint
-import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.location.formatAltitude
 import app.matthieu.cairngps.ui.theme.CairnGreen
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.WaypointIconBg
 
-/** Route: wires up the [WaypointsViewModel] and renders the saved-waypoints list. */
-@Composable
-fun WaypointsRoute(
-    waypointRepository: WaypointRepository,
-    onOpenWaypoint: (Long) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val viewModel: WaypointsViewModel =
-        viewModel(factory = WaypointsViewModel.factory(waypointRepository))
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    WaypointsListScreen(
-        uiState = uiState,
-        onOpenWaypoint = onOpenWaypoint,
-        modifier = modifier,
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun WaypointsListScreen(
-    uiState: WaypointsUiState,
-    onOpenWaypoint: (Long) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.waypoints_title)) })
-        },
-    ) { innerPadding ->
-        WaypointsListContent(
-            uiState = uiState,
-            onOpenWaypoint = onOpenWaypoint,
-            modifier = Modifier.padding(innerPadding),
-        )
-    }
-}
-
 /**
  * The waypoints list body (empty state or [LazyColumn] of [WaypointRow]s), without its own
- * [Scaffold]/[TopAppBar]. Shared between the standalone [WaypointsRoute] and the "Repères" tab of
- * the Historique screen, which each own their surrounding chrome.
+ * [androidx.compose.material3.Scaffold]/[androidx.compose.material3.TopAppBar]. Used by the
+ * "Repères" tab of the Historique screen, which owns the surrounding chrome.
  */
 @Composable
 fun WaypointsListContent(
@@ -120,7 +73,7 @@ private fun WaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             .fillMaxWidth()
             .heightIn(min = 56.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),

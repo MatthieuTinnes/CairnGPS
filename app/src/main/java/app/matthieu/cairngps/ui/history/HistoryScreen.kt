@@ -47,7 +47,6 @@ import app.matthieu.cairngps.ui.common.SegmentedToggle
 import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.location.formatDuration
 import app.matthieu.cairngps.ui.location.formatElevation
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -205,7 +204,7 @@ private fun SessionRow(session: Session, sessionRepository: SessionRepository, o
             .fillMaxWidth()
             .heightIn(min = 64.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),

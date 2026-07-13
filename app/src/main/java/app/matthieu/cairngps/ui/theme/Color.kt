@@ -13,10 +13,10 @@ val DarkBackground = Color(0xFF0E1310)
 val DarkSurface = Color(0xFF161C18)
 val DarkOnSurface = Color(0xFFE6EAE3)
 
-// Light equivalents (used only if the system/user forces light mode).
-val LightBackground = Color(0xFFF7FAF5)
+// Light equivalents, matching the design's light-theme variant (screen 1o).
+val LightBackground = Color(0xFFF4F7F1)
 val LightSurface = Color(0xFFFFFFFF)
-val LightOnSurface = Color(0xFF191D17)
+val LightOnSurface = Color(0xFF141A12)
 
 // Accuracy quality indicator: green < 5 m, orange 5–15 m, red > 15 m.
 // Slightly desaturated so they stay comfortable on the dark background.

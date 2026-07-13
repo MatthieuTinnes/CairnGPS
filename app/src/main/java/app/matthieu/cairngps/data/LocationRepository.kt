@@ -35,15 +35,6 @@ class LocationRepository(context: Context) {
         }
 
     /**
-     * Cold [Flow] of GPS fixes. A new registration is created for each collector and torn down
-     * automatically when collection stops.
-     *
-     * @param minTimeMs      Minimum interval between updates, in milliseconds.
-     * @param minDistanceM   Minimum movement between updates, in meters.
-     *
-     * The caller MUST hold [Manifest.permission.ACCESS_FINE_LOCATION] before collecting.
-     */
-    /**
      * The most recent cached GPS fix the OS holds, or `null` if it has none. Cheap and does *not*
      * power up the GPS chip — used e.g. to seed magnetic declination for the compass without
      * forcing a full location request.
@@ -52,6 +43,15 @@ class LocationRepository(context: Context) {
     fun lastKnownLocation(): LocationData? =
         locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.toLocationData()
 
+    /**
+     * Cold [Flow] of GPS fixes. A new registration is created for each collector and torn down
+     * automatically when collection stops.
+     *
+     * @param minTimeMs      Minimum interval between updates, in milliseconds.
+     * @param minDistanceM   Minimum movement between updates, in meters.
+     *
+     * The caller MUST hold [Manifest.permission.ACCESS_FINE_LOCATION] before collecting.
+     */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun locationUpdates(
         minTimeMs: Long = 1_000L,

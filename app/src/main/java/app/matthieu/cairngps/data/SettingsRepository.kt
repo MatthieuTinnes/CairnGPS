@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
 // Single DataStore instance for the process, scoped to the application context via this delegate.
@@ -27,19 +30,24 @@ class SettingsRepository(context: Context) {
     }
 
     /** Cold flow that emits the current settings and every subsequent change. */
-    val settings: Flow<AppSettings> = dataStore.data.map { prefs ->
-        AppSettings(
-            coordinateFormat = prefs[Keys.COORDINATE_FORMAT]
-                ?.let { runCatching { CoordinateFormat.valueOf(it) }.getOrNull() }
-                ?: CoordinateFormat.DECIMAL,
-            themeMode = prefs[Keys.THEME_MODE]
-                ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
-                ?: ThemeMode.DARK,
-            northReference = prefs[Keys.NORTH_REFERENCE]
-                ?.let { runCatching { NorthReference.valueOf(it) }.getOrNull() }
-                ?: NorthReference.MAGNETIC,
-        )
-    }
+    val settings: Flow<AppSettings> = dataStore.data
+        // A corrupted/unreadable preferences file surfaces as an IOException from the DataStore
+        // itself; fall back to defaults instead of crashing every collector (ViewModels stateIn
+        // this flow directly).
+        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .map { prefs ->
+            AppSettings(
+                coordinateFormat = prefs[Keys.COORDINATE_FORMAT]
+                    ?.let { runCatching { CoordinateFormat.valueOf(it) }.getOrNull() }
+                    ?: CoordinateFormat.DECIMAL,
+                themeMode = prefs[Keys.THEME_MODE]
+                    ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
+                    ?: ThemeMode.DARK,
+                northReference = prefs[Keys.NORTH_REFERENCE]
+                    ?.let { runCatching { NorthReference.valueOf(it) }.getOrNull() }
+                    ?: NorthReference.MAGNETIC,
+            )
+        }
 
     suspend fun setCoordinateFormat(format: CoordinateFormat) {
         dataStore.edit { prefs -> prefs[Keys.COORDINATE_FORMAT] = format.name }

@@ -39,7 +39,6 @@
     <string name="tab_profile">Profil</string>
 
     <!-- Actions -->
-    <string name="hint_tap_to_copy">Appuyer pour copier</string>
     <string name="coordinates_copied">Coordonnées copiées</string>
     <string name="action_open_settings">Paramètres</string>
     <string name="action_back">Retour</string>
@@ -55,10 +54,8 @@
     <string name="theme_dark">Sombre</string>
     <string name="settings_coordinate_format">Format des coordonnées</string>
     <string name="coordinate_format_decimal">Décimal</string>
-    <string name="coordinate_format_decimal_example">47.123456°</string>
     <string name="settings_north_reference">Nord de la boussole</string>
     <string name="coordinate_format_dms">DMS</string>
-    <string name="coordinate_format_dms_example">47°07\'24.4\"N</string>
 
     <!-- Waypoints -->
     <string name="action_save_waypoint">Marquer un repère</string>
@@ -68,12 +65,10 @@
     <string name="waypoint_saved">Repère enregistré</string>
     <string name="action_save">Enregistrer</string>
     <string name="action_cancel">Annuler</string>
-    <string name="waypoints_title">Repères enregistrés</string>
     <string name="waypoints_empty">Aucun repère enregistré pour le moment.\n\nDepuis l\'écran Position, appuyez sur « Enregistrer ce point » pour capturer votre position actuelle.</string>
     <string name="waypoint_detail_title">Repère</string>
     <string name="label_measurements">Mesures</string>
     <string name="label_satellites_used">Satellites fixés</string>
-    <string name="label_saved_at">Enregistré le</string>
     <string name="waypoint_created_at_fmt">Enregistré le %1$s</string>
     <string name="action_open_in_maps">Ouvrir dans une carte</string>
     <string name="no_maps_app">Aucune application de carte installée</string>
@@ -88,8 +83,6 @@
     <string name="history_tab_waypoints">Repères</string>
     <string name="history_tab_tracks">Sessions</string>
     <string name="sessions_empty">Aucune trace enregistrée pour le moment.\n\nDepuis l\'écran Position, appuyez sur « Démarrer » pour commencer une trace.</string>
-    <string name="label_altitude_min">Altitude min</string>
-    <string name="label_altitude_max">Altitude max</string>
     <string name="label_current_distance">Distance actuelle</string>
 
     <!-- Recording (Position screen) -->
@@ -124,22 +117,10 @@
     <string name="session_name_label">Nom de la trace</string>
     <string name="label_altitude_profile">Profil d\'altitude</string>
 
-    <!-- Accuracy quality -->
-    <string name="quality_good">Bonne</string>
-    <string name="quality_medium">Moyenne</string>
-    <string name="quality_poor">Faible</string>
-    <string name="quality_unknown">Inconnue</string>
-
     <!-- Satellites screen -->
     <string name="satellites_title">Satellites</string>
-    <string name="action_open_satellites">Satellites</string>
     <string name="sats_waiting">En attente des données satellites…</string>
-    <string name="sats_in_view">En vue</string>
-    <string name="sats_used_in_fix">Fixés</string>
-    <string name="sats_constellation_summary">%1$d en vue, %2$d fixés</string>
     <string name="sats_status_chip_fmt">%1$d vus · %2$d fix</string>
-    <string name="label_constellations">Constellations</string>
-    <string name="label_satellite_list">Satellites en vue</string>
     <string name="sat_elevation_azimuth">él. %1$d° · az. %2$d°</string>
     <string name="unit_dbhz">dB-Hz</string>
 

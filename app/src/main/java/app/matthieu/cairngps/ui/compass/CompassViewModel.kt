@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
@@ -140,11 +139,6 @@ class CompassViewModel(
         navigationTargetRepository.setTarget(waypointId)
     }
 
-    /** Switches the north reference preference; persisted so it applies across the whole app. */
-    fun setNorthReference(reference: NorthReference) {
-        viewModelScope.launch { settingsRepository.setNorthReference(reference) }
-    }
-
     private fun onReading(reading: CompassReading) {
         smoothedMagnetic = lowPass(reading.azimuthMagneticDegrees, smoothedMagnetic)
         lastAccuracy = reading.accuracy
@@ -168,7 +162,10 @@ class CompassViewModel(
                 results,
             )
             targetDistance = results[0].toDouble()
-            targetBearing = normalize(results[1])
+            // distanceBetween's bearing is always relative to true north; convert it into the same
+            // reference as headingDegrees below (magnetic unless useTrueNorth), or the needle would
+            // be off by the declination whenever the compass is in magnetic mode.
+            targetBearing = normalize(results[1] - if (useTrueNorth) 0f else (declination ?: 0f))
         }
 
         val magnetic = smoothedMagnetic
@@ -177,7 +174,6 @@ class CompassViewModel(
             _uiState.value = _uiState.value.copy(
                 hasData = false,
                 useTrueNorth = useTrueNorth,
-                northReference = northReference,
                 declinationDegrees = declination,
                 targetName = target?.name,
                 targetDistanceMeters = targetDistance,
@@ -193,7 +189,6 @@ class CompassViewModel(
             headingDegrees = heading,
             cardinalIndex = cardinalIndex(heading),
             useTrueNorth = useTrueNorth,
-            northReference = northReference,
             declinationDegrees = declination,
             needsCalibration = needsCalibration(lastAccuracy),
             targetName = target?.name,

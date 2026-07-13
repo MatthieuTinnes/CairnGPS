@@ -46,9 +46,9 @@ data class RecordingState(
  * recording is active, then persists the final aggregates as a [Session] on [stop].
  *
  * App-scoped (constructed once in `CairnApplication`), not screen-scoped: a recording must
- * survive navigating away from the Position screen. There is no foreground service yet (planned
- * later per CLAUDE.md), so the recording is still tied to the app process and stops if the
- * process is killed in the background.
+ * survive navigating away from the Position screen. Its lifecycle is driven by
+ * `service.RecordingService` (a `START_STICKY` foreground service with its own notification), so
+ * the recording keeps running in the background rather than stopping when the app is backgrounded.
  */
 class RecordingRepository(
     private val locationRepository: LocationRepository,

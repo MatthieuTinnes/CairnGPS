@@ -22,5 +22,4 @@ data class SatelliteGlobeUiState(
     val observer: LocationData? = null,
     val hasGnssData: Boolean = false,
     val satellites: List<GlobeSatellite> = emptyList(),
-) {
-}
+)

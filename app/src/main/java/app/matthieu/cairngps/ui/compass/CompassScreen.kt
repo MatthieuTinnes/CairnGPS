@@ -66,7 +66,6 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
-import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
@@ -80,7 +79,6 @@ import app.matthieu.cairngps.ui.theme.CompassDialFill
 import app.matthieu.cairngps.ui.theme.CompassTickMajor
 import app.matthieu.cairngps.ui.theme.CompassTickMinor
 import app.matthieu.cairngps.ui.theme.DarkBackground
-import app.matthieu.cairngps.ui.theme.DarkSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OnGreenButton
@@ -125,7 +123,6 @@ fun CompassRoute(
 
     CompassScreen(
         uiState = uiState,
-        onNorthReferenceChange = viewModel::setNorthReference,
         onSelectTarget = viewModel::setTarget,
         modifier = modifier,
     )
@@ -135,7 +132,6 @@ fun CompassRoute(
 @Composable
 private fun CompassScreen(
     uiState: CompassUiState,
-    onNorthReferenceChange: (NorthReference) -> Unit,
     onSelectTarget: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -319,7 +315,7 @@ private fun DeclinationInfo(uiState: CompassUiState) {
 private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (uiState.hasTarget) {
@@ -555,7 +551,6 @@ private fun CompassScreenPreview() {
                 targetDistanceMeters = 1240.0,
                 bearingToTargetDegrees = 312f,
             ),
-            onNorthReferenceChange = {},
             onSelectTarget = {},
         )
     }
