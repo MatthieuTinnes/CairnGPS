@@ -323,11 +323,14 @@ private fun BottomActionsRow(
 
         Button(
             onClick = if (isRecording) onStopRecording else onStartRecording,
+            enabled = isRecording || hasFix,
             shape = RoundedCornerShape(16.dp),
             contentPadding = PaddingValues(5.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (isIdleWithoutFix) IdleButtonBg else CairnAmber,
                 contentColor = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else OnAmberButton,
+                disabledContainerColor = IdleButtonBg,
+                disabledContentColor = MaterialTheme.colorScheme.tertiary,
             ),
             modifier = Modifier
                 .weight(1f)
