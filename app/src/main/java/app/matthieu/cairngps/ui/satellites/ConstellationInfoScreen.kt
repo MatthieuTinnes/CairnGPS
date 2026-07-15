@@ -25,9 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,6 +39,8 @@ import app.matthieu.cairngps.data.Constellation
 import app.matthieu.cairngps.ui.theme.CairnStone
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.Sym
 
@@ -97,6 +101,10 @@ fun ConstellationInfoScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.constellation_info_title)) },
+                // Transparent rather than the default surface container — see HomeScreen's
+                // TopAppBar for the same fix (avoids a stray white block behind the title in light
+                // theme, design 5e).
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
                     IconButton(onClick = onBack) {
@@ -133,6 +141,7 @@ fun ConstellationInfoScreen(
 
 @Composable
 private fun ConstellationDocCard(doc: ConstellationDoc) {
+    val light = LocalIsLightTheme.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -167,13 +176,13 @@ private fun ConstellationDocCard(doc: ConstellationDoc) {
                 fontSize = 12.5.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = MonoFontFamily,
-                color = CairnStone,
+                color = if (light) LightStatusText else CairnStone,
             )
             Text(
                 text = stringResource(doc.descriptionRes),
                 fontSize = 13.5.sp,
                 lineHeight = 20.sp,
-                color = CairnStone,
+                color = if (light) LightStatusText else CairnStone,
             )
         }
     }

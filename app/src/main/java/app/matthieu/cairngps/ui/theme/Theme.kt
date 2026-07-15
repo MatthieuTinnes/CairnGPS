@@ -5,7 +5,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -33,6 +35,13 @@ private val LightColors = lightColorScheme(
 )
 
 /**
+ * Whether the light theme is currently active. Some screen-level colors (design 1o's Position
+ * screen fixed literals — button fills, recording chip, tab bar…) don't map to a Material color
+ * role and are branched on this directly, rather than deriving a scheme role just for them.
+ */
+val LocalIsLightTheme = staticCompositionLocalOf { false }
+
+/**
  * App theme. Defaults to a dark scheme — the app is meant for outdoor / hiking use where a dark,
  * low-glare, OLED-friendly UI is preferable. Pass [darkTheme] = false only to preview light mode.
  */
@@ -51,9 +60,11 @@ fun CairnGpsTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content,
-    )
+    CompositionLocalProvider(LocalIsLightTheme provides !darkTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content,
+        )
+    }
 }

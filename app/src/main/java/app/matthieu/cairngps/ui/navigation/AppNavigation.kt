@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
@@ -37,6 +38,12 @@ import app.matthieu.cairngps.ui.satellites.SatelliteGlobeRoute
 import app.matthieu.cairngps.ui.satellites.SatellitesRoute
 import app.matthieu.cairngps.ui.settings.SettingsRoute
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.LightNavBar
+import app.matthieu.cairngps.ui.theme.LightNavIndicator
+import app.matthieu.cairngps.ui.theme.LightNavSelectedIcon
+import app.matthieu.cairngps.ui.theme.LightNavSelectedText
+import app.matthieu.cairngps.ui.theme.LightNavUnselected
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.waypoints.WaypointDetailRoute
 
@@ -98,7 +105,10 @@ fun MainScaffold(app: CairnApplication) {
         Scaffold(
             bottomBar = {
                 if (showBottomBar) {
-                    NavigationBar {
+                    val light = LocalIsLightTheme.current
+                    NavigationBar(
+                        containerColor = if (light) LightNavBar else NavigationBarDefaults.containerColor,
+                    ) {
                         TopLevelTab.entries.forEach { tab ->
                             val selected = currentRoute == tab.route
                             NavigationBarItem(
@@ -125,11 +135,11 @@ fun MainScaffold(app: CairnApplication) {
                                 },
                                 label = { Text(stringResource(tab.labelRes)) },
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    selectedIconColor = if (light) LightNavSelectedIcon else MaterialTheme.colorScheme.onPrimaryContainer,
+                                    indicatorColor = if (light) LightNavIndicator else MaterialTheme.colorScheme.primaryContainer,
+                                    unselectedIconColor = if (light) LightNavUnselected else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    selectedTextColor = if (light) LightNavSelectedText else MaterialTheme.colorScheme.onSurface,
+                                    unselectedTextColor = if (light) LightNavUnselected else MaterialTheme.colorScheme.onSurfaceVariant,
                                 ),
                             )
                         }

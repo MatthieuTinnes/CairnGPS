@@ -48,6 +48,28 @@ val DashText = Color(0xFF5B655C)
 val DashMuted = Color(0xFF485249)
 val IdleButtonBg = Color(0xFF232B25)
 
+// Position screen, light theme (design 1o): light-theme variants of the fixed dark literals above
+// (buttons, status line, recording chip), which don't adapt on their own since the mockup uses
+// fixed values in both themes rather than theme-adaptive roles.
+val LightStatusText = Color(0xFF525E52) // "Fix 3D · …" status line
+val LightSaveButtonBg = Color(0xFFD7EBCB) // green "Marquer un repère" fill
+val LightOnSaveButton = Color(0xFF2E5E24) // its icon + text
+val LightStartButtonBg = Color(0xFF2E5E24) // green "Démarrer" fill
+val LightOnStartButton = Color(0xFFFFFFFF) // its icon + text
+
+// Bottom navigation (tab bar), light theme.
+val LightNavBar = Color(0xFFEBF0E7)
+val LightNavIndicator = Color(0xFFB7DBA4)
+val LightNavSelectedIcon = Color(0xFF1E3D17)
+val LightNavSelectedText = Color(0xFF1A2018)
+val LightNavUnselected = Color(0xFF525E52)
+
+// Recording chip (timer), light theme — light equivalent of RecChip* (no explicit 1o mock; derived
+// to match the app's recording-red on a light surface).
+val LightRecChipBg = Color(0xFFFBE4E2)
+val LightRecChipBorder = Color(0xFFF3C3BE)
+val LightRecChipText = Color(0xFFB3261E)
+
 // Compass dial (design 1c): the dial's own puck fill/border and its rotating rose's tick tones —
 // distinct from the general palette since the mockup uses fixed literals here rather than
 // theme-adaptive roles.
@@ -55,6 +77,12 @@ val CompassDialFill = Color(0xFF121813)
 val CompassDialBorder = Color(0xFF232B25)
 val CompassTickMajor = Color(0xFF5B655C)
 val CompassTickMinor = Color(0xFF37403A)
+
+// Compass dial, light theme (design 5b): light equivalents of the four literals above.
+val CompassDialFillLight = Color(0xFFEDF2E9)
+val CompassDialBorderLight = Color(0xFFC9D2C3)
+val CompassTickMajorLight = Color(0xFF6E7A6B)
+val CompassTickMinorLight = Color(0xFFC9D2C3)
 
 // Satellites sky plot (design 1d): fixed literals for the polar chart's fill/rings and the
 // screen's status chip / shortcut button border — distinct from the general palette since the
@@ -69,11 +97,25 @@ val OutlineSubtle = Color(0xFF37403A)
 // (StatusChipBg) but with its own border and brighter text, per the mockup.
 val GlobeLegendBorder = Color(0xFF232B25)
 
+// Satellites sky plot, light theme (design 5c): light equivalents of the SkyPlot*/status literals
+// above. LightBorderSubtle also covers 5c's signal-bar track and 5d's globe legend chip border.
+val SkyPlotFillLight = Color(0xFFE9EFE5)
+val SkyPlotOuterRingLight = Color(0xFF6E7A6B)
+val SkyPlotRingLight = Color(0xFF5F6D5D) // inner elevation rings + N/S/E/O axes
+val SkyPlotNorthLight = Color(0xFFA66A00) // darker amber "N" label, readable on the light plot
+val LightBorderSubtle = Color(0xFFE1E7DE)
+
 // Profile hub last-achievement banner (design 1g): its own amber-tinted surface, distinct from the
 // general palette since the mockup uses fixed literals here rather than theme-adaptive roles.
 val AchievementBannerBg = Color(0xFF2B2410)
 val AchievementBannerBorder = Color(0xFF493C15)
 val AchievementLabelGold = Color(0xFFC9A34A)
+
+// Profile hub last-achievement banner, light theme (design 5f): light equivalents of the three
+// literals above (subtitle text reuses LightStatusText, no new constant needed for it).
+val LightAchievementBannerBg = Color(0xFFFDF3DC)
+val LightAchievementBannerBorder = Color(0xFFE8CE8C)
+val LightAchievementLabelGold = Color(0xFF8A6410)
 
 // Carnet waypoint row icon circle (design 1h): a distinct muted-green background, different from
 // the CairnGreenDark used for the Compass target card / Profil avatar.

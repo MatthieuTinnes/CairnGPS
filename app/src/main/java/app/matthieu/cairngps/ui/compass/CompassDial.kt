@@ -12,11 +12,6 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.matthieu.cairngps.ui.theme.CompassDialBorder
-import app.matthieu.cairngps.ui.theme.CompassDialFill
-import app.matthieu.cairngps.ui.theme.CompassTickMajor
-import app.matthieu.cairngps.ui.theme.CompassTickMinor
-import app.matthieu.cairngps.ui.theme.DarkBackground
 import app.matthieu.cairngps.ui.theme.ValueMuted
 import kotlin.math.cos
 import kotlin.math.sin
@@ -35,6 +30,11 @@ internal fun DrawScope.drawCompassRose(
     cardinalColor: Color,
     indexColor: Color,
     targetColor: Color,
+    dialFill: Color,
+    dialBorder: Color,
+    tickMajor: Color,
+    tickMinor: Color,
+    dotHalo: Color,
     textMeasurer: TextMeasurer,
 ) {
     // Reserve a margin at the edge for the fixed heading index, so it sits clear of the ticks.
@@ -42,23 +42,23 @@ internal fun DrawScope.drawCompassRose(
     val radius = size.minDimension / 2f - indexMargin
     val center = Offset(size.width / 2f, size.height / 2f)
 
-    drawDialBase(center, radius)
+    drawDialBase(center, radius, dialFill, dialBorder)
 
     rotate(degrees = -heading, pivot = center) {
-        drawTicksAndLabels(center, radius, roseLabels, cardinalColor, indexColor, textMeasurer)
+        drawTicksAndLabels(center, radius, roseLabels, cardinalColor, indexColor, tickMajor, tickMinor, textMeasurer)
         // Rotates with the ticks: its screen position still tracks the true/magnetic bearing
         // regardless of which way the device currently points.
-        drawTargetDot(center, radius, targetBearing, targetColor)
+        drawTargetDot(center, radius, targetBearing, targetColor, dotHalo)
     }
 
     drawHeadingIndex(center, radius, indexColor)
 }
 
 /** Solid puck fill behind the whole dial, with a thin border — matching the design's flat circle. */
-private fun DrawScope.drawDialBase(center: Offset, radius: Float) {
-    drawCircle(color = CompassDialFill, radius = radius, center = center)
+private fun DrawScope.drawDialBase(center: Offset, radius: Float, fill: Color, border: Color) {
+    drawCircle(color = fill, radius = radius, center = center)
     drawCircle(
-        color = CompassDialBorder,
+        color = border,
         radius = radius,
         center = center,
         style = Stroke(width = 1.5.dp.toPx()),
@@ -72,6 +72,8 @@ private fun DrawScope.drawTicksAndLabels(
     roseLabels: Array<String>,
     cardinalColor: Color,
     indexColor: Color,
+    tickMajor: Color,
+    tickMinor: Color,
     textMeasurer: TextMeasurer,
 ) {
     for (i in 0 until 72) {
@@ -83,7 +85,7 @@ private fun DrawScope.drawTicksAndLabels(
         val outer = radius - 4.dp.toPx()
         val inner = outer - (if (isMajor) 18.dp.toPx() else 10.dp.toPx())
         drawLine(
-            color = if (isMajor) CompassTickMajor else CompassTickMinor,
+            color = if (isMajor) tickMajor else tickMinor,
             start = Offset(center.x + inner * sinV, center.y - inner * cosV),
             end = Offset(center.x + outer * sinV, center.y - outer * cosV),
             strokeWidth = (if (isMajor) 2.5f else 1f).dp.toPx(),
@@ -113,8 +115,14 @@ private fun DrawScope.drawTicksAndLabels(
     }
 }
 
-/** Target bearing marker: a small filled dot on the ring, haloed with the background color for contrast. */
-private fun DrawScope.drawTargetDot(center: Offset, radius: Float, targetBearing: Float?, targetColor: Color) {
+/** Target bearing marker: a small filled dot on the ring, haloed with the dial's fill color for contrast. */
+private fun DrawScope.drawTargetDot(
+    center: Offset,
+    radius: Float,
+    targetBearing: Float?,
+    targetColor: Color,
+    halo: Color,
+) {
     if (targetBearing == null) return
     val rad = Math.toRadians(targetBearing.toDouble())
     val tickRadius = radius - 4.dp.toPx()
@@ -122,7 +130,7 @@ private fun DrawScope.drawTargetDot(center: Offset, radius: Float, targetBearing
         center.x + tickRadius * sin(rad).toFloat(),
         center.y - tickRadius * cos(rad).toFloat(),
     )
-    drawCircle(color = DarkBackground, radius = 8.dp.toPx(), center = dotCenter)
+    drawCircle(color = halo, radius = 8.dp.toPx(), center = dotCenter)
     drawCircle(color = targetColor, radius = 7.dp.toPx(), center = dotCenter)
 }
 

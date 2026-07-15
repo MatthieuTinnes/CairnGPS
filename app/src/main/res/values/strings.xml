@@ -160,7 +160,7 @@
     <string name="compass_calibration_needed">Boussole à calibrer</string>
     <string name="compass_calibration_hint">Bougez l\'appareil en formant un 8 dans l\'air.</string>
     <string name="compass_sensor_unavailable">Cet appareil ne dispose pas de capteur de boussole.</string>
-    <string name="compass_target_ref_true">nord vrai</string>
+    <string name="compass_target_ref_true">nord géographique</string>
     <string name="compass_target_ref_magnetic">nord magnétique</string>
     <string name="compass_target_bearing_fmt">cap %1$d° · %2$s</string>
     <string name="compass_change_target">Changer de repère cible</string>

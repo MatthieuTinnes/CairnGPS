@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -48,7 +49,9 @@ import app.matthieu.cairngps.data.Constellation
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.SatelliteInfo
 import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
+import app.matthieu.cairngps.ui.theme.CompassDialBorderLight
 import app.matthieu.cairngps.ui.theme.ConstellationBeidou
 import app.matthieu.cairngps.ui.theme.ConstellationGalileo
 import app.matthieu.cairngps.ui.theme.ConstellationGlonass
@@ -60,6 +63,10 @@ import app.matthieu.cairngps.ui.theme.ConstellationUnknown
 import app.matthieu.cairngps.ui.theme.DarkOnSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightBorderSubtle
+import app.matthieu.cairngps.ui.theme.LightNavBar
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OutlineSubtle
 import app.matthieu.cairngps.ui.theme.QualityGood
@@ -121,6 +128,10 @@ private fun SatellitesScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.satellites_title)) },
+                // Transparent rather than the default surface container — see HomeScreen's
+                // TopAppBar for the same fix (avoids a stray white block behind the title in light
+                // theme, design 5c).
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     if (uiState.hasData) {
                         StatusChip(inView = uiState.inViewCount, usedInFix = uiState.usedInFixCount)
@@ -197,11 +208,12 @@ private fun WaitingForGnss(modifier: Modifier = Modifier) {
 /** "N vus · M fix" pill in the top bar (screen 1d). */
 @Composable
 private fun StatusChip(inView: Int, usedInFix: Int) {
+    val light = LocalIsLightTheme.current
     Row(
         modifier = Modifier
             .height(32.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(StatusChipBg)
+            .background(if (light) LightNavBar else StatusChipBg)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -215,7 +227,7 @@ private fun StatusChip(inView: Int, usedInFix: Int) {
             text = stringResource(R.string.sats_status_chip_fmt, inView, usedInFix),
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = DarkOnSurface,
+            color = if (light) MaterialTheme.colorScheme.onSurface else DarkOnSurface,
         )
     }
 }
@@ -251,11 +263,12 @@ private fun SkyPlotCard(satellites: List<SatelliteInfo>) {
 
 @Composable
 private fun LegendChip(constellation: Constellation) {
+    val light = LocalIsLightTheme.current
     Row(
         modifier = Modifier
             .height(26.dp)
             .clip(RoundedCornerShape(13.dp))
-            .background(StatusChipBg)
+            .background(if (light) LightNavBar else StatusChipBg)
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -265,24 +278,34 @@ private fun LegendChip(constellation: Constellation) {
                 .background(constellation.color(), CircleShape),
         )
         Spacer(Modifier.width(6.dp))
-        Text(text = constellation.displayName, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = CairnStone)
+        Text(
+            text = constellation.displayName,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (light) LightStatusText else CairnStone,
+        )
     }
 }
 
 /** "Globe 3D" / "Constellations" shortcut button (screen 1d). */
 @Composable
 private fun ShortcutButton(icon: Char, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val light = LocalIsLightTheme.current
     Row(
         modifier = modifier
             .height(52.dp)
             .clip(RoundedCornerShape(16.dp))
-            .border(width = 1.dp, color = OutlineSubtle, shape = RoundedCornerShape(16.dp))
+            .border(
+                width = 1.dp,
+                color = if (light) CompassDialBorderLight else OutlineSubtle,
+                shape = RoundedCornerShape(16.dp),
+            )
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Sym(icon = icon, contentDescription = null, tint = CairnGreen, size = 20.dp)
+        Sym(icon = icon, contentDescription = null, tint = if (light) CairnGreenDark else CairnGreen, size = 20.dp)
         Spacer(Modifier.width(8.dp))
         Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
     }
@@ -330,6 +353,7 @@ private fun ConstellationGroupHeader(constellation: Constellation, count: Int) {
 
 @Composable
 private fun SatelliteRow(satellite: SatelliteInfo) {
+    val light = LocalIsLightTheme.current
     val color = satellite.constellation.color()
     // Satellites tracked but not used in the fix are dimmed so the fixed ones stand out.
     val contentAlpha = if (satellite.usedInFix) 1f else 0.55f
@@ -357,6 +381,7 @@ private fun SatelliteRow(satellite: SatelliteInfo) {
         SignalBar(
             cn0DbHz = satellite.cn0DbHz,
             color = color.copy(alpha = contentAlpha),
+            trackColor = if (light) LightBorderSubtle else SkyPlotInnerRing,
             modifier = Modifier.weight(1f),
         )
         Spacer(Modifier.width(10.dp))
@@ -365,7 +390,7 @@ private fun SatelliteRow(satellite: SatelliteInfo) {
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = MonoFontFamily,
-            color = CairnStone.copy(alpha = contentAlpha),
+            color = (if (light) LightStatusText else CairnStone).copy(alpha = contentAlpha),
             textAlign = TextAlign.End,
             modifier = Modifier.width(30.dp),
         )
@@ -374,7 +399,7 @@ private fun SatelliteRow(satellite: SatelliteInfo) {
 
 /** Horizontal signal bar filled proportionally to the C/N0 value. */
 @Composable
-private fun SignalBar(cn0DbHz: Float, color: Color, modifier: Modifier = Modifier) {
+private fun SignalBar(cn0DbHz: Float, color: Color, trackColor: Color, modifier: Modifier = Modifier) {
     // Animate level changes so successive GNSS snapshots slide instead of flickering.
     val fraction by animateFloatAsState(
         targetValue = ((cn0DbHz - CN0_RANGE_MIN_DBHZ) / CN0_RANGE_SPAN_DBHZ).coerceIn(CN0_MIN_FRACTION, 1f),
@@ -384,7 +409,7 @@ private fun SignalBar(cn0DbHz: Float, color: Color, modifier: Modifier = Modifie
         modifier = modifier
             .height(6.dp)
             .clip(RoundedCornerShape(3.dp))
-            .background(SkyPlotInnerRing),
+            .background(trackColor),
     ) {
         Box(
             modifier = Modifier

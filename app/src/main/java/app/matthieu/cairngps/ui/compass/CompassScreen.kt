@@ -31,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,8 +66,20 @@ import app.matthieu.cairngps.domain.format.formatShortDistance
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
+import app.matthieu.cairngps.ui.theme.CompassDialBorder
+import app.matthieu.cairngps.ui.theme.CompassDialBorderLight
+import app.matthieu.cairngps.ui.theme.CompassDialFill
+import app.matthieu.cairngps.ui.theme.CompassDialFillLight
+import app.matthieu.cairngps.ui.theme.CompassTickMajor
+import app.matthieu.cairngps.ui.theme.CompassTickMajorLight
+import app.matthieu.cairngps.ui.theme.CompassTickMinor
+import app.matthieu.cairngps.ui.theme.CompassTickMinorLight
+import app.matthieu.cairngps.ui.theme.DarkBackground
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
@@ -134,7 +147,12 @@ private fun CompassScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.compass_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.compass_title)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            )
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -208,9 +226,15 @@ private fun CompassDial(uiState: CompassUiState) {
     val roseLabels = stringArrayResource(R.array.compass_rose_labels)
     val cardinals = stringArrayResource(R.array.compass_cardinals)
 
+    val light = LocalIsLightTheme.current
     val cardinalColor = MaterialTheme.colorScheme.onSurface
     val indexColor = CairnAmber
-    val targetColor = CairnGreen
+    val targetColor = if (light) CairnGreenDark else CairnGreen
+    val dialFill = if (light) CompassDialFillLight else CompassDialFill
+    val dialBorder = if (light) CompassDialBorderLight else CompassDialBorder
+    val tickMajor = if (light) CompassTickMajorLight else CompassTickMajor
+    val tickMinor = if (light) CompassTickMinorLight else CompassTickMinor
+    val dotHalo = if (light) CompassDialFillLight else DarkBackground
     val textMeasurer = rememberTextMeasurer()
 
     Box(
@@ -228,6 +252,11 @@ private fun CompassDial(uiState: CompassUiState) {
                 cardinalColor = cardinalColor,
                 indexColor = indexColor,
                 targetColor = targetColor,
+                dialFill = dialFill,
+                dialBorder = dialBorder,
+                tickMajor = tickMajor,
+                tickMinor = tickMinor,
+                dotHalo = dotHalo,
                 textMeasurer = textMeasurer,
             )
         }
@@ -257,7 +286,8 @@ private fun CompassDial(uiState: CompassUiState) {
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 2.sp,
-                    color = CairnStone,
+                    // CairnStone is too low-contrast on the light background (design 5b).
+                    color = if (light) LightStatusText else CairnStone,
                     modifier = Modifier.padding(top = 6.dp),
                 )
             }
@@ -297,6 +327,7 @@ private fun DeclinationInfo(uiState: CompassUiState) {
  */
 @Composable
 private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
+    val light = LocalIsLightTheme.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -307,7 +338,7 @@ private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
                     Box(
                         modifier = Modifier
                             .size(44.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                            .background(if (light) CairnGreenDark else CairnGreen, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = OnGreenButton)
@@ -341,7 +372,7 @@ private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
                             icon = Glyph.Navigation,
                             contentDescription = null,
                             filled = true,
-                            tint = CairnGreen,
+                            tint = if (light) CairnGreenDark else CairnGreen,
                             modifier = if (relative != null) {
                                 Modifier.rotateGlyph(relative)
                             } else {

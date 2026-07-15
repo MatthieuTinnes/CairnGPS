@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -63,6 +64,9 @@ import app.matthieu.cairngps.domain.SatelliteGeometry
 import app.matthieu.cairngps.ui.theme.DarkOnSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.GlobeLegendBorder
+import app.matthieu.cairngps.ui.theme.LightBorderSubtle
+import app.matthieu.cairngps.ui.theme.LightNavBar
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.StatusChipBg
 import app.matthieu.cairngps.ui.theme.Sym
 import kotlinx.coroutines.Dispatchers
@@ -112,6 +116,10 @@ private fun SatelliteGlobeScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.satellite_globe_title)) },
+                // Transparent rather than the default surface container — see HomeScreen's
+                // TopAppBar for the same fix (avoids a stray white block behind the title in light
+                // theme, design 5d).
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
                     IconButton(onClick = onBack) {
@@ -192,12 +200,17 @@ private fun GlobeWaiting(message: String, modifier: Modifier = Modifier) {
 /** Constellation legend chip below the globe (screen 1e). */
 @Composable
 private fun GlobeLegendChip(constellation: Constellation) {
+    val light = LocalIsLightTheme.current
     Row(
         modifier = Modifier
             .height(30.dp)
             .clip(RoundedCornerShape(15.dp))
-            .background(StatusChipBg)
-            .border(width = 1.dp, color = GlobeLegendBorder, shape = RoundedCornerShape(15.dp))
+            .background(if (light) LightNavBar else StatusChipBg)
+            .border(
+                width = 1.dp,
+                color = if (light) LightBorderSubtle else GlobeLegendBorder,
+                shape = RoundedCornerShape(15.dp),
+            )
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -211,7 +224,7 @@ private fun GlobeLegendChip(constellation: Constellation) {
             text = constellation.displayName,
             fontSize = 12.5.sp,
             fontWeight = FontWeight.Medium,
-            color = DarkOnSurface,
+            color = if (light) MaterialTheme.colorScheme.onSurface else DarkOnSurface,
         )
     }
 }

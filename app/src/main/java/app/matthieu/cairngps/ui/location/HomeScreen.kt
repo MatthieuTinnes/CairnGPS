@@ -37,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,6 +90,15 @@ import app.matthieu.cairngps.ui.theme.DashText
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.IdleButtonBg
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightOnSaveButton
+import app.matthieu.cairngps.ui.theme.LightOnStartButton
+import app.matthieu.cairngps.ui.theme.LightRecChipBg
+import app.matthieu.cairngps.ui.theme.LightRecChipBorder
+import app.matthieu.cairngps.ui.theme.LightRecChipText
+import app.matthieu.cairngps.ui.theme.LightSaveButtonBg
+import app.matthieu.cairngps.ui.theme.LightStartButtonBg
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OnAmberButton
 import app.matthieu.cairngps.ui.theme.OnGreenButton
@@ -206,6 +216,10 @@ private fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.tab_home)) },
+                // Transparent rather than the default surface container: Material3's TopAppBar
+                // otherwise draws an opaque surface-colored bar (white in light theme) behind the
+                // title, which reads as a stray white block over the page background (design 1o).
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     if (recordingUiState.isRecording) {
                         RecordingBadge(elapsedMs = recordingUiState.elapsedMs)
@@ -298,6 +312,15 @@ private fun BottomActionsRow(
     onStopRecording: () -> Unit,
 ) {
     val isIdleWithoutFix = !hasFix && !isRecording
+    val light = LocalIsLightTheme.current
+
+    // Design 1o's "Marquer un repère" fill/text and "Démarrer" fill are lighter, distinct tones on
+    // a white/off-white background — the dark theme's literals (near-black text on dark green,
+    // amber start button) don't carry over, so both buttons pick light-theme-specific colors here.
+    val saveButtonBg = if (light) LightSaveButtonBg else CairnGreenDark
+    val onSaveButton = if (light) LightOnSaveButton else MaterialTheme.colorScheme.onSurface
+    val startButtonBg = if (light) LightStartButtonBg else CairnAmber
+    val onStartButton = if (light) LightOnStartButton else OnAmberButton
 
     Row(
         modifier = Modifier
@@ -313,16 +336,16 @@ private fun BottomActionsRow(
 
             contentPadding = PaddingValues(5.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = CairnGreenDark,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor = CairnGreenDark,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface,
+                containerColor = saveButtonBg,
+                contentColor = onSaveButton,
+                disabledContainerColor = saveButtonBg,
+                disabledContentColor = onSaveButton,
             ),
             modifier = Modifier
                 .weight(1f)
                 .height(60.dp),
         ) {
-            Sym(icon = Glyph.AddLocationAlt, contentDescription = null, tint = OnGreenButton)
+            Sym(icon = Glyph.AddLocationAlt, contentDescription = null, tint = if (light) onSaveButton else OnGreenButton)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.action_save_waypoint))
         }
@@ -333,8 +356,8 @@ private fun BottomActionsRow(
             shape = RoundedCornerShape(16.dp),
             contentPadding = PaddingValues(5.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isIdleWithoutFix) IdleButtonBg else CairnAmber,
-                contentColor = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else OnAmberButton,
+                containerColor = if (isIdleWithoutFix) IdleButtonBg else startButtonBg,
+                contentColor = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else onStartButton,
                 disabledContainerColor = IdleButtonBg,
                 disabledContentColor = MaterialTheme.colorScheme.tertiary,
             ),
@@ -346,7 +369,7 @@ private fun BottomActionsRow(
                 icon = if (isRecording) Glyph.Stop else Glyph.PlayArrow,
                 contentDescription = null,
                 filled = true,
-                tint = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else OnAmberButton,
+                tint = if (isIdleWithoutFix) MaterialTheme.colorScheme.tertiary else onStartButton,
             )
             Spacer(Modifier.width(8.dp))
             Text(stringResource(if (isRecording) R.string.recording_stop else R.string.recording_start))
@@ -432,10 +455,15 @@ private fun RecordingStat(
 /** Pill with the live elapsed time, shown in the top bar while recording. */
 @Composable
 private fun RecordingBadge(elapsedMs: Long) {
+    val light = LocalIsLightTheme.current
+    val chipBg = if (light) LightRecChipBg else RecChipBg
+    val chipBorder = if (light) LightRecChipBorder else RecChipBorder
+    val chipText = if (light) LightRecChipText else RecChipText
+
     Row(
         modifier = Modifier
-            .background(RecChipBg, RoundedCornerShape(16.dp))
-            .border(1.dp, RecChipBorder, RoundedCornerShape(16.dp))
+            .background(chipBg, RoundedCornerShape(16.dp))
+            .border(1.dp, chipBorder, RoundedCornerShape(16.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -445,7 +473,7 @@ private fun RecordingBadge(elapsedMs: Long) {
             text = formatDuration(elapsedMs),
             style = MaterialTheme.typography.labelLarge,
             fontFamily = MonoFontFamily,
-            color = RecChipText,
+            color = chipText,
         )
     }
 }
@@ -520,8 +548,10 @@ private fun StatusLine(hasFix: Boolean, satellitesUsedInFix: Int?, satellitesVis
                 },
                 style = MaterialTheme.typography.titleSmall,
                 // Same muted tone whether or not a fix has been acquired — only the dot's color
-                // signals fix status (design 1a/1b).
-                color = MaterialTheme.colorScheme.tertiary,
+                // signals fix status (design 1a/1b). colorScheme.tertiary (CairnStone) is a light
+                // grey that's too low-contrast on the light background, so light theme uses its
+                // own darker tone from design 1o instead.
+                color = if (LocalIsLightTheme.current) LightStatusText else MaterialTheme.colorScheme.tertiary,
             )
         }
     }

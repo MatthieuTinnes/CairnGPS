@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -55,6 +56,11 @@ import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightAchievementBannerBg
+import app.matthieu.cairngps.ui.theme.LightAchievementBannerBorder
+import app.matthieu.cairngps.ui.theme.LightAchievementLabelGold
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.OnAmberButton
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
@@ -104,6 +110,7 @@ private fun ProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.tab_profile)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     val settingsLabel = stringResource(R.string.action_open_settings)
                     IconButton(onClick = onOpenSettings) {
@@ -167,13 +174,23 @@ private fun ProfileScreen(
             val lastUnlockedAt = uiState.lastUnlockedAt
             if (lastUnlocked != null && lastUnlockedAt != null) {
                 item(key = "last-achievement") {
+                    // The banner's amber-tinted surface is a fixed dark literal in the design (1g)
+                    // that stays dark in light theme (5f), so its background/border/label/subtitle
+                    // pick light-theme-specific values here.
+                    val light = LocalIsLightTheme.current
                     Card(
                         onClick = onOpenAchievements,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(width = 1.dp, color = AchievementBannerBorder, shape = RoundedCornerShape(20.dp)),
+                            .border(
+                                width = 1.dp,
+                                color = if (light) LightAchievementBannerBorder else AchievementBannerBorder,
+                                shape = RoundedCornerShape(20.dp),
+                            ),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = AchievementBannerBg),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (light) LightAchievementBannerBg else AchievementBannerBg,
+                        ),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
@@ -194,14 +211,19 @@ private fun ProfileScreen(
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     letterSpacing = 0.8.sp,
-                                    color = AchievementLabelGold,
+                                    color = if (light) LightAchievementLabelGold else AchievementLabelGold,
                                 )
                                 Text(
                                     text = buildAnnotatedString {
                                         withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) {
                                             append(stringResource(lastUnlocked.titleRes))
                                         }
-                                        withStyle(SpanStyle(fontWeight = FontWeight.Normal, color = CairnStone)) {
+                                        withStyle(
+                                            SpanStyle(
+                                                fontWeight = FontWeight.Normal,
+                                                color = if (light) LightStatusText else CairnStone,
+                                            ),
+                                        ) {
                                             append(" · " + formatWaypointTimestamp(lastUnlockedAt))
                                         }
                                     },

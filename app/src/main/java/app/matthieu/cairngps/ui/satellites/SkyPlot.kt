@@ -19,9 +19,15 @@ import app.matthieu.cairngps.data.SatelliteInfo
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.DarkBackground
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.SkyPlotFill
+import app.matthieu.cairngps.ui.theme.SkyPlotFillLight
 import app.matthieu.cairngps.ui.theme.SkyPlotInnerRing
+import app.matthieu.cairngps.ui.theme.SkyPlotNorthLight
 import app.matthieu.cairngps.ui.theme.SkyPlotOuterRing
+import app.matthieu.cairngps.ui.theme.SkyPlotOuterRingLight
+import app.matthieu.cairngps.ui.theme.SkyPlotRingLight
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -36,6 +42,14 @@ fun SkyPlot(satellites: List<SatelliteInfo>, modifier: Modifier = Modifier) {
     val cardinals = stringArrayResource(R.array.compass_rose_labels) // [N, E, S, O]
     val textMeasurer = rememberTextMeasurer()
 
+    val light = LocalIsLightTheme.current
+    val plotFill = if (light) SkyPlotFillLight else SkyPlotFill
+    val outerRing = if (light) SkyPlotOuterRingLight else SkyPlotOuterRing
+    val innerRing = if (light) SkyPlotRingLight else SkyPlotInnerRing
+    val northColor = if (light) SkyPlotNorthLight else CairnAmber
+    val axisLabelColor = if (light) LightStatusText else LabelMuted
+    val dotHalo = if (light) SkyPlotFillLight else DarkBackground
+
     Canvas(
         modifier = modifier
             .fillMaxWidth()
@@ -45,46 +59,46 @@ fun SkyPlot(satellites: List<SatelliteInfo>, modifier: Modifier = Modifier) {
         val radius = size.minDimension / 2f * 0.86f
 
         // Solid puck fill behind the whole plot, with a thin border.
-        drawCircle(color = SkyPlotFill, radius = radius, center = center)
-        drawCircle(color = SkyPlotOuterRing, radius = radius, center = center, style = Stroke(width = 1.dp.toPx()))
+        drawCircle(color = plotFill, radius = radius, center = center)
+        drawCircle(color = outerRing, radius = radius, center = center, style = Stroke(width = 1.dp.toPx()))
 
         // Elevation rings at 30°/60° up to the zenith, plus the N/S/E/O axes.
         listOf(93f / 140f, 47f / 140f).forEach { fraction ->
             drawCircle(
-                color = SkyPlotInnerRing,
+                color = innerRing,
                 radius = radius * fraction,
                 center = center,
                 style = Stroke(width = 1.dp.toPx()),
             )
         }
-        drawLine(SkyPlotInnerRing, Offset(center.x, center.y - radius), Offset(center.x, center.y + radius), 1.dp.toPx())
-        drawLine(SkyPlotInnerRing, Offset(center.x - radius, center.y), Offset(center.x + radius, center.y), 1.dp.toPx())
+        drawLine(innerRing, Offset(center.x, center.y - radius), Offset(center.x, center.y + radius), 1.dp.toPx())
+        drawLine(innerRing, Offset(center.x - radius, center.y), Offset(center.x + radius, center.y), 1.dp.toPx())
 
         val labelMargin = 14.dp.toPx()
         cardinals.getOrNull(0)?.let { label ->
             drawText(
                 textLayoutResult = textMeasurer.measure(
                     label,
-                    TextStyle(color = CairnAmber, fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                    TextStyle(color = northColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
                 ),
                 topLeft = Offset(center.x - 5.dp.toPx(), center.y - radius - labelMargin),
             )
         }
         cardinals.getOrNull(1)?.let { label ->
             drawText(
-                textLayoutResult = textMeasurer.measure(label, TextStyle(color = LabelMuted, fontSize = 12.sp)),
+                textLayoutResult = textMeasurer.measure(label, TextStyle(color = axisLabelColor, fontSize = 12.sp)),
                 topLeft = Offset(center.x + radius + 2.dp.toPx(), center.y - 6.dp.toPx()),
             )
         }
         cardinals.getOrNull(2)?.let { label ->
             drawText(
-                textLayoutResult = textMeasurer.measure(label, TextStyle(color = LabelMuted, fontSize = 12.sp)),
+                textLayoutResult = textMeasurer.measure(label, TextStyle(color = axisLabelColor, fontSize = 12.sp)),
                 topLeft = Offset(center.x - 4.dp.toPx(), center.y + radius + labelMargin - 10.dp.toPx()),
             )
         }
         cardinals.getOrNull(3)?.let { label ->
             drawText(
-                textLayoutResult = textMeasurer.measure(label, TextStyle(color = LabelMuted, fontSize = 12.sp)),
+                textLayoutResult = textMeasurer.measure(label, TextStyle(color = axisLabelColor, fontSize = 12.sp)),
                 topLeft = Offset(center.x - radius - labelMargin, center.y - 6.dp.toPx()),
             )
         }
@@ -102,7 +116,7 @@ fun SkyPlot(satellites: List<SatelliteInfo>, modifier: Modifier = Modifier) {
             val color = satellite.constellation.color()
             if (satellite.usedInFix) {
                 drawCircle(color = color, radius = 6.5.dp.toPx(), center = point)
-                drawCircle(color = DarkBackground, radius = 6.5.dp.toPx(), center = point, style = Stroke(width = 1.5.dp.toPx()))
+                drawCircle(color = dotHalo, radius = 6.5.dp.toPx(), center = point, style = Stroke(width = 1.5.dp.toPx()))
             } else {
                 drawCircle(color = color.copy(alpha = 0.75f), radius = 5.5.dp.toPx(), center = point, style = Stroke(width = 1.5.dp.toPx()))
             }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,7 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
+import app.matthieu.cairngps.ui.theme.CompassDialBorderLight
 import app.matthieu.cairngps.ui.theme.Glyph
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.OutlineSubtle
 import app.matthieu.cairngps.ui.theme.Sym
@@ -43,11 +45,14 @@ fun SegmentedToggle(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val light = LocalIsLightTheme.current
+    val dividerColor = if (light) CompassDialBorderLight else OutlineSubtle
+
     Row(
         modifier = modifier
             .height(40.dp)
             .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, OutlineSubtle, RoundedCornerShape(20.dp))
+            .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
             .selectableGroup(),
     ) {
         options.forEachIndexed { index, label ->
@@ -75,7 +80,11 @@ fun SegmentedToggle(
                     text = label,
                     fontSize = 14.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (selected) MaterialTheme.colorScheme.onSurface else CairnStone,
+                    // The selected pill's background is the fixed CairnGreenDark literal in both
+                    // themes, so its text uses the matching fixed OnGreenButton rather than
+                    // colorScheme.onSurface — that role flips to near-black in light theme and
+                    // would be unreadable on the still-dark-green pill (design 5m/5g).
+                    color = if (selected) OnGreenButton else if (light) LightStatusText else CairnStone,
                 )
             }
             if (index != options.lastIndex) {
@@ -83,7 +92,7 @@ fun SegmentedToggle(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(1.dp)
-                        .background(OutlineSubtle),
+                        .background(dividerColor),
                 )
             }
         }
