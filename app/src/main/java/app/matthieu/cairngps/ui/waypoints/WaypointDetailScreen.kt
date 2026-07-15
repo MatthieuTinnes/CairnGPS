@@ -2,12 +2,9 @@ package app.matthieu.cairngps.ui.waypoints
 
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -55,7 +52,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -66,13 +62,14 @@ import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.ui.location.DASH
-import app.matthieu.cairngps.ui.location.formatAccuracy
-import app.matthieu.cairngps.ui.location.formatAltitude
-import app.matthieu.cairngps.ui.location.formatCoordinate
-import app.matthieu.cairngps.ui.location.formatCoordinatesForClipboard
-import app.matthieu.cairngps.ui.location.formatDistanceKm
-import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.DASH
+import app.matthieu.cairngps.domain.format.copyCoordinates
+import app.matthieu.cairngps.domain.format.formatAccuracy
+import app.matthieu.cairngps.domain.format.formatAltitude
+import app.matthieu.cairngps.domain.format.formatCoordinate
+import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
@@ -159,6 +156,8 @@ private fun WaypointDetailScreen(
 
     if (showDeleteDialog) {
         DeleteConfirmDialog(
+            title = stringResource(R.string.waypoint_delete_dialog_title),
+            message = stringResource(R.string.waypoint_delete_dialog_message),
             onDismiss = { showDeleteDialog = false },
             onConfirm = {
                 showDeleteDialog = false
@@ -238,7 +237,7 @@ private fun WaypointDetailScreen(
             }
 
             Card(
-                onClick = { copyCoordinates(context, waypoint) },
+                onClick = { context.copyCoordinates(waypoint.latitude, waypoint.longitude) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -286,13 +285,13 @@ private fun WaypointDetailScreen(
                 MeasurementTile(
                     label = stringResource(R.string.label_altitude),
                     value = formatAltitude(waypoint.altitude),
-                    unit = stringResource(R.string.unit_meters),
+                    unit = "m",
                     modifier = Modifier.weight(1f),
                 )
                 val (distanceValue, distanceUnit) = when {
-                    currentDistanceMeters == null -> DASH to stringResource(R.string.unit_meters)
+                    currentDistanceMeters == null -> DASH to "m"
                     currentDistanceMeters >= 1000.0 -> formatDistanceKm(currentDistanceMeters) to "km"
-                    else -> currentDistanceMeters.roundToInt().toString() to stringResource(R.string.unit_meters)
+                    else -> currentDistanceMeters.roundToInt().toString() to "m"
                 }
                 MeasurementTile(
                     label = stringResource(R.string.label_current_distance),
@@ -320,12 +319,12 @@ private fun WaypointDetailScreen(
                     )
                     MeasurementRow(
                         stringResource(R.string.label_speed),
-                        "${formatSpeedKmh(waypoint.speed)} ${stringResource(R.string.unit_kmh)}",
+                        "${formatSpeedKmh(waypoint.speed)} km/h",
                         valueColor = MaterialTheme.colorScheme.onSurface,
                     )
                     MeasurementRow(
                         stringResource(R.string.label_accuracy),
-                        "±${formatAccuracy(waypoint.horizontalAccuracy)} ${stringResource(R.string.unit_meters)}",
+                        "±${formatAccuracy(waypoint.horizontalAccuracy)} m",
                     )
                     MeasurementRow(
                         stringResource(R.string.label_satellites_used),
@@ -429,12 +428,13 @@ private fun MeasurementTile(label: String, value: String, unit: String, modifier
     }
 }
 
+/** Confirmation dialog shared by every "delete this X?" flow (waypoints, sessions). */
 @Composable
-private fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+fun DeleteConfirmDialog(title: String, message: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.waypoint_delete_dialog_title)) },
-        text = { Text(stringResource(R.string.waypoint_delete_dialog_message)) },
+        title = { Text(title) },
+        text = { Text(message) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
@@ -499,30 +499,19 @@ private fun MeasurementRow(label: String, value: String, valueColor: Color = Cai
     }
 }
 
-private fun copyCoordinates(context: Context, waypoint: Waypoint) {
-    val text = formatCoordinatesForClipboard(waypoint.latitude, waypoint.longitude)
-    context.getSystemService<ClipboardManager>()
-        ?.setPrimaryClip(ClipData.newPlainText("coordinates", text))
-
-    // Android 13+ shows its own "copied" confirmation UI, so only toast on older versions.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        Toast.makeText(context, R.string.coordinates_copied, Toast.LENGTH_SHORT).show()
-    }
-}
-
 /**
- * Ouvre le repère dans une app de cartographie via une URI `geo:`. Android présente le sélecteur
- * de toutes les apps géo installées (Google Maps, Organic Maps, OsmAnd…), sans coder pour chacune.
+ * Opens the waypoint in a map app via a `geo:` URI. Android shows the picker for every installed
+ * geo app (Google Maps, Organic Maps, OsmAnd…), so there's no need to code against each one.
  */
 private fun openInMaps(context: Context, waypoint: Waypoint) {
-    // Locale.US force le point décimal : une virgule casserait l'URI geo:.
+    // Locale.US forces a decimal point: a comma would break the geo: URI.
     val coordinates = "%.6f,%.6f".format(Locale.US, waypoint.latitude, waypoint.longitude)
-    // q=lat,lon(label) place un marqueur nommé au point ; le nom doit être encodé.
+    // q=lat,lon(label) drops a named marker at the point; the name must be encoded.
     val uri = "geo:$coordinates?q=$coordinates(${Uri.encode(waypoint.name)})".toUri()
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, uri))
     } catch (_: ActivityNotFoundException) {
-        // resolveActivity est peu fiable sous Android 11+ (visibilité des packages), d'où le catch.
+        // resolveActivity is unreliable on Android 11+ (package visibility), hence the catch.
         Toast.makeText(context, R.string.no_maps_app, Toast.LENGTH_SHORT).show()
     }
 }

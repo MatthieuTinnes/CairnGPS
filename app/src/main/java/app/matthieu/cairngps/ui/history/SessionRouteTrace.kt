@@ -10,21 +10,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.TrackPoint
+import app.matthieu.cairngps.domain.format.formatTimeOfDay
 import app.matthieu.cairngps.ui.theme.AchievementLabelGold
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.LabelMuted
-import app.matthieu.cairngps.ui.waypoints.formatTimeOfDay
-import androidx.compose.ui.res.stringResource
 
 /**
  * The session's route shape (screen 1j), with a filled start marker and a hollow end marker, plus
@@ -46,23 +45,7 @@ fun SessionRouteTrace(
                 .fillMaxWidth()
                 .height(130.dp),
         ) {
-            val lats = track.map { it.latitude }
-            val lons = track.map { it.longitude }
-            val latSpan = (lats.max() - lats.min()).takeIf { it > 0.0 } ?: 1.0
-            val lonSpan = (lons.max() - lons.min()).takeIf { it > 0.0 } ?: 1.0
-            val minLat = lats.min()
-            val minLon = lons.min()
-
-            val marginX = size.width * 0.04f
-            val marginY = size.height * 0.1f
-            val drawWidth = size.width - marginX * 2
-            val drawHeight = size.height - marginY * 2
-
-            fun project(point: TrackPoint): Offset {
-                val x = marginX + ((point.longitude - minLon) / lonSpan).toFloat() * drawWidth
-                val y = marginY + (1f - ((point.latitude - minLat) / latSpan).toFloat()) * drawHeight
-                return Offset(x, y)
-            }
+            val project = trackProjector(track, marginXFraction = 0.04f, marginYFraction = 0.1f)
 
             val path = Path()
             track.forEachIndexed { index, point ->

@@ -5,11 +5,11 @@ import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.SatelliteInfo
 import app.matthieu.cairngps.domain.SatelliteGeometry
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -92,11 +92,6 @@ class SatelliteGlobeViewModel(
     companion object {
         /** Factory that injects the [LocationRepository] without needing a DI framework. */
         fun factory(repository: LocationRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return SatelliteGlobeViewModel(repository) as T
-                }
-            }
+            factoryOf { SatelliteGlobeViewModel(repository) }
     }
 }

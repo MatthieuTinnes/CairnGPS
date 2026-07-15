@@ -3,13 +3,13 @@ package app.matthieu.cairngps.ui.gamification
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.AchievementState
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.RecordEntry
 import app.matthieu.cairngps.data.RecordsRepository
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -68,12 +68,8 @@ class AchievementsViewModel(
             achievementsRepository: AchievementsRepository,
             recordsRepository: RecordsRepository,
             sessionRepository: SessionRepository,
-        ): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return AchievementsViewModel(achievementsRepository, recordsRepository, sessionRepository) as T
-                }
-            }
+        ): ViewModelProvider.Factory = factoryOf {
+            AchievementsViewModel(achievementsRepository, recordsRepository, sessionRepository)
+        }
     }
 }

@@ -3,12 +3,12 @@ package app.matthieu.cairngps.ui.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -83,12 +83,8 @@ class SessionDetailViewModel(
             sessionRepository: SessionRepository,
             waypointRepository: WaypointRepository,
             sessionId: Long,
-        ): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return SessionDetailViewModel(sessionRepository, waypointRepository, sessionId) as T
-                }
-            }
+        ): ViewModelProvider.Factory = factoryOf {
+            SessionDetailViewModel(sessionRepository, waypointRepository, sessionId)
+        }
     }
 }

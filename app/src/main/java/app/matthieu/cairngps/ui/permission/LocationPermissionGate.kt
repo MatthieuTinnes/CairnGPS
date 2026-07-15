@@ -124,7 +124,7 @@ private fun LocationPermissionRequest(
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(32.dp))
-        // 56 dp: touch targets stay glove-friendly for outdoor use (see CLAUDE.md).
+        // 56 dp: touch targets stay glove-friendly for outdoor use.
         if (permanentlyDenied) {
             Button(
                 onClick = onOpenSettings,

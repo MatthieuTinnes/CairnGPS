@@ -36,20 +36,20 @@ import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.RecordType
 import app.matthieu.cairngps.data.RecordsRepository
 import app.matthieu.cairngps.data.SettingsRepository
-import app.matthieu.cairngps.ui.location.DASH
-import app.matthieu.cairngps.ui.location.formatAltitude
-import app.matthieu.cairngps.ui.location.formatCoordinate
-import app.matthieu.cairngps.ui.location.formatDistanceKm
-import app.matthieu.cairngps.ui.location.formatElevation
-import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.DASH
+import app.matthieu.cairngps.domain.format.formatAltitude
+import app.matthieu.cairngps.domain.format.formatCoordinate
+import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatElevation
+import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
+import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnStone
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.Sym
-import app.matthieu.cairngps.ui.settings.SettingsViewModel
-import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
 /** Route: the Records screen, reached from a button on the Succès screen. */
 @Composable

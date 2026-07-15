@@ -21,25 +21,13 @@ fun RouteSparkline(track: List<TrackPoint>, modifier: Modifier = Modifier) {
     if (track.size < 2) return
 
     Canvas(modifier = modifier) {
-        val lats = track.map { it.latitude }
-        val lons = track.map { it.longitude }
-        val latSpan = (lats.max() - lats.min()).takeIf { it > 0.0 } ?: 1.0
-        val lonSpan = (lons.max() - lons.min()).takeIf { it > 0.0 } ?: 1.0
-        val minLat = lats.min()
-        val minLon = lons.min()
-
         // A small margin so the line doesn't touch the row's edges.
-        val marginX = size.width * 0.05f
-        val marginY = size.height * 0.1f
-        val drawWidth = size.width - marginX * 2
-        val drawHeight = size.height - marginY * 2
+        val project = trackProjector(track, marginXFraction = 0.05f, marginYFraction = 0.1f)
 
         val path = Path()
         track.forEachIndexed { index, point ->
-            val x = marginX + ((point.longitude - minLon) / lonSpan).toFloat() * drawWidth
-            // Inverted: higher latitude (north) should draw higher on screen.
-            val y = marginY + (1f - ((point.latitude - minLat) / latSpan).toFloat()) * drawHeight
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            val offset = project(point)
+            if (index == 0) path.moveTo(offset.x, offset.y) else path.lineTo(offset.x, offset.y)
         }
 
         drawPath(

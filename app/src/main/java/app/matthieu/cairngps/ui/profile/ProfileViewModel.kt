@@ -3,10 +3,10 @@ package app.matthieu.cairngps.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.common.factoryOf
 import app.matthieu.cairngps.ui.gamification.Achievements
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -50,12 +50,8 @@ class ProfileViewModel(
             sessionRepository: SessionRepository,
             achievementsRepository: AchievementsRepository,
             waypointRepository: WaypointRepository,
-        ): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return ProfileViewModel(sessionRepository, achievementsRepository, waypointRepository) as T
-                }
-            }
+        ): ViewModelProvider.Factory = factoryOf {
+            ProfileViewModel(sessionRepository, achievementsRepository, waypointRepository)
+        }
     }
 }

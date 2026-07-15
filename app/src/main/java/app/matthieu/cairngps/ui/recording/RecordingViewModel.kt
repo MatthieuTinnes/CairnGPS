@@ -3,9 +3,9 @@ package app.matthieu.cairngps.ui.recording
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.RecordingState
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -83,11 +83,6 @@ class RecordingViewModel(
     companion object {
         /** Factory that injects the [RecordingRepository] without needing a DI framework. */
         fun factory(recordingRepository: RecordingRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return RecordingViewModel(recordingRepository) as T
-                }
-            }
+            factoryOf { RecordingViewModel(recordingRepository) }
     }
 }

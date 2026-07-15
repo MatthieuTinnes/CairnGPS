@@ -26,10 +26,6 @@
     <string name="label_accuracy_h">H</string>
     <string name="label_accuracy_v">V</string>
 
-    <!-- Units -->
-    <string name="unit_meters">m</string>
-    <string name="unit_kmh">km/h</string>
-
     <!-- Bottom navigation tabs -->
     <string name="tab_home">Position</string>
     <string name="tab_compass">Naviguer</string>
@@ -100,6 +96,7 @@
     <string name="recording_notification_content">Alt %1$s m · %2$s km/h · %3$s km</string>
 
     <!-- Session (trace) detail -->
+    <string name="session_default_name_prefix">Trace</string>
     <string name="session_detail_title">Trace</string>
     <string name="session_waypoints_label">Repères de la session</string>
     <string name="session_waypoints_empty">Aucun repère rattaché à cette session.</string>

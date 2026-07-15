@@ -5,8 +5,6 @@ import android.location.Location
 import androidx.annotation.RequiresPermission
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -240,8 +238,11 @@ class RecordingRepository(
     /**
      * Stops accumulating, persists the final [Session] and attaches any waypoints saved during
      * the recording to it. A no-op if no recording was in progress.
+     *
+     * @param namePrefix Localized prefix for the auto-generated session name (e.g. `"Trace"`),
+     *                    resolved by the caller — the data layer doesn't hold string resources.
      */
-    suspend fun stop() {
+    suspend fun stop(namePrefix: String) {
         val job = recordingJob ?: return
         recordingJob = null
         job.cancelAndJoin()
@@ -275,7 +276,7 @@ class RecordingRepository(
         if (!finalState.isRecording) return
 
         val session = Session(
-            name = defaultSessionName(finalState.startTimestamp),
+            name = defaultSessionName(namePrefix, finalState.startTimestamp),
             startTimestamp = finalState.startTimestamp,
             endTimestamp = System.currentTimeMillis(),
             distanceMeters = finalState.distanceMeters,
@@ -324,11 +325,8 @@ class RecordingRepository(
     }
 }
 
-private val sessionNameFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault())
-
-/** Default trace name based on the recording's start date/time, e.g. `Trace 10/07/2026 14:30`. */
-private fun defaultSessionName(startTimestamp: Long): String {
-    val stamp = sessionNameFormatter.format(Instant.ofEpochMilli(startTimestamp).atZone(ZoneId.systemDefault()))
-    return "Trace $stamp"
+/** Default trace name based on [namePrefix] and the recording's start date/time. */
+private fun defaultSessionName(namePrefix: String, startTimestamp: Long): String {
+    val stamp = DefaultNameTimestampFormatter.format(Instant.ofEpochMilli(startTimestamp).atZone(ZoneId.systemDefault()))
+    return "$namePrefix $stamp"
 }

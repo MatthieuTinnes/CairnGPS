@@ -43,8 +43,9 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
 import app.matthieu.cairngps.ui.common.StatTile
-import app.matthieu.cairngps.ui.location.formatDistanceKm
 import app.matthieu.cairngps.ui.theme.AchievementBannerBg
 import app.matthieu.cairngps.ui.theme.AchievementBannerBorder
 import app.matthieu.cairngps.ui.theme.AchievementLabelGold
@@ -57,7 +58,6 @@ import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.OnAmberButton
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
-import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
 /**
  * Route: the "Profil" tab — a hub of lifetime totals and shortcuts to Carnet, Succès, Records and

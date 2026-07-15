@@ -1,11 +1,25 @@
-package app.matthieu.cairngps.ui.location
+package app.matthieu.cairngps.domain.format
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.os.Build
+import android.widget.Toast
+import androidx.core.content.getSystemService
+import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-/** Placeholder shown for any value before the first GPS fix arrives. */
+/**
+ * Placeholder shown for any value before the first GPS fix arrives.
+ *
+ * There are two placeholder conventions in the app by design, not by accident: this em dash for
+ * regular-sized text (formatters, detail/records screens), and full-width digit templates like
+ * `HomeScreen.DASH_COORD_DECIMAL`/`DASH_SPEED` for the large monospace readouts on the Position
+ * screen, where a single short dash would visually collapse relative to the digits it replaces.
+ */
 const val DASH: String = "—"
 
 /** Quality bucket for a horizontal accuracy radius, used to drive the visual indicator. */
@@ -68,6 +82,18 @@ fun formatAccuracy(accuracyMeters: Float?): String =
 /** Coordinates as plain decimal degrees for the clipboard, e.g. `47.123456, 6.123456`. */
 fun formatCoordinatesForClipboard(latitude: Double, longitude: Double): String =
     "%.6f, %.6f".format(latitude, longitude)
+
+/**
+ * Copies [latitude]/[longitude] to the system clipboard. Android 13+ shows its own "copied"
+ * confirmation UI, so a toast is only needed on older versions.
+ */
+fun Context.copyCoordinates(latitude: Double, longitude: Double) {
+    val text = formatCoordinatesForClipboard(latitude, longitude)
+    getSystemService<ClipboardManager>()?.setPrimaryClip(ClipData.newPlainText("coordinates", text))
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        Toast.makeText(this, R.string.coordinates_copied, Toast.LENGTH_SHORT).show()
+    }
+}
 
 /**
  * A duration as `H:MM:SS` (or `MM:SS` under an hour). Always defined, unlike a GPS reading.

@@ -21,7 +21,8 @@ import androidx.room.PrimaryKey
  * @property elevationLoss    Cumulative negative elevation change (D−), in meters.
  * @property minAltitude      Lowest altitude reached, in meters.
  * @property maxAltitude      Highest altitude reached, in meters.
- * @property latitudeMax      Northernmost latitude reached — kept for the future records page.
+ * @property latitudeMax      Northernmost latitude reached — feeds the geographic records (see
+ *                             `GamificationManager`).
  * @property latitudeMin      Southernmost latitude reached.
  * @property longitudeMax     Easternmost longitude reached.
  * @property longitudeMin     Westernmost longitude reached.

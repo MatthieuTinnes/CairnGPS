@@ -16,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +23,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,11 +44,12 @@ import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.ui.location.formatAltitude
-import app.matthieu.cairngps.ui.location.formatDistanceKm
-import app.matthieu.cairngps.ui.location.formatDuration
-import app.matthieu.cairngps.ui.location.formatElevation
-import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatDuration
+import app.matthieu.cairngps.domain.format.formatElevation
+import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatTimeOfDay
+import app.matthieu.cairngps.domain.format.formatWaypointMetaLine
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
@@ -58,9 +57,8 @@ import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.SoftError
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.WaypointIconBg
+import app.matthieu.cairngps.ui.waypoints.DeleteConfirmDialog
 import app.matthieu.cairngps.ui.waypoints.RenameDialog
-import app.matthieu.cairngps.ui.waypoints.formatTimeOfDay
-import app.matthieu.cairngps.ui.waypoints.formatWaypointShortDate
 
 /**
  * Route: loads the session identified by [sessionId] and renders its full detail, including the
@@ -114,6 +112,8 @@ private fun SessionDetailScreen(
 
     if (showDeleteDialog) {
         DeleteConfirmDialog(
+            title = stringResource(R.string.session_delete_dialog_title),
+            message = stringResource(R.string.session_delete_dialog_message),
             onDismiss = { showDeleteDialog = false },
             onConfirm = {
                 showDeleteDialog = false
@@ -339,9 +339,7 @@ private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = waypoint.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = CairnGreen)
                 Text(
-                    text = "${formatAltitude(waypoint.altitude)} m · " +
-                        "%.4f, %.4f".format(waypoint.latitude, waypoint.longitude) + " · " +
-                        formatWaypointShortDate(waypoint.timestamp),
+                    text = formatWaypointMetaLine(waypoint),
                     fontSize = 12.sp,
                     fontFamily = MonoFontFamily,
                     color = LabelMuted,
@@ -351,26 +349,4 @@ private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = LabelMuted)
         }
     }
-}
-
-@Composable
-private fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.session_delete_dialog_title)) },
-        text = { Text(stringResource(R.string.session_delete_dialog_message)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    text = stringResource(R.string.action_delete),
-                    color = SoftError,
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
-    )
 }

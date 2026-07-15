@@ -2,18 +2,11 @@ package app.matthieu.cairngps.ui.location
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +29,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -58,10 +50,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.core.content.getSystemService
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -71,11 +61,27 @@ import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.format.AccuracyQuality
+import app.matthieu.cairngps.domain.format.DASH
+import app.matthieu.cairngps.domain.format.accuracyQuality
+import app.matthieu.cairngps.domain.format.copyCoordinates
+import app.matthieu.cairngps.domain.format.defaultWaypointName
+import app.matthieu.cairngps.domain.format.formatAccuracy
+import app.matthieu.cairngps.domain.format.formatAltitude
+import app.matthieu.cairngps.domain.format.formatCoordinate
+import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatDuration
+import app.matthieu.cairngps.domain.format.formatElevation
+import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatSpeedMs
 import app.matthieu.cairngps.service.RecordingService
+import app.matthieu.cairngps.ui.common.BigValue
+import app.matthieu.cairngps.ui.common.CardTitle
+import app.matthieu.cairngps.ui.common.DataCard
+import app.matthieu.cairngps.ui.common.PulsingDot
 import app.matthieu.cairngps.ui.recording.RecordingUiState
 import app.matthieu.cairngps.ui.recording.RecordingViewModel
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
-import app.matthieu.cairngps.ui.waypoints.defaultWaypointName
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.DashMuted
@@ -156,7 +162,7 @@ fun HomeRoute(
         onStartRecording = {
             // Recording start/stop is owned by RecordingService, not the ViewModel: only it can
             // keep the recording (and its notification) alive while the app is backgrounded.
-            if (Build.VERSION.SDK_INT >= 33 &&
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                     PackageManager.PERMISSION_GRANTED
             ) {
@@ -369,13 +375,13 @@ private fun SessionCard(uiState: RecordingUiState) {
             )
             RecordingStat(
                 label = stringResource(R.string.recording_elevation_gain),
-                value = "+${formatElevation(uiState.elevationGain)} ${stringResource(R.string.unit_meters)}",
+                value = "+${formatElevation(uiState.elevationGain)} m",
                 valueColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f),
             )
             RecordingStat(
                 label = stringResource(R.string.recording_elevation_loss),
-                value = "-${formatElevation(uiState.elevationLoss)} ${stringResource(R.string.unit_meters)}",
+                value = "-${formatElevation(uiState.elevationLoss)} m",
                 valueColor = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.weight(1f),
             )
@@ -384,12 +390,12 @@ private fun SessionCard(uiState: RecordingUiState) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             RecordingStat(
                 label = stringResource(R.string.recording_avg_speed),
-                value = "${formatSpeedKmh(uiState.averageSpeed)} ${stringResource(R.string.unit_kmh)}",
+                value = "${formatSpeedKmh(uiState.averageSpeed)} km/h",
                 modifier = Modifier.weight(1f),
             )
             RecordingStat(
                 label = stringResource(R.string.recording_max_speed),
-                value = "${formatSpeedKmh(uiState.maxSpeed)} ${stringResource(R.string.unit_kmh)}",
+                value = "${formatSpeedKmh(uiState.maxSpeed)} km/h",
                 modifier = Modifier.weight(1f),
             )
             RecordingStat(
@@ -421,26 +427,6 @@ private fun RecordingStat(
             color = LabelMuted,
         )
     }
-}
-
-/** A pulsing colored dot — used for the recording badge and the "session en cours" indicator. */
-@Composable
-private fun PulsingDot(color: Color, size: Dp = 8.dp) {
-    val transition = rememberInfiniteTransition(label = "rec-pulse")
-    val alpha by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0.25f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 800),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "rec-pulse-alpha",
-    )
-    Box(
-        modifier = Modifier
-            .size(size)
-            .background(color.copy(alpha = alpha), CircleShape),
-    )
 }
 
 /** Pill with the live elapsed time, shown in the top bar while recording. */
@@ -593,7 +579,7 @@ private fun AltitudeCard(uiState: LocationUiState, modifier: Modifier = Modifier
         Spacer(Modifier.height(8.dp))
         BigValue(
             value = if (uiState.hasFix) formatAltitude(uiState.fix?.altitude) else DASH_ALTITUDE,
-            unit = stringResource(R.string.unit_meters),
+            unit = "m",
             valueColor = if (uiState.hasFix) Color.Unspecified else DashMuted,
             unitColor = if (uiState.hasFix) MaterialTheme.colorScheme.tertiary else ValueMuted,
         )
@@ -610,7 +596,7 @@ private fun SpeedCard(uiState: LocationUiState) {
                 Spacer(Modifier.height(4.dp))
                 BigValue(
                     value = if (uiState.hasFix) formatSpeedKmh(uiState.fix?.speed) else DASH_SPEED,
-                    unit = stringResource(R.string.unit_kmh),
+                    unit = "km/h",
                     valueColor = if (uiState.hasFix) Color.Unspecified else DashMuted,
                     unitColor = if (uiState.hasFix) MaterialTheme.colorScheme.tertiary else ValueMuted,
                 )
@@ -694,86 +680,10 @@ private fun NoFixHintCard() {
     }
 }
 
-/**
- * A rounded surface card with consistent padding for a single data group.
- * When [onClick] is provided the whole card becomes tappable (disabled while [enabled] is false).
- */
-@Composable
-private fun DataCard(
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    enabled: Boolean = true,
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
-) {
-    // Material3's default Card container pulls from the surfaceContainer* roles, which Compose
-    // derives from primary/neutral tones rather than our explicit colorScheme.surface — so left
-    // at its default it drifts from the design's flat #161C18. Force it back to colorScheme.surface
-    // (which *is* DarkSurface / #161C18, set explicitly in Theme.kt) to match the mock exactly.
-    // The disabled variant needs the same override: CoordinatesCard is disabled while there's no
-    // fix, and without this it would fall back to Material3's dimmed disabled container, making it
-    // look different from the other (always-enabled) cards — the design keeps every card the same
-    // flat color regardless of fix state.
-    val colors = CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surface,
-        disabledContainerColor = MaterialTheme.colorScheme.surface,
-        disabledContentColor = MaterialTheme.colorScheme.onSurface,
-    )
-    if (onClick != null) {
-        Card(onClick = onClick, enabled = enabled, colors = colors, modifier = modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(20.dp), content = content)
-        }
-    } else {
-        Card(colors = colors, modifier = modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(20.dp), content = content)
-        }
-    }
-}
-
-@Composable
-private fun CardTitle(text: String) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelMedium,
-        color = LabelMuted,
-    )
-}
-
-/** A large numeric value with a smaller trailing unit, baseline-aligned. */
-@Composable
-private fun BigValue(
-    value: String,
-    unit: String,
-    valueColor: Color = Color.Unspecified,
-    unitColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-) {
-    Row(verticalAlignment = Alignment.Bottom) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.displaySmall,
-            fontFamily = MonoFontFamily,
-            color = valueColor,
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = unit,
-            style = MaterialTheme.typography.titleMedium,
-            color = unitColor,
-            modifier = Modifier.padding(bottom = 6.dp),
-        )
-    }
-}
-
 private fun copyCoordinates(
     context: android.content.Context,
     uiState: LocationUiState,
 ) {
     val fix = uiState.fix ?: return
-    val text = formatCoordinatesForClipboard(fix.latitude, fix.longitude)
-    context.getSystemService<ClipboardManager>()
-        ?.setPrimaryClip(ClipData.newPlainText("coordinates", text))
-
-    // Android 13+ shows its own "copied" confirmation UI, so only toast on older versions.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-        Toast.makeText(context, R.string.coordinates_copied, Toast.LENGTH_SHORT).show()
-    }
+    context.copyCoordinates(fix.latitude, fix.longitude)
 }

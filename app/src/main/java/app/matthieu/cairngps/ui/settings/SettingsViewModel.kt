@@ -3,12 +3,12 @@ package app.matthieu.cairngps.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -42,11 +42,6 @@ class SettingsViewModel(
 
     companion object {
         fun factory(repository: SettingsRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return SettingsViewModel(repository) as T
-                }
-            }
+            factoryOf { SettingsViewModel(repository) }
     }
 }

@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Waypoint
-import app.matthieu.cairngps.ui.location.formatAltitude
+import app.matthieu.cairngps.domain.format.formatWaypointMetaLine
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
@@ -91,9 +91,7 @@ private fun WaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = waypoint.name, fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold)
                 Text(
-                    text = "${formatAltitude(waypoint.altitude)} m · " +
-                        "%.4f, %.4f".format(waypoint.latitude, waypoint.longitude) + " · " +
-                        formatWaypointShortDate(waypoint.timestamp),
+                    text = formatWaypointMetaLine(waypoint),
                     fontSize = 12.5.sp,
                     fontFamily = MonoFontFamily,
                     color = LabelMuted,

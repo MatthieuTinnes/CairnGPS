@@ -3,8 +3,8 @@ package app.matthieu.cairngps.ui.waypoints
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -27,11 +27,6 @@ class WaypointsViewModel(
     companion object {
         /** Factory that injects the [WaypointRepository] without needing a DI framework. */
         fun factory(repository: WaypointRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return WaypointsViewModel(repository) as T
-                }
-            }
+            factoryOf { WaypointsViewModel(repository) }
     }
 }

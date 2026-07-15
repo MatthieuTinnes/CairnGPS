@@ -18,10 +18,10 @@ import app.matthieu.cairngps.MainActivity
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.RecordingState
-import app.matthieu.cairngps.ui.location.formatAltitude
-import app.matthieu.cairngps.ui.location.formatDistanceKm
-import app.matthieu.cairngps.ui.location.formatDuration
-import app.matthieu.cairngps.ui.location.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatAltitude
+import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatDuration
+import app.matthieu.cairngps.domain.format.formatSpeedKmh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,8 +32,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Foreground service that keeps a recording alive (and visible via an ongoing notification) while
- * the app is backgrounded — the exception to the onStart/onStop GPS lifecycle rule sanctioned by
- * CLAUDE.md. This is now the single entry point for starting/stopping a recording: the recording
+ * the app is backgrounded — the deliberate exception to the rest of the app's ON_START/ON_STOP GPS
+ * lifecycle. This is now the single entry point for starting/stopping a recording: the recording
  * card (via [RecordingService.start]/[RecordingService.stop]) and the notification's own "Arrêter"
  * action both go through it, so [RecordingRepository] always has one caller driving its lifecycle.
  */
@@ -74,15 +74,21 @@ class RecordingService : Service() {
         }
         if (tickerJob == null) {
             tickerJob = scope.launch {
-                while (true) {
+                // Loop is bounded by isRecording rather than `while (true)`, so a recording that
+                // stops through a path other than handleStop() (e.g. the repository itself
+                // clearing state) still tears the notification down instead of freezing on a
+                // stale "0s" readout.
+                while (recordingRepository.state.value.isRecording) {
                     val state = recordingRepository.state.value
-                    val elapsed = if (state.isRecording) {
-                        (System.currentTimeMillis() - state.startTimestamp).coerceAtLeast(0)
-                    } else {
-                        0L
-                    }
+                    val elapsed = (System.currentTimeMillis() - state.startTimestamp).coerceAtLeast(0)
                     notificationManager.notify(NOTIFICATION_ID, buildNotification(state, elapsed))
                     delay(1_000L)
+                }
+                tickerJob = null
+                if (isForeground) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    isForeground = false
+                    stopSelf()
                 }
             }
         }
@@ -90,7 +96,7 @@ class RecordingService : Service() {
 
     private fun handleStop() {
         scope.launch {
-            recordingRepository.stop()
+            recordingRepository.stop(getString(R.string.session_default_name_prefix))
             tickerJob?.cancel()
             tickerJob = null
             stopForeground(STOP_FOREGROUND_REMOVE)

@@ -1,5 +1,7 @@
-package app.matthieu.cairngps.ui.waypoints
+package app.matthieu.cairngps.domain.format
 
+import app.matthieu.cairngps.data.DefaultNameTimestampFormatter
+import app.matthieu.cairngps.data.Waypoint
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -9,9 +11,6 @@ import java.util.Locale
 // java.time is available from minSdk 26, so no desugaring is needed here.
 private val dateTimeFormatter: DateTimeFormatter =
     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
-
-private val defaultNameFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault())
 
 private val shortDateFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
@@ -43,6 +42,16 @@ fun formatTimeOfDay(epochMillis: Long): String =
  * e.g. `Repère 10/07/2026 14:30`.
  */
 fun defaultWaypointName(namePrefix: String, epochMillis: Long = System.currentTimeMillis()): String {
-    val stamp = defaultNameFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
+    val stamp = DefaultNameTimestampFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
     return "$namePrefix $stamp"
 }
+
+/**
+ * The "alt m · lat, lon · date" meta line shown under a waypoint's name in list rows (screens
+ * 1h, 1j) — shared by [app.matthieu.cairngps.ui.waypoints.WaypointsListContent] and the session
+ * detail screen's waypoint rows.
+ */
+fun formatWaypointMetaLine(waypoint: Waypoint): String =
+    "${formatAltitude(waypoint.altitude)} m · " +
+        "%.4f, %.4f".format(waypoint.latitude, waypoint.longitude) + " · " +
+        formatWaypointShortDate(waypoint.timestamp)

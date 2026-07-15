@@ -32,10 +32,10 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.RecordsRepository
 import app.matthieu.cairngps.data.SessionRepository
-import app.matthieu.cairngps.ui.location.formatElevation
+import app.matthieu.cairngps.domain.format.formatElevation
+import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.Sym
-import app.matthieu.cairngps.ui.waypoints.formatWaypointTimestamp
 
 /**
  * Route: "Succès". Owns the [AchievementsViewModel] and opens Records from here. Reached from the

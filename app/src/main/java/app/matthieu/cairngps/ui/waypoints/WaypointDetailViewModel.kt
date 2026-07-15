@@ -6,12 +6,12 @@ import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,10 +58,10 @@ class WaypointDetailViewModel(
     /**
      * Takes a single last-known-position snapshot and computes the distance to this waypoint. A
      * one-shot read rather than a live subscription: this is a static detail page, not a tracking
-     * screen, so it doesn't need its own ON_START/ON_STOP GPS stream (see CLAUDE.md) — an
-     * approximate "distance actuelle" is enough here; the Naviguer tab is where a live,
-     * continuously updated bearing/distance belongs. Called once from the Route, which is only
-     * ever composed under the location-permission gate.
+     * screen, so it doesn't need its own ON_START/ON_STOP GPS stream — an approximate
+     * "distance actuelle" is enough here; the Naviguer tab is where a live, continuously updated
+     * bearing/distance belongs. Called once from the Route, which is only ever composed under the
+     * location-permission gate.
      */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun refreshCurrentDistance() {
@@ -99,12 +99,8 @@ class WaypointDetailViewModel(
             sessionRepository: SessionRepository,
             locationRepository: LocationRepository,
             waypointId: Long,
-        ): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return WaypointDetailViewModel(repository, sessionRepository, locationRepository, waypointId) as T
-                }
-            }
+        ): ViewModelProvider.Factory = factoryOf {
+            WaypointDetailViewModel(repository, sessionRepository, locationRepository, waypointId)
+        }
     }
 }

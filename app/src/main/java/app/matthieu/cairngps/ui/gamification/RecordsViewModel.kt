@@ -3,11 +3,11 @@ package app.matthieu.cairngps.ui.gamification
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.RecordEntry
 import app.matthieu.cairngps.data.RecordType
 import app.matthieu.cairngps.data.RecordsRepository
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -50,11 +50,6 @@ class RecordsViewModel(recordsRepository: RecordsRepository) : ViewModel() {
 
         /** Factory that injects the [RecordsRepository] without needing a DI framework. */
         fun factory(recordsRepository: RecordsRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return RecordsViewModel(recordsRepository) as T
-                }
-            }
+            factoryOf { RecordsViewModel(recordsRepository) }
     }
 }

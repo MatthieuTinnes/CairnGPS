@@ -38,19 +38,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.BaselineShift
@@ -69,24 +61,16 @@ import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.ui.location.formatShortDistance
+import app.matthieu.cairngps.domain.format.formatShortDistance
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnStone
-import app.matthieu.cairngps.ui.theme.CompassDialBorder
-import app.matthieu.cairngps.ui.theme.CompassDialFill
-import app.matthieu.cairngps.ui.theme.CompassTickMajor
-import app.matthieu.cairngps.ui.theme.CompassTickMinor
-import app.matthieu.cairngps.ui.theme.DarkBackground
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
-import app.matthieu.cairngps.ui.theme.ValueMuted
-import kotlin.math.cos
 import kotlin.math.roundToInt
-import kotlin.math.sin
 import androidx.compose.ui.draw.rotate as rotateModifier
 
 /**
@@ -434,105 +418,7 @@ private fun TargetPickerDialog(
     )
 }
 
-/**
- * Draws the compass rose rotated by `-heading` so its north mark points to real (magnetic or true)
- * north. There is no needle — matching the design (1c), the current heading is read from the
- * fixed numeric readout and the fixed amber index at the top; the rose underneath just carries
- * the tick marks, cardinal letters and degree numbers. When a navigation target is set, a green
- * dot on the ring marks its bearing.
- */
-private fun DrawScope.drawCompassRose(
-    heading: Float,
-    targetBearing: Float?,
-    roseLabels: Array<String>,
-    cardinalColor: Color,
-    indexColor: Color,
-    targetColor: Color,
-    textMeasurer: TextMeasurer,
-) {
-    // Reserve a margin at the edge for the fixed heading index, so it sits clear of the ticks.
-    val indexMargin = 16.dp.toPx()
-    val radius = size.minDimension / 2f - indexMargin
-    val center = Offset(size.width / 2f, size.height / 2f)
-
-    // Solid puck fill behind the whole dial, with a thin border — matching the design's flat
-    // circle rather than a bare stroked ring.
-    drawCircle(color = CompassDialFill, radius = radius, center = center)
-    drawCircle(
-        color = CompassDialBorder,
-        radius = radius,
-        center = center,
-        style = Stroke(width = 1.5.dp.toPx()),
-    )
-
-    rotate(degrees = -heading, pivot = center) {
-        // Tick marks every 5°, longer/thicker and paired with a label on the 30° marks.
-        for (i in 0 until 72) {
-            val deg = i * 5
-            val isMajor = i % 6 == 0
-            val rad = Math.toRadians(deg.toDouble())
-            val sinV = sin(rad).toFloat()
-            val cosV = cos(rad).toFloat()
-            val outer = radius - 4.dp.toPx()
-            val inner = outer - (if (isMajor) 18.dp.toPx() else 10.dp.toPx())
-            drawLine(
-                color = if (isMajor) CompassTickMajor else CompassTickMinor,
-                start = Offset(center.x + inner * sinV, center.y - inner * cosV),
-                end = Offset(center.x + outer * sinV, center.y - outer * cosV),
-                strokeWidth = (if (isMajor) 2.5f else 1f).dp.toPx(),
-            )
-
-            // Cardinal letters at N/E/S/O (roseLabels order); the other 30° marks get their
-            // degree number instead, smaller and muted.
-            if (isMajor) {
-                val cardinalIndex = deg / 90
-                val isCardinal = deg % 90 == 0
-                val labelRadius = radius - 42.dp.toPx()
-                val x = center.x + labelRadius * sinV
-                val y = center.y - labelRadius * cosV
-                val layout = textMeasurer.measure(
-                    text = if (isCardinal) roseLabels[cardinalIndex] else deg.toString(),
-                    style = TextStyle(
-                        color = if (deg == 0) indexColor else if (isCardinal) cardinalColor else ValueMuted,
-                        fontSize = if (isCardinal) 19.sp else 11.sp,
-                        fontWeight = if (isCardinal) FontWeight.Bold else FontWeight.Medium,
-                    ),
-                )
-                drawText(
-                    textLayoutResult = layout,
-                    topLeft = Offset(x - layout.size.width / 2f, y - layout.size.height / 2f),
-                )
-            }
-        }
-
-        // Target bearing marker: a small filled dot on the ring, haloed with the background color
-        // for contrast, rotating with it since it's drawn inside the same `rotate` block as the
-        // ticks (its screen position still tracks the true/magnetic bearing regardless of which
-        // way the device currently points).
-        if (targetBearing != null) {
-            val rad = Math.toRadians(targetBearing.toDouble())
-            val tickRadius = radius - 4.dp.toPx()
-            val dotCenter = Offset(
-                center.x + tickRadius * sin(rad).toFloat(),
-                center.y - tickRadius * cos(rad).toFloat(),
-            )
-            drawCircle(color = DarkBackground, radius = 8.dp.toPx(), center = dotCenter)
-            drawCircle(color = targetColor, radius = 7.dp.toPx(), center = dotCenter)
-        }
-    }
-
-    // Fixed heading index, drawn last so it stays on top of the ticks. Points down at the ring from
-    // the reserved margin.
-    drawPath(
-        Path().apply {
-            moveTo(center.x, center.y - radius)
-            lineTo(center.x - 11.dp.toPx(), center.y - radius - 14.dp.toPx())
-            lineTo(center.x + 11.dp.toPx(), center.y - radius - 14.dp.toPx())
-            close()
-        },
-        color = indexColor,
-    )
-}
+// drawCompassRose (and its sub-draw helpers) lives in CompassDial.kt.
 
 @Preview(showBackground = true)
 @Composable

@@ -8,7 +8,6 @@ import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import app.matthieu.cairngps.data.CompassReading
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationData
@@ -18,6 +17,7 @@ import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -168,34 +168,31 @@ class CompassViewModel(
             targetBearing = normalize(results[1] - if (useTrueNorth) 0f else (declination ?: 0f))
         }
 
-        val magnetic = smoothedMagnetic
-        if (magnetic == null) {
-            // No heading yet: keep the declination/north-reference/target facts visible while we wait.
-            _uiState.value = _uiState.value.copy(
-                hasData = false,
-                useTrueNorth = useTrueNorth,
-                declinationDegrees = declination,
-                targetName = target?.name,
-                targetDistanceMeters = targetDistance,
-                bearingToTargetDegrees = targetBearing,
-                waypoints = waypoints,
-            )
-            return
-        }
-        val heading = normalize(magnetic + if (useTrueNorth) (declination ?: 0f) else 0f)
-        _uiState.value = CompassUiState(
-            sensorAvailable = true,
-            hasData = true,
-            headingDegrees = heading,
-            cardinalIndex = cardinalIndex(heading),
+        // Base state carries the facts that are known regardless of whether a heading has been
+        // read yet (declination, north reference, target); the magnetic-dependent fields are
+        // overlaid below only once a first sensor reading has arrived.
+        var state = CompassUiState(
+            sensorAvailable = compassRepository.isSensorAvailable,
             useTrueNorth = useTrueNorth,
             declinationDegrees = declination,
-            needsCalibration = needsCalibration(lastAccuracy),
             targetName = target?.name,
             targetDistanceMeters = targetDistance,
             bearingToTargetDegrees = targetBearing,
             waypoints = waypoints,
         )
+
+        val magnetic = smoothedMagnetic
+        if (magnetic != null) {
+            val heading = normalize(magnetic + if (useTrueNorth) (declination ?: 0f) else 0f)
+            state = state.copy(
+                hasData = true,
+                headingDegrees = heading,
+                cardinalIndex = cardinalIndex(heading),
+                needsCalibration = needsCalibration(lastAccuracy),
+            )
+        }
+
+        _uiState.value = state
     }
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -244,18 +241,14 @@ class CompassViewModel(
             settingsRepository: SettingsRepository,
             waypointRepository: WaypointRepository,
             navigationTargetRepository: NavigationTargetRepository,
-        ): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                    return CompassViewModel(
-                        compassRepository,
-                        locationRepository,
-                        settingsRepository,
-                        waypointRepository,
-                        navigationTargetRepository,
-                    ) as T
-                }
-            }
+        ): ViewModelProvider.Factory = factoryOf {
+            CompassViewModel(
+                compassRepository,
+                locationRepository,
+                settingsRepository,
+                waypointRepository,
+                navigationTargetRepository,
+            )
+        }
     }
 }

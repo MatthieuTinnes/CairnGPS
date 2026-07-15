@@ -1,5 +1,6 @@
 package app.matthieu.cairngps.ui.history
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,13 +40,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
-import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatDuration
+import app.matthieu.cairngps.domain.format.formatElevation
+import app.matthieu.cairngps.domain.format.formatWaypointShortDateTime
 import app.matthieu.cairngps.ui.common.SegmentedToggle
-import app.matthieu.cairngps.ui.location.formatDistanceKm
-import app.matthieu.cairngps.ui.location.formatDuration
-import app.matthieu.cairngps.ui.location.formatElevation
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -55,7 +55,6 @@ import app.matthieu.cairngps.ui.theme.ValueMuted
 import app.matthieu.cairngps.ui.waypoints.WaypointsListContent
 import app.matthieu.cairngps.ui.waypoints.WaypointsUiState
 import app.matthieu.cairngps.ui.waypoints.WaypointsViewModel
-import app.matthieu.cairngps.ui.waypoints.formatWaypointShortDateTime
 
 /**
  * Route: "Carnet" — tabbed between saved waypoints ("Repères") and recorded sessions ("Sessions").
@@ -82,7 +81,6 @@ fun HistoryRoute(
     HistoryScreen(
         waypointsUiState = waypointsUiState,
         sessionsUiState = sessionsUiState,
-        sessionRepository = sessionRepository,
         onOpenWaypoint = onOpenWaypoint,
         onOpenSession = onOpenSession,
         onBack = onBack,
@@ -100,7 +98,6 @@ private enum class HistoryTab(@StringRes val labelRes: Int) {
 private fun HistoryScreen(
     waypointsUiState: WaypointsUiState,
     sessionsUiState: SessionsUiState,
-    sessionRepository: SessionRepository,
     onOpenWaypoint: (Long) -> Unit,
     onOpenSession: (Long) -> Unit,
     onBack: () -> Unit,
@@ -150,7 +147,6 @@ private fun HistoryScreen(
 
                 HistoryTab.TRACKS -> SessionsListContent(
                     uiState = sessionsUiState,
-                    sessionRepository = sessionRepository,
                     onOpenSession = onOpenSession,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -162,7 +158,6 @@ private fun HistoryScreen(
 @Composable
 private fun SessionsListContent(
     uiState: SessionsUiState,
-    sessionRepository: SessionRepository,
     onOpenSession: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -182,11 +177,10 @@ private fun SessionsListContent(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(uiState.sessions.orEmpty(), key = { it.id }) { session ->
+            items(uiState.sessions.orEmpty(), key = { it.session.id }) { sessionWithTrack ->
                 SessionRow(
-                    session = session,
-                    sessionRepository = sessionRepository,
-                    onClick = { onOpenSession(session.id) },
+                    sessionWithTrack = sessionWithTrack,
+                    onClick = { onOpenSession(sessionWithTrack.session.id) },
                 )
             }
         }
@@ -194,9 +188,8 @@ private fun SessionsListContent(
 }
 
 @Composable
-private fun SessionRow(session: Session, sessionRepository: SessionRepository, onClick: () -> Unit) {
-    val track by sessionRepository.trackForSession(session.id)
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+private fun SessionRow(sessionWithTrack: SessionWithTrack, onClick: () -> Unit) {
+    val (session, track) = sessionWithTrack
 
     Card(
         onClick = onClick,
