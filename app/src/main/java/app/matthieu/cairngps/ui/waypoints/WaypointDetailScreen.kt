@@ -37,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -184,6 +185,7 @@ private fun WaypointDetailScreen(
         topBar = {
             TopAppBar(
                 title = { Text(waypoint?.name ?: stringResource(R.string.waypoint_detail_title)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     val backLabel = stringResource(R.string.action_back)
                     IconButton(onClick = onBack) {

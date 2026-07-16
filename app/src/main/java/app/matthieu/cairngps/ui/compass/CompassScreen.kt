@@ -449,8 +449,6 @@ private fun TargetPickerDialog(
     )
 }
 
-// drawCompassRose (and its sub-draw helpers) lives in CompassDial.kt.
-
 @Preview(showBackground = true)
 @Composable
 private fun CompassScreenPreview() {
