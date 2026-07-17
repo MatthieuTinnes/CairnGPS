@@ -45,11 +45,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.distanceUnitLabel
+import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
 import app.matthieu.cairngps.ui.common.StatTile
 import app.matthieu.cairngps.ui.gamification.LevelInfo
+import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.AchievementBannerBg
 import app.matthieu.cairngps.ui.theme.AchievementBannerBorder
 import app.matthieu.cairngps.ui.theme.AchievementLabelGold
@@ -78,6 +82,7 @@ fun ProfileRoute(
     sessionRepository: SessionRepository,
     achievementsRepository: AchievementsRepository,
     waypointRepository: WaypointRepository,
+    settingsRepository: SettingsRepository,
     onOpenSettings: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenAchievements: () -> Unit,
@@ -87,10 +92,14 @@ fun ProfileRoute(
     val viewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModel.factory(sessionRepository, achievementsRepository, waypointRepository),
     )
+    val settingsViewModel: SettingsViewModel =
+        viewModel(factory = SettingsViewModel.factory(settingsRepository))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
     ProfileScreen(
         uiState = uiState,
+        unitSystem = settings.unitSystem,
         onOpenSettings = onOpenSettings,
         onOpenHistory = onOpenHistory,
         onOpenAchievements = onOpenAchievements,
@@ -103,6 +112,7 @@ fun ProfileRoute(
 @Composable
 private fun ProfileScreen(
     uiState: ProfileUiState,
+    unitSystem: UnitSystem,
     onOpenSettings: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenAchievements: () -> Unit,
@@ -160,8 +170,8 @@ private fun ProfileScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     StatTile(
-                        value = formatDistanceKm(uiState.totalDistanceMeters),
-                        label = stringResource(R.string.profile_stat_total_km),
+                        value = formatDistance(uiState.totalDistanceMeters, unitSystem),
+                        label = stringResource(R.string.profile_stat_total_km_fmt, distanceUnitLabel(unitSystem)),
                         modifier = Modifier.weight(1f),
                     )
                     StatTile(

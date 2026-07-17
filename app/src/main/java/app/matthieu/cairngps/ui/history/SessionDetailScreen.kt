@@ -43,15 +43,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.TrackPoint
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.distanceUnitLabel
+import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatDuration
 import app.matthieu.cairngps.domain.format.formatElevation
-import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatSpeed
 import app.matthieu.cairngps.domain.format.formatTimeOfDay
 import app.matthieu.cairngps.domain.format.formatWaypointMetaLine
+import app.matthieu.cairngps.domain.format.shortUnitLabel
+import app.matthieu.cairngps.domain.format.speedUnitLabel
+import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.Glyph
@@ -75,6 +81,7 @@ fun SessionDetailRoute(
     sessionId: Long,
     sessionRepository: SessionRepository,
     waypointRepository: WaypointRepository,
+    settingsRepository: SettingsRepository,
     onBack: () -> Unit,
     onOpenWaypoint: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -82,7 +89,10 @@ fun SessionDetailRoute(
     val viewModel: SessionDetailViewModel = viewModel(
         factory = SessionDetailViewModel.factory(sessionRepository, waypointRepository, sessionId),
     )
+    val settingsViewModel: SettingsViewModel =
+        viewModel(factory = SettingsViewModel.factory(settingsRepository))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
     // Once the delete completes, leave the detail screen (side-effect, not done during composition).
     LaunchedEffect(uiState.deleted) {
@@ -93,6 +103,7 @@ fun SessionDetailRoute(
         session = uiState.session,
         waypoints = uiState.waypoints,
         track = uiState.track,
+        unitSystem = settings.unitSystem,
         onBack = onBack,
         onOpenWaypoint = onOpenWaypoint,
         onDelete = viewModel::delete,
@@ -107,6 +118,7 @@ private fun SessionDetailScreen(
     session: Session?,
     waypoints: List<Waypoint>,
     track: List<TrackPoint>,
+    unitSystem: UnitSystem,
     onBack: () -> Unit,
     onOpenWaypoint: (Long) -> Unit,
     onDelete: () -> Unit,
@@ -218,8 +230,8 @@ private fun SessionDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SessionStatTile(
-                    formatDistanceKm(session.distanceMeters),
-                    stringResource(R.string.session_stat_distance),
+                    formatDistance(session.distanceMeters, unitSystem),
+                    stringResource(R.string.session_stat_distance_fmt, distanceUnitLabel(unitSystem)),
                     Modifier.weight(1f),
                 )
                 SessionStatTile(
@@ -228,8 +240,8 @@ private fun SessionDetailScreen(
                     Modifier.weight(1f),
                 )
                 SessionStatTile(
-                    "+${formatElevation(session.elevationGain)}",
-                    stringResource(R.string.session_stat_elevation_gain),
+                    "+${formatElevation(session.elevationGain, unitSystem)}",
+                    stringResource(R.string.session_stat_elevation_gain_fmt, shortUnitLabel(unitSystem)),
                     Modifier.weight(1f),
                 )
             }
@@ -238,18 +250,18 @@ private fun SessionDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SessionStatTile(
-                    "−${formatElevation(session.elevationLoss)}",
-                    stringResource(R.string.session_stat_elevation_loss),
+                    "−${formatElevation(session.elevationLoss, unitSystem)}",
+                    stringResource(R.string.session_stat_elevation_loss_fmt, shortUnitLabel(unitSystem)),
                     Modifier.weight(1f),
                 )
                 SessionStatTile(
-                    formatSpeedKmh(session.maxSpeed),
-                    stringResource(R.string.session_stat_max_speed),
+                    formatSpeed(session.maxSpeed, unitSystem),
+                    stringResource(R.string.session_stat_max_speed_fmt, speedUnitLabel(unitSystem)),
                     Modifier.weight(1f),
                 )
                 SessionStatTile(
-                    formatSpeedKmh(session.averageSpeed),
-                    stringResource(R.string.session_stat_avg_speed),
+                    formatSpeed(session.averageSpeed, unitSystem),
+                    stringResource(R.string.session_stat_avg_speed_fmt, speedUnitLabel(unitSystem)),
                     Modifier.weight(1f),
                 )
             }
@@ -269,7 +281,7 @@ private fun SessionDetailScreen(
                             color = LabelMuted,
                             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
                         )
-                        AltitudeProfile(track = track, modifier = Modifier.fillMaxWidth())
+                        AltitudeProfile(track = track, unitSystem = unitSystem, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -292,7 +304,7 @@ private fun SessionDetailScreen(
                     )
                 } else {
                     waypoints.forEach { waypoint ->
-                        SessionWaypointRow(waypoint = waypoint, onClick = { onOpenWaypoint(waypoint.id) })
+                        SessionWaypointRow(waypoint = waypoint, unitSystem = unitSystem, onClick = { onOpenWaypoint(waypoint.id) })
                     }
                 }
             }
@@ -321,7 +333,7 @@ private fun SessionStatTile(value: String, label: String, modifier: Modifier = M
 }
 
 @Composable
-private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
+private fun SessionWaypointRow(waypoint: Waypoint, unitSystem: UnitSystem, onClick: () -> Unit) {
     val light = LocalIsLightTheme.current
     val accentColor = if (light) CairnGreenDark else CairnGreen
     Card(
@@ -348,7 +360,7 @@ private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = waypoint.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accentColor)
                 Text(
-                    text = formatWaypointMetaLine(waypoint),
+                    text = formatWaypointMetaLine(waypoint, unitSystem),
                     fontSize = 12.sp,
                     fontFamily = MonoFontFamily,
                     color = LabelMuted,

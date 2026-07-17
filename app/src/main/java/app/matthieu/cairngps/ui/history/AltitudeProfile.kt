@@ -15,7 +15,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.data.TrackPoint
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.domain.format.formatElevation
+import app.matthieu.cairngps.domain.format.shortUnitLabel
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
@@ -29,7 +31,7 @@ import app.matthieu.cairngps.ui.theme.ValueMuted
  * (older sessions recorded before the track-points feature existed have none).
  */
 @Composable
-fun AltitudeProfile(track: List<TrackPoint>, modifier: Modifier = Modifier) {
+fun AltitudeProfile(track: List<TrackPoint>, unitSystem: UnitSystem, modifier: Modifier = Modifier) {
     if (track.isEmpty()) return
 
     val minAltitude = track.minOf { it.altitude }
@@ -70,13 +72,13 @@ fun AltitudeProfile(track: List<TrackPoint>, modifier: Modifier = Modifier) {
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                text = "${formatElevation(minAltitude)} m",
+                text = "${formatElevation(minAltitude, unitSystem)} ${shortUnitLabel(unitSystem)}",
                 fontSize = 11.sp,
                 fontFamily = MonoFontFamily,
                 color = ValueMuted,
             )
             Text(
-                text = "max ${formatElevation(maxAltitude)} m",
+                text = "max ${formatElevation(maxAltitude, unitSystem)} ${shortUnitLabel(unitSystem)}",
                 fontSize = 11.sp,
                 fontFamily = MonoFontFamily,
                 color = ValueMuted,

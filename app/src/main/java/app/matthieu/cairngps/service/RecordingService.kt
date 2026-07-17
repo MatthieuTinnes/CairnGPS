@@ -18,10 +18,15 @@ import app.matthieu.cairngps.MainActivity
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.RecordingState
+import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
+import app.matthieu.cairngps.domain.format.distanceUnitLabel
 import app.matthieu.cairngps.domain.format.formatAltitude
-import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatDuration
-import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatSpeed
+import app.matthieu.cairngps.domain.format.shortUnitLabel
+import app.matthieu.cairngps.domain.format.speedUnitLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,6 +50,20 @@ class RecordingService : Service() {
 
     private val recordingRepository: RecordingRepository by lazy {
         (application as CairnApplication).recordingRepository
+    }
+    private val settingsRepository: SettingsRepository by lazy {
+        (application as CairnApplication).settingsRepository
+    }
+
+    // Kept in sync from settingsRepository so buildNotification (called synchronously from the
+    // ticker loop) doesn't need a suspend read on every tick.
+    private var unitSystem: UnitSystem = UnitSystem.METRIC
+
+    override fun onCreate() {
+        super.onCreate()
+        scope.launch {
+            settingsRepository.settings.collect { unitSystem = it.unitSystem }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -143,9 +162,12 @@ class RecordingService : Service() {
         val title = getString(R.string.recording_notification_title_fmt, formatDuration(elapsedMs))
         val content = getString(
             R.string.recording_notification_content,
-            formatAltitude(state.currentAltitude),
-            formatSpeedKmh(state.currentSpeed),
-            formatDistanceKm(state.distanceMeters),
+            formatAltitude(state.currentAltitude, unitSystem),
+            shortUnitLabel(unitSystem),
+            formatSpeed(state.currentSpeed, unitSystem),
+            speedUnitLabel(unitSystem),
+            formatDistance(state.distanceMeters, unitSystem),
+            distanceUnitLabel(unitSystem),
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)

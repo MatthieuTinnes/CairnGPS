@@ -38,13 +38,17 @@ import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.RecordType
 import app.matthieu.cairngps.data.RecordsRepository
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.domain.format.DASH
+import app.matthieu.cairngps.domain.format.distanceUnitLabel
 import app.matthieu.cairngps.domain.format.formatAltitude
 import app.matthieu.cairngps.domain.format.formatCoordinate
-import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatElevation
-import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatSpeed
 import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
+import app.matthieu.cairngps.domain.format.shortUnitLabel
+import app.matthieu.cairngps.domain.format.speedUnitLabel
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnStone
@@ -71,6 +75,7 @@ fun RecordsRoute(
     RecordsScreen(
         uiState = uiState,
         coordinateFormat = settings.coordinateFormat,
+        unitSystem = settings.unitSystem,
         onBack = onBack,
         modifier = modifier,
     )
@@ -81,6 +86,7 @@ fun RecordsRoute(
 private fun RecordsScreen(
     uiState: RecordsUiState,
     coordinateFormat: CoordinateFormat,
+    unitSystem: UnitSystem,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -107,7 +113,7 @@ private fun RecordsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(uiState.items.orEmpty(), key = { it.type }) { item ->
-                RecordCard(item, coordinateFormat)
+                RecordCard(item, coordinateFormat, unitSystem)
             }
         }
     }
@@ -127,7 +133,7 @@ private val RecordType.glyph: Char
     }
 
 @Composable
-private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateFormat) {
+private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateFormat, unitSystem: UnitSystem) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,7 +166,7 @@ private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateForm
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = formatRecordValue(item, coordinateFormat),
+                    text = formatRecordValue(item, coordinateFormat, unitSystem),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = MonoFontFamily,
@@ -179,13 +185,13 @@ private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateForm
 }
 
 /** The record's headline value, formatted in its natural unit — [DASH] when not set yet. */
-private fun formatRecordValue(item: RecordDisplayItem, coordinateFormat: CoordinateFormat): String {
+private fun formatRecordValue(item: RecordDisplayItem, coordinateFormat: CoordinateFormat, unitSystem: UnitSystem): String {
     val entry = item.entry ?: return DASH
     return when (item.type) {
-        RecordType.MAX_SPEED -> "${formatSpeedKmh(entry.value.toFloat())} km/h"
-        RecordType.MAX_ALTITUDE, RecordType.MIN_ALTITUDE -> "${formatAltitude(entry.value)} m"
-        RecordType.MAX_ELEVATION_GAIN -> "${formatElevation(entry.value)} m"
-        RecordType.MAX_DISTANCE -> "${formatDistanceKm(entry.value)} km"
+        RecordType.MAX_SPEED -> "${formatSpeed(entry.value.toFloat(), unitSystem)} ${speedUnitLabel(unitSystem)}"
+        RecordType.MAX_ALTITUDE, RecordType.MIN_ALTITUDE -> "${formatAltitude(entry.value, unitSystem)} ${shortUnitLabel(unitSystem)}"
+        RecordType.MAX_ELEVATION_GAIN -> "${formatElevation(entry.value, unitSystem)} ${shortUnitLabel(unitSystem)}"
+        RecordType.MAX_DISTANCE -> "${formatDistance(entry.value, unitSystem)} ${distanceUnitLabel(unitSystem)}"
         RecordType.NORTHERNMOST, RecordType.SOUTHERNMOST ->
             formatCoordinate(entry.value, isLatitude = true, format = coordinateFormat)
         RecordType.EASTERNMOST, RecordType.WESTERNMOST ->

@@ -62,6 +62,8 @@ import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.domain.format.DASH
@@ -69,9 +71,12 @@ import app.matthieu.cairngps.domain.format.copyCoordinates
 import app.matthieu.cairngps.domain.format.formatAccuracy
 import app.matthieu.cairngps.domain.format.formatAltitude
 import app.matthieu.cairngps.domain.format.formatCoordinate
-import app.matthieu.cairngps.domain.format.formatDistanceKm
-import app.matthieu.cairngps.domain.format.formatSpeedKmh
+import app.matthieu.cairngps.domain.format.formatSpeed
 import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
+import app.matthieu.cairngps.domain.format.shortDistanceValueAndUnit
+import app.matthieu.cairngps.domain.format.shortUnitLabel
+import app.matthieu.cairngps.domain.format.speedUnitLabel
+import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
@@ -91,7 +96,6 @@ import app.matthieu.cairngps.ui.theme.SoftErrorLight
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.WaypointIconBg
 import java.util.Locale
-import kotlin.math.roundToInt
 
 /**
  * Route: loads the waypoint identified by [waypointId] and renders its full detail. Navigates back
@@ -105,6 +109,7 @@ fun WaypointDetailRoute(
     waypointRepository: WaypointRepository,
     sessionRepository: SessionRepository,
     locationRepository: LocationRepository,
+    settingsRepository: SettingsRepository,
     onBack: () -> Unit,
     onOpenSession: (Long) -> Unit,
     onNavigate: (Long) -> Unit,
@@ -119,7 +124,10 @@ fun WaypointDetailRoute(
                 waypointId,
             ),
         )
+    val settingsViewModel: SettingsViewModel =
+        viewModel(factory = SettingsViewModel.factory(settingsRepository))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
     // Once the delete completes, leave the detail screen (side-effect, not done during composition).
     LaunchedEffect(uiState.deleted) {
@@ -136,6 +144,7 @@ fun WaypointDetailRoute(
         waypoint = uiState.waypoint,
         session = uiState.session,
         currentDistanceMeters = uiState.currentDistanceMeters,
+        unitSystem = settings.unitSystem,
         onBack = onBack,
         onDelete = viewModel::delete,
         onEdit = viewModel::edit,
@@ -152,6 +161,7 @@ private fun WaypointDetailScreen(
     waypoint: Waypoint?,
     session: Session?,
     currentDistanceMeters: Double?,
+    unitSystem: UnitSystem,
     onBack: () -> Unit,
     onDelete: () -> Unit,
     onEdit: (String, String) -> Unit,
@@ -370,14 +380,14 @@ private fun WaypointDetailScreen(
             ) {
                 MeasurementTile(
                     label = stringResource(R.string.label_altitude),
-                    value = formatAltitude(waypoint.altitude),
-                    unit = "m",
+                    value = formatAltitude(waypoint.altitude, unitSystem),
+                    unit = shortUnitLabel(unitSystem),
                     modifier = Modifier.weight(1f),
                 )
-                val (distanceValue, distanceUnit) = when {
-                    currentDistanceMeters == null -> DASH to "m"
-                    currentDistanceMeters >= 1000.0 -> formatDistanceKm(currentDistanceMeters) to "km"
-                    else -> currentDistanceMeters.roundToInt().toString() to "m"
+                val (distanceValue, distanceUnit) = if (currentDistanceMeters == null) {
+                    DASH to shortUnitLabel(unitSystem)
+                } else {
+                    shortDistanceValueAndUnit(currentDistanceMeters, unitSystem)
                 }
                 MeasurementTile(
                     label = stringResource(R.string.label_current_distance),
@@ -405,12 +415,12 @@ private fun WaypointDetailScreen(
                     )
                     MeasurementRow(
                         stringResource(R.string.label_speed),
-                        "${formatSpeedKmh(waypoint.speed)} km/h",
+                        "${formatSpeed(waypoint.speed, unitSystem)} ${speedUnitLabel(unitSystem)}",
                         valueColor = MaterialTheme.colorScheme.onSurface,
                     )
                     MeasurementRow(
                         stringResource(R.string.label_accuracy),
-                        "±${formatAccuracy(waypoint.horizontalAccuracy)} m",
+                        "±${formatAccuracy(waypoint.horizontalAccuracy, unitSystem)} ${shortUnitLabel(unitSystem)}",
                     )
                     MeasurementRow(
                         stringResource(R.string.label_satellites_used),

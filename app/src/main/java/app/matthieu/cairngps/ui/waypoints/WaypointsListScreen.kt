@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.R
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.domain.format.formatWaypointMetaLine
 import app.matthieu.cairngps.ui.theme.CairnGreen
@@ -47,6 +48,7 @@ import app.matthieu.cairngps.ui.theme.WaypointIconBg
 @Composable
 fun WaypointsListContent(
     uiState: WaypointsUiState,
+    unitSystem: UnitSystem,
     onOpenWaypoint: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -59,14 +61,14 @@ fun WaypointsListContent(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(uiState.waypoints.orEmpty(), key = { it.id }) { waypoint ->
-                WaypointRow(waypoint = waypoint, onClick = { onOpenWaypoint(waypoint.id) })
+                WaypointRow(waypoint = waypoint, unitSystem = unitSystem, onClick = { onOpenWaypoint(waypoint.id) })
             }
         }
     }
 }
 
 @Composable
-private fun WaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
+private fun WaypointRow(waypoint: Waypoint, unitSystem: UnitSystem, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -91,7 +93,7 @@ private fun WaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = waypoint.name, fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold)
                 Text(
-                    text = formatWaypointMetaLine(waypoint),
+                    text = formatWaypointMetaLine(waypoint, unitSystem),
                     fontSize = 12.5.sp,
                     fontFamily = MonoFontFamily,
                     color = LabelMuted,

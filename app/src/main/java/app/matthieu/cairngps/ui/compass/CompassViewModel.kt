@@ -15,6 +15,7 @@ import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.common.factoryOf
@@ -57,8 +58,10 @@ class CompassViewModel(
     private var lastAccuracy: Int = SensorManager.SENSOR_STATUS_ACCURACY_HIGH
     private var declination: Float? = null
 
-    // North reference is a persisted preference (set from the Settings screen), not local UI state.
+    // North reference and unit system are persisted preferences (set from the Settings screen),
+    // not local UI state.
     private var northReference: NorthReference = NorthReference.MAGNETIC
+    private var unitSystem: UnitSystem = UnitSystem.METRIC
 
     // Target waypoint (selected from the "Changer de repère cible" picker) and the last known
     // position, combined to derive the bearing/distance shown on the target card. Neither is tied
@@ -75,6 +78,7 @@ class CompassViewModel(
         settingsRepository.settings
             .onEach { settings ->
                 northReference = settings.northReference
+                unitSystem = settings.unitSystem
                 publish()
             }
             .launchIn(viewModelScope)
@@ -207,6 +211,7 @@ class CompassViewModel(
             bearingToTargetDegrees = targetBearing,
             waypoints = waypoints,
             targetWaypointId = target?.id,
+            unitSystem = unitSystem,
         )
 
         val magnetic = smoothedMagnetic

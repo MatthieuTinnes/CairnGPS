@@ -8,9 +8,14 @@ import android.widget.Toast
 import androidx.core.content.getSystemService
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.UnitSystem
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+
+private const val METERS_TO_FEET = 3.28084
+private const val KM_TO_MILES = 0.621371
+private const val MPS_TO_MPH = 2.236936
 
 /**
  * Placeholder shown for any value before the first GPS fix arrives.
@@ -25,7 +30,24 @@ const val DASH: String = "—"
 /** Quality bucket for a horizontal accuracy radius, used to drive the visual indicator. */
 enum class AccuracyQuality { GOOD, MEDIUM, POOR, UNKNOWN }
 
-/** green < 5 m, orange 5–15 m, red > 15 m. */
+/** Unit label for altitude/elevation/accuracy readings: meters (metric) or feet (imperial). */
+fun shortUnitLabel(unitSystem: UnitSystem): String = if (unitSystem == UnitSystem.METRIC) "m" else "ft"
+
+/** Unit label for the main speed readout: km/h (metric) or mph (imperial). */
+fun speedUnitLabel(unitSystem: UnitSystem): String = if (unitSystem == UnitSystem.METRIC) "km/h" else "mph"
+
+/** Unit label for the secondary speed readout: m/s (metric) or ft/s (imperial). */
+fun speedSecondaryUnitLabel(unitSystem: UnitSystem): String = if (unitSystem == UnitSystem.METRIC) "m/s" else "ft/s"
+
+/** Unit label for long-distance totals: km (metric) or mi (imperial). */
+fun distanceUnitLabel(unitSystem: UnitSystem): String = if (unitSystem == UnitSystem.METRIC) "km" else "mi"
+
+/**
+ * green < 5 m, orange 5–15 m, red > 15 m.
+ *
+ * Thresholds always compare the raw metric radius, regardless of the display unit system — this
+ * gates a visual indicator, not a number shown to the user.
+ */
 fun accuracyQuality(accuracyMeters: Float?): AccuracyQuality = when {
     accuracyMeters == null -> AccuracyQuality.UNKNOWN
     accuracyMeters < 5f -> AccuracyQuality.GOOD
@@ -63,21 +85,29 @@ private fun formatDms(value: Double, isLatitude: Boolean): String {
     return "%d°%02d'%02d.%d\"%s".format(degrees, minutes, seconds, tenths, hemisphere)
 }
 
-/** Altitude as whole meters, or [DASH]. Unit is displayed separately. */
-fun formatAltitude(altitudeMeters: Double?): String =
-    altitudeMeters?.roundToInt()?.toString() ?: DASH
+/** Altitude as a whole number, meters or feet depending on [unitSystem], or [DASH]. */
+fun formatAltitude(altitudeMeters: Double?, unitSystem: UnitSystem): String = altitudeMeters?.let {
+    val value = if (unitSystem == UnitSystem.METRIC) it else it * METERS_TO_FEET
+    value.roundToInt().toString()
+} ?: DASH
 
-/** Speed converted to km/h with one decimal, or [DASH]. */
-fun formatSpeedKmh(speedMetersPerSecond: Float?): String =
-    speedMetersPerSecond?.let { "%.1f".format(it * 3.6f) } ?: DASH
+/** Speed converted to km/h or mph (per [unitSystem]) with one decimal, or [DASH]. */
+fun formatSpeed(speedMetersPerSecond: Float?, unitSystem: UnitSystem): String = speedMetersPerSecond?.let {
+    val value = if (unitSystem == UnitSystem.METRIC) it * 3.6f else it * MPS_TO_MPH.toFloat()
+    "%.1f".format(value)
+} ?: DASH
 
-/** Raw speed in m/s with one decimal, or [DASH]. */
-fun formatSpeedMs(speedMetersPerSecond: Float?): String =
-    speedMetersPerSecond?.let { "%.1f".format(it) } ?: DASH
+/** Secondary speed readout in m/s or ft/s (per [unitSystem]) with one decimal, or [DASH]. */
+fun formatSpeedSecondary(speedMetersPerSecond: Float?, unitSystem: UnitSystem): String = speedMetersPerSecond?.let {
+    val value = if (unitSystem == UnitSystem.METRIC) it else it * METERS_TO_FEET.toFloat()
+    "%.1f".format(value)
+} ?: DASH
 
-/** Horizontal accuracy radius in meters with one decimal, or [DASH]. */
-fun formatAccuracy(accuracyMeters: Float?): String =
-    accuracyMeters?.let { "%.1f".format(it) } ?: DASH
+/** Horizontal accuracy radius in meters or feet (per [unitSystem]) with one decimal, or [DASH]. */
+fun formatAccuracy(accuracyMeters: Float?, unitSystem: UnitSystem): String = accuracyMeters?.let {
+    val value = if (unitSystem == UnitSystem.METRIC) it else it * METERS_TO_FEET.toFloat()
+    "%.1f".format(value)
+} ?: DASH
 
 /** Coordinates as plain decimal degrees for the clipboard, e.g. `47.123456, 6.123456`. */
 fun formatCoordinatesForClipboard(latitude: Double, longitude: Double): String =
@@ -115,16 +145,49 @@ fun formatDuration(durationMs: Long, showSecondsPastOneHour: Boolean = true): St
     }
 }
 
-/** A distance in meters, formatted in km with two decimals for readability during a recording. */
-fun formatDistanceKm(distanceMeters: Double): String = "%.2f".format(distanceMeters / 1000.0)
+/**
+ * A distance in meters, formatted with two decimals for readability during a recording: km
+ * (metric) or mi (imperial), per [unitSystem].
+ */
+fun formatDistance(distanceMeters: Double, unitSystem: UnitSystem): String {
+    val km = distanceMeters / 1000.0
+    val value = if (unitSystem == UnitSystem.METRIC) km else km * KM_TO_MILES
+    return "%.2f".format(value)
+}
 
 /**
- * A distance for a short-range display (target/current-distance cards): whole meters under 1 km,
- * two-decimal kilometers above — unlike [formatDistanceKm] this includes the unit, since callers
- * show it standalone rather than next to a separate "km" label.
+ * The (value, unit) pair for a short-range distance display (target/current-distance cards):
+ * whole small units below the long-unit threshold, two-decimal long units above. Metric switches
+ * from meters to km at 1000 m; imperial switches from feet to mi at 528 ft (0.1 mi).
  */
-fun formatShortDistance(distanceMeters: Double): String =
-    if (distanceMeters >= 1000.0) "${formatDistanceKm(distanceMeters)} km" else "${distanceMeters.roundToInt()} m"
+fun shortDistanceValueAndUnit(distanceMeters: Double, unitSystem: UnitSystem): Pair<String, String> = when (unitSystem) {
+    UnitSystem.METRIC -> if (distanceMeters >= 1000.0) {
+        formatDistance(distanceMeters, unitSystem) to distanceUnitLabel(unitSystem)
+    } else {
+        distanceMeters.roundToInt().toString() to shortUnitLabel(unitSystem)
+    }
+    UnitSystem.IMPERIAL -> {
+        val feet = distanceMeters * METERS_TO_FEET
+        if (feet >= 528.0) {
+            formatDistance(distanceMeters, unitSystem) to distanceUnitLabel(unitSystem)
+        } else {
+            feet.roundToInt().toString() to shortUnitLabel(unitSystem)
+        }
+    }
+}
 
-/** An elevation gain/loss (D+/D-) as whole meters. */
-fun formatElevation(elevationMeters: Double): String = elevationMeters.roundToInt().toString()
+/**
+ * A distance for a short-range display (target/current-distance cards), as a single string —
+ * unlike [formatDistance] this includes the unit, since callers show it standalone rather than
+ * next to a separate label. See [shortDistanceValueAndUnit] for the threshold rules.
+ */
+fun formatShortDistance(distanceMeters: Double, unitSystem: UnitSystem): String {
+    val (value, unit) = shortDistanceValueAndUnit(distanceMeters, unitSystem)
+    return "$value $unit"
+}
+
+/** An elevation gain/loss (D+/D-) as a whole number, meters or feet depending on [unitSystem]. */
+fun formatElevation(elevationMeters: Double, unitSystem: UnitSystem): String {
+    val value = if (unitSystem == UnitSystem.METRIC) elevationMeters else elevationMeters * METERS_TO_FEET
+    return value.roundToInt().toString()
+}

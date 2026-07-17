@@ -61,20 +61,25 @@ import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.domain.format.AccuracyQuality
 import app.matthieu.cairngps.domain.format.DASH
 import app.matthieu.cairngps.domain.format.accuracyQuality
 import app.matthieu.cairngps.domain.format.copyCoordinates
 import app.matthieu.cairngps.domain.format.defaultWaypointName
+import app.matthieu.cairngps.domain.format.distanceUnitLabel
 import app.matthieu.cairngps.domain.format.formatAccuracy
 import app.matthieu.cairngps.domain.format.formatAltitude
 import app.matthieu.cairngps.domain.format.formatCoordinate
-import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatDuration
 import app.matthieu.cairngps.domain.format.formatElevation
-import app.matthieu.cairngps.domain.format.formatSpeedKmh
-import app.matthieu.cairngps.domain.format.formatSpeedMs
+import app.matthieu.cairngps.domain.format.formatSpeed
+import app.matthieu.cairngps.domain.format.formatSpeedSecondary
+import app.matthieu.cairngps.domain.format.shortUnitLabel
+import app.matthieu.cairngps.domain.format.speedSecondaryUnitLabel
+import app.matthieu.cairngps.domain.format.speedUnitLabel
 import app.matthieu.cairngps.service.RecordingService
 import app.matthieu.cairngps.ui.common.BigValue
 import app.matthieu.cairngps.ui.common.CardTitle
@@ -116,12 +121,13 @@ private const val DASH_COORD_DECIMAL = "--.------°"
 private const val DASH_COORD_DMS = "--°--'--.-\"-"
 private const val DASH_SPEED = "--,-"
 private const val DASH_ALTITUDE = "-- --"
-private const val DASH_ACCURACY = "± -- m"
 
 private fun coordinateDash(format: CoordinateFormat): String = when (format) {
     CoordinateFormat.DECIMAL -> DASH_COORD_DECIMAL
     CoordinateFormat.DMS -> DASH_COORD_DMS
 }
+
+private fun dashAccuracy(unitSystem: UnitSystem): String = "± -- ${shortUnitLabel(unitSystem)}"
 
 /**
  * Screen route. Wires up the [LocationViewModel] and binds GPS tracking to the screen lifecycle:
@@ -167,6 +173,7 @@ fun HomeRoute(
     HomeScreen(
         uiState = uiState,
         coordinateFormat = settings.coordinateFormat,
+        unitSystem = settings.unitSystem,
         recordingUiState = recordingUiState,
         onSaveWaypoint = viewModel::saveWaypoint,
         onStartRecording = {
@@ -191,6 +198,7 @@ fun HomeRoute(
 private fun HomeScreen(
     uiState: LocationUiState,
     coordinateFormat: CoordinateFormat,
+    unitSystem: UnitSystem,
     recordingUiState: RecordingUiState,
     onSaveWaypoint: (String) -> Unit,
     onStartRecording: () -> Unit,
@@ -264,15 +272,17 @@ private fun HomeScreen(
                     onCopy = { copyCoordinates(context, uiState) },
                 )
 
-                SpeedCard(uiState = uiState)
+                SpeedCard(uiState = uiState, unitSystem = unitSystem)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AltitudeCard(
                         uiState = uiState,
+                        unitSystem = unitSystem,
                         modifier = Modifier.weight(1f),
                     )
                     AccuracyCard(
                         uiState = uiState,
+                        unitSystem = unitSystem,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -282,7 +292,7 @@ private fun HomeScreen(
                 }
 
                 if (recordingUiState.isRecording) {
-                    SessionCard(uiState = recordingUiState)
+                    SessionCard(uiState = recordingUiState, unitSystem = unitSystem)
                 }
 
                 Spacer(Modifier.height(4.dp))
@@ -379,7 +389,7 @@ private fun BottomActionsRow(
 
 /** The "SESSION EN COURS" card: a 2×3 grid of live recording stats, shown only while recording. */
 @Composable
-private fun SessionCard(uiState: RecordingUiState) {
+private fun SessionCard(uiState: RecordingUiState, unitSystem: UnitSystem) {
     DataCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             PulsingDot(color = QualityPoor)
@@ -393,18 +403,18 @@ private fun SessionCard(uiState: RecordingUiState) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             RecordingStat(
                 label = stringResource(R.string.recording_distance),
-                value = "${formatDistanceKm(uiState.distanceMeters)} km",
+                value = "${formatDistance(uiState.distanceMeters, unitSystem)} ${distanceUnitLabel(unitSystem)}",
                 modifier = Modifier.weight(1f),
             )
             RecordingStat(
                 label = stringResource(R.string.recording_elevation_gain),
-                value = "+${formatElevation(uiState.elevationGain)} m",
+                value = "+${formatElevation(uiState.elevationGain, unitSystem)} ${shortUnitLabel(unitSystem)}",
                 valueColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f),
             )
             RecordingStat(
                 label = stringResource(R.string.recording_elevation_loss),
-                value = "-${formatElevation(uiState.elevationLoss)} m",
+                value = "-${formatElevation(uiState.elevationLoss, unitSystem)} ${shortUnitLabel(unitSystem)}",
                 valueColor = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.weight(1f),
             )
@@ -413,12 +423,12 @@ private fun SessionCard(uiState: RecordingUiState) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             RecordingStat(
                 label = stringResource(R.string.recording_avg_speed),
-                value = "${formatSpeedKmh(uiState.averageSpeed)} km/h",
+                value = "${formatSpeed(uiState.averageSpeed, unitSystem)} ${speedUnitLabel(unitSystem)}",
                 modifier = Modifier.weight(1f),
             )
             RecordingStat(
                 label = stringResource(R.string.recording_max_speed),
-                value = "${formatSpeedKmh(uiState.maxSpeed)} km/h",
+                value = "${formatSpeed(uiState.maxSpeed, unitSystem)} ${speedUnitLabel(unitSystem)}",
                 modifier = Modifier.weight(1f),
             )
             RecordingStat(
@@ -603,36 +613,40 @@ private fun CoordinatesCard(
 }
 
 @Composable
-private fun AltitudeCard(uiState: LocationUiState, modifier: Modifier = Modifier) {
+private fun AltitudeCard(uiState: LocationUiState, unitSystem: UnitSystem, modifier: Modifier = Modifier) {
     DataCard(modifier = modifier) {
         CardTitle(stringResource(R.string.label_altitude))
         Spacer(Modifier.height(8.dp))
         BigValue(
-            value = if (uiState.hasFix) formatAltitude(uiState.fix?.altitude) else DASH_ALTITUDE,
-            unit = "m",
+            value = if (uiState.hasFix) formatAltitude(uiState.fix?.altitude, unitSystem) else DASH_ALTITUDE,
+            unit = shortUnitLabel(unitSystem),
             valueColor = if (uiState.hasFix) Color.Unspecified else DashMuted,
             unitColor = if (uiState.hasFix) MaterialTheme.colorScheme.tertiary else ValueMuted,
         )
     }
 }
 
-/** Full-width VITESSE card: the primary km/h reading, with the m/s equivalent alongside it. */
+/** Full-width VITESSE card: the primary km/h (or mph) reading, with the secondary unit alongside it. */
 @Composable
-private fun SpeedCard(uiState: LocationUiState) {
+private fun SpeedCard(uiState: LocationUiState, unitSystem: UnitSystem) {
     DataCard {
         Row(verticalAlignment = Alignment.Bottom) {
             Column(modifier = Modifier.weight(1f)) {
                 CardTitle(stringResource(R.string.label_speed))
                 Spacer(Modifier.height(4.dp))
                 BigValue(
-                    value = if (uiState.hasFix) formatSpeedKmh(uiState.fix?.speed) else DASH_SPEED,
-                    unit = "km/h",
+                    value = if (uiState.hasFix) formatSpeed(uiState.fix?.speed, unitSystem) else DASH_SPEED,
+                    unit = speedUnitLabel(unitSystem),
                     valueColor = if (uiState.hasFix) Color.Unspecified else DashMuted,
                     unitColor = if (uiState.hasFix) MaterialTheme.colorScheme.tertiary else ValueMuted,
                 )
             }
             Text(
-                text = if (uiState.hasFix) "${formatSpeedMs(uiState.fix?.speed)} m/s" else "$DASH_SPEED m/s",
+                text = if (uiState.hasFix) {
+                    "${formatSpeedSecondary(uiState.fix?.speed, unitSystem)} ${speedSecondaryUnitLabel(unitSystem)}"
+                } else {
+                    "$DASH_SPEED ${speedSecondaryUnitLabel(unitSystem)}"
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 fontFamily = MonoFontFamily,
                 color = if (uiState.hasFix) ValueMuted else DashMuted,
@@ -643,24 +657,26 @@ private fun SpeedCard(uiState: LocationUiState) {
 
 /** PRÉCISION card: horizontal and vertical accuracy, each with its own quality dot. */
 @Composable
-private fun AccuracyCard(uiState: LocationUiState, modifier: Modifier = Modifier) {
+private fun AccuracyCard(uiState: LocationUiState, unitSystem: UnitSystem, modifier: Modifier = Modifier) {
     DataCard(modifier = modifier) {
         CardTitle(stringResource(R.string.label_precision))
         Spacer(Modifier.height(10.dp))
         AccuracyRow(
             accuracyMeters = uiState.fix?.horizontalAccuracy,
             letter = stringResource(R.string.label_accuracy_h),
+            unitSystem = unitSystem,
         )
         Spacer(Modifier.height(8.dp))
         AccuracyRow(
             accuracyMeters = uiState.fix?.verticalAccuracy,
             letter = stringResource(R.string.label_accuracy_v),
+            unitSystem = unitSystem,
         )
     }
 }
 
 @Composable
-private fun AccuracyRow(accuracyMeters: Float?, letter: String) {
+private fun AccuracyRow(accuracyMeters: Float?, letter: String, unitSystem: UnitSystem) {
     val quality = accuracyQuality(accuracyMeters)
     val color = when (quality) {
         AccuracyQuality.GOOD -> QualityGood
@@ -676,7 +692,11 @@ private fun AccuracyRow(accuracyMeters: Float?, letter: String) {
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = if (accuracyMeters != null) "±${formatAccuracy(accuracyMeters)} m" else DASH_ACCURACY,
+            text = if (accuracyMeters != null) {
+                "±${formatAccuracy(accuracyMeters, unitSystem)} ${shortUnitLabel(unitSystem)}"
+            } else {
+                dashAccuracy(unitSystem)
+            },
             style = MaterialTheme.typography.titleMedium,
             fontFamily = MonoFontFamily,
             color = if (accuracyMeters != null) Color.Unspecified else DashText,

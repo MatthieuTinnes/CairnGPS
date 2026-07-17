@@ -27,6 +27,13 @@ enum class NorthReference {
     TRUE,
 }
 
+/** Unit system used to display measurements. Persisted as an app-wide preference. */
+@Serializable
+enum class UnitSystem {
+    METRIC,
+    IMPERIAL,
+}
+
 /**
  * User-configurable application settings.
  *
@@ -37,4 +44,5 @@ data class AppSettings(
     val coordinateFormat: CoordinateFormat = CoordinateFormat.DECIMAL,
     val themeMode: ThemeMode = ThemeMode.DARK,
     val northReference: NorthReference = NorthReference.MAGNETIC,
+    val unitSystem: UnitSystem = UnitSystem.METRIC,
 )

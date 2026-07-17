@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.domain.format
 
 import app.matthieu.cairngps.data.DefaultNameTimestampFormatter
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 import java.time.Instant
 import java.time.ZoneId
@@ -51,7 +52,7 @@ fun defaultWaypointName(namePrefix: String, epochMillis: Long = System.currentTi
  * 1h, 1j) — shared by [app.matthieu.cairngps.ui.waypoints.WaypointsListContent] and the session
  * detail screen's waypoint rows.
  */
-fun formatWaypointMetaLine(waypoint: Waypoint): String =
-    "${formatAltitude(waypoint.altitude)} m · " +
+fun formatWaypointMetaLine(waypoint: Waypoint, unitSystem: UnitSystem): String =
+    "${formatAltitude(waypoint.altitude, unitSystem)} ${shortUnitLabel(unitSystem)} · " +
         "%.4f, %.4f".format(waypoint.latitude, waypoint.longitude) + " · " +
         formatWaypointShortDate(waypoint.timestamp)

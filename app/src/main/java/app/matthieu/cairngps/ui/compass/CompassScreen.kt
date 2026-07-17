@@ -64,6 +64,7 @@ import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.domain.format.defaultWaypointName
@@ -152,6 +153,7 @@ private fun CompassScreen(
         TargetPickerSheet(
             waypoints = uiState.waypoints,
             targetWaypointId = uiState.targetWaypointId,
+            unitSystem = uiState.unitSystem,
             onSelect = { id ->
                 showTargetPicker = false
                 onSelectTarget(id)
@@ -403,7 +405,7 @@ private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
                         val distance = uiState.targetDistanceMeters
                         if (distance != null) {
                             Text(
-                                text = formatShortDistance(distance),
+                                text = formatShortDistance(distance, uiState.unitSystem),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontFamily = MonoFontFamily,
                             )
@@ -436,6 +438,7 @@ private fun Modifier.rotateGlyph(degrees: Float): Modifier = this.rotateModifier
 private fun TargetPickerSheet(
     waypoints: List<Waypoint>,
     targetWaypointId: Long?,
+    unitSystem: UnitSystem,
     onSelect: (Long) -> Unit,
     onCreateHere: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -481,6 +484,7 @@ private fun TargetPickerSheet(
                         TargetPickerRow(
                             waypoint = waypoint,
                             selected = waypoint.id == targetWaypointId,
+                            unitSystem = unitSystem,
                             onClick = { onSelect(waypoint.id) },
                         )
                     }
@@ -526,7 +530,7 @@ private fun TargetPickerSheet(
 
 /** One waypoint row in [TargetPickerSheet]: icon circle, name, muted metadata subtitle. */
 @Composable
-private fun TargetPickerRow(waypoint: Waypoint, selected: Boolean, onClick: () -> Unit) {
+private fun TargetPickerRow(waypoint: Waypoint, selected: Boolean, unitSystem: UnitSystem, onClick: () -> Unit) {
     val light = LocalIsLightTheme.current
     val accentColor = if (light) CairnGreenDark else CairnGreen
     Row(
@@ -556,7 +560,7 @@ private fun TargetPickerRow(waypoint: Waypoint, selected: Boolean, onClick: () -
         Column(modifier = Modifier.weight(1f)) {
             Text(text = waypoint.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                text = formatWaypointMetaLine(waypoint),
+                text = formatWaypointMetaLine(waypoint, unitSystem),
                 fontSize = 12.5.sp,
                 fontFamily = MonoFontFamily,
                 color = LabelMuted,

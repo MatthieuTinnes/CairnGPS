@@ -191,6 +191,7 @@ fun MainScaffold(app: CairnApplication) {
                         sessionRepository = app.sessionRepository,
                         achievementsRepository = app.achievementsRepository,
                         waypointRepository = app.waypointRepository,
+                        settingsRepository = app.settingsRepository,
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                         onOpenHistory = { navController.navigate(Routes.HISTORY) },
                         onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
@@ -201,6 +202,7 @@ fun MainScaffold(app: CairnApplication) {
                     HistoryRoute(
                         waypointRepository = app.waypointRepository,
                         sessionRepository = app.sessionRepository,
+                        settingsRepository = app.settingsRepository,
                         onOpenWaypoint = { id -> navController.navigate(Routes.waypointDetail(id)) },
                         onOpenSession = { id -> navController.navigate(Routes.sessionDetail(id)) },
                         onBack = { navController.popBackStack() },
@@ -216,6 +218,7 @@ fun MainScaffold(app: CairnApplication) {
                         waypointRepository = app.waypointRepository,
                         sessionRepository = app.sessionRepository,
                         locationRepository = app.locationRepository,
+                        settingsRepository = app.settingsRepository,
                         onBack = { navController.popBackStack() },
                         onOpenSession = { sessionId -> navController.navigate(Routes.sessionDetail(sessionId)) },
                         onNavigate = { targetId ->
@@ -237,6 +240,7 @@ fun MainScaffold(app: CairnApplication) {
                         sessionId = id,
                         sessionRepository = app.sessionRepository,
                         waypointRepository = app.waypointRepository,
+                        settingsRepository = app.settingsRepository,
                         onBack = { navController.popBackStack() },
                         onOpenWaypoint = { waypointId -> navController.navigate(Routes.waypointDetail(waypointId)) },
                     )
@@ -247,6 +251,7 @@ fun MainScaffold(app: CairnApplication) {
                         recordsRepository = app.recordsRepository,
                         sessionRepository = app.sessionRepository,
                         waypointRepository = app.waypointRepository,
+                        settingsRepository = app.settingsRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }

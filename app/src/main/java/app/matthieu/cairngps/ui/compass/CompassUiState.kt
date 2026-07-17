@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.ui.compass
 
 import app.matthieu.cairngps.data.NorthReference
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 
 /**
@@ -29,6 +30,7 @@ import app.matthieu.cairngps.data.Waypoint
  * @property waypoints              Every saved waypoint, for the "Changer de repère cible" picker.
  * @property targetWaypointId       Id of the selected target waypoint, so the picker can highlight
  *                                  the currently active row; `null` when no target is set.
+ * @property unitSystem              Unit system used to display the target distance.
  */
 data class CompassUiState(
     val sensorAvailable: Boolean = true,
@@ -44,6 +46,7 @@ data class CompassUiState(
     val bearingToTargetDegrees: Float? = null,
     val waypoints: List<Waypoint> = emptyList(),
     val targetWaypointId: Long? = null,
+    val unitSystem: UnitSystem = UnitSystem.METRIC,
 ) {
     /** True once a target waypoint is selected, regardless of whether a bearing could be computed. */
     val hasTarget: Boolean get() = targetName != null

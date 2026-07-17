@@ -44,8 +44,17 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.RecordsRepository
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.format.distanceUnitLabel
+import app.matthieu.cairngps.domain.format.formatAltitude
+import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatElevation
+import app.matthieu.cairngps.domain.format.formatSpeed
+import app.matthieu.cairngps.domain.format.shortUnitLabel
+import app.matthieu.cairngps.domain.format.speedUnitLabel
+import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
@@ -63,6 +72,7 @@ fun AchievementsRoute(
     recordsRepository: RecordsRepository,
     sessionRepository: SessionRepository,
     waypointRepository: WaypointRepository,
+    settingsRepository: SettingsRepository,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -74,10 +84,14 @@ fun AchievementsRoute(
             waypointRepository,
         ),
     )
+    val settingsViewModel: SettingsViewModel =
+        viewModel(factory = SettingsViewModel.factory(settingsRepository))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
     AchievementsScreen(
         uiState = uiState,
+        unitSystem = settings.unitSystem,
         onBack = onBack,
         modifier = modifier,
     )
@@ -110,6 +124,7 @@ private val AchievementFamily.titleRes: Int
 @Composable
 private fun AchievementsScreen(
     uiState: AchievementsUiState,
+    unitSystem: UnitSystem,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -162,15 +177,15 @@ private fun AchievementsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             uiState.next?.let { next ->
-                item(span = { GridItemSpan(maxLineSpan) }) { NextAchievementCard(next) }
+                item(span = { GridItemSpan(maxLineSpan) }) { NextAchievementCard(next, unitSystem) }
             }
-            items(items, key = { it.def.id }) { item -> AchievementBadge(item) }
+            items(items, key = { it.def.id }) { item -> AchievementBadge(item, unitSystem) }
         }
     }
 }
 
 @Composable
-private fun NextAchievementCard(next: NextAchievementUi) {
+private fun NextAchievementCard(next: NextAchievementUi, unitSystem: UnitSystem) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -219,7 +234,7 @@ private fun NextAchievementCard(next: NextAchievementUi) {
                     val nextThreshold = next.progress.nextThreshold
                     if (nextThreshold != null) {
                         Text(
-                            text = formatFamilyValue(next.def.family, nextThreshold),
+                            text = formatFamilyValue(next.def.family, nextThreshold, unitSystem),
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = MonoFontFamily,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -232,7 +247,7 @@ private fun NextAchievementCard(next: NextAchievementUi) {
 }
 
 @Composable
-private fun AchievementBadge(item: AchievementItem) {
+private fun AchievementBadge(item: AchievementItem, unitSystem: UnitSystem) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -266,7 +281,7 @@ private fun AchievementBadge(item: AchievementItem) {
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = stringResource(item.def.descRes),
+                text = achievementDescription(item.def, unitSystem),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -283,12 +298,25 @@ private fun AchievementBadge(item: AchievementItem) {
 }
 
 /** Formats a raw metric value in the unit its family is best expressed in, for the progress caption. */
-private fun formatFamilyValue(family: AchievementFamily, value: Double): String = when (family) {
-    AchievementFamily.ALTITUDE -> "${formatElevation(value)} m"
-    AchievementFamily.SPEED -> "%.0f km/h".format(value * 3.6)
+private fun formatFamilyValue(family: AchievementFamily, value: Double, unitSystem: UnitSystem): String = when (family) {
+    AchievementFamily.ALTITUDE -> "${formatElevation(value, unitSystem)} ${shortUnitLabel(unitSystem)}"
+    AchievementFamily.SPEED -> "${formatSpeed(value.toFloat(), unitSystem)} ${speedUnitLabel(unitSystem)}"
     AchievementFamily.SATELLITES -> "%.0f".format(value)
-    AchievementFamily.DISTANCE -> "%.1f km".format(value / 1000.0)
+    AchievementFamily.DISTANCE -> "${formatDistance(value, unitSystem)} ${distanceUnitLabel(unitSystem)}"
     AchievementFamily.SESSIONS -> "%.0f".format(value)
     AchievementFamily.GEO -> "" // GEO has no progress bar (see Achievements.progressToNext)
     AchievementFamily.TIME -> "" // TIME has no progress bar (see Achievements.progressToNext)
+}
+
+/**
+ * The achievement's description, with its family's threshold converted to the display unit
+ * system — [AchievementDef.descRes] is a format string taking the formatted value and its unit
+ * label for ALTITUDE/SPEED/DISTANCE, and a plain string otherwise.
+ */
+@Composable
+private fun achievementDescription(def: AchievementDef, unitSystem: UnitSystem): String = when (def.family) {
+    AchievementFamily.ALTITUDE -> stringResource(def.descRes, formatAltitude(def.threshold, unitSystem), shortUnitLabel(unitSystem))
+    AchievementFamily.SPEED -> stringResource(def.descRes, formatSpeed(def.threshold.toFloat(), unitSystem), speedUnitLabel(unitSystem))
+    AchievementFamily.DISTANCE -> stringResource(def.descRes, formatDistance(def.threshold, unitSystem), distanceUnitLabel(unitSystem))
+    else -> stringResource(def.descRes)
 }

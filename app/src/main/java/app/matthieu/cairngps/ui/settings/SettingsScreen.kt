@@ -51,6 +51,7 @@ import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.ui.common.SegmentedToggle
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.Glyph
@@ -107,6 +108,8 @@ fun SettingsRoute(
         },
         northReference = settings.northReference,
         onNorthReferenceChange = viewModel::setNorthReference,
+        unitSystem = settings.unitSystem,
+        onUnitSystemChange = viewModel::setUnitSystem,
         isBackupWorking = isBackupWorking,
         backupEvents = viewModel.backupEvents,
         onExport = viewModel::exportBackup,
@@ -127,6 +130,8 @@ private fun SettingsScreen(
     onLanguageChange: (Int) -> Unit,
     northReference: NorthReference,
     onNorthReferenceChange: (NorthReference) -> Unit,
+    unitSystem: UnitSystem,
+    onUnitSystemChange: (UnitSystem) -> Unit,
     isBackupWorking: Boolean,
     backupEvents: SharedFlow<BackupEvent>,
     onExport: (OutputStream) -> Unit,
@@ -276,6 +281,18 @@ private fun SettingsScreen(
                         ),
                         selectedIndex = languageIndex,
                         onSelect = onLanguageChange,
+                    )
+                }
+                SettingCard(stringResource(R.string.settings_unit_system)) {
+                    SegmentedToggle(
+                        options = listOf(
+                            stringResource(R.string.unit_system_metric),
+                            stringResource(R.string.unit_system_imperial),
+                        ),
+                        selectedIndex = if (unitSystem == UnitSystem.METRIC) 0 else 1,
+                        onSelect = { index ->
+                            onUnitSystemChange(if (index == 0) UnitSystem.METRIC else UnitSystem.IMPERIAL)
+                        },
                     )
                 }
             }

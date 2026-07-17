@@ -56,6 +56,9 @@
     <string name="coordinate_format_decimal">Decimal</string>
     <string name="settings_north_reference">Compass north</string>
     <string name="coordinate_format_dms">DMS</string>
+    <string name="settings_unit_system">Unit system</string>
+    <string name="unit_system_metric">Metric</string>
+    <string name="unit_system_imperial">Imperial</string>
     <string name="settings_data_section">Data</string>
     <string name="settings_export_title">Export data</string>
     <string name="settings_export_subtitle">Waypoints, tracks, achievements and settings in a single file</string>
@@ -132,7 +135,7 @@
     <string name="recording_elevation_loss">D−</string>
     <string name="recording_notification_channel_name">Recording</string>
     <string name="recording_notification_title_fmt">Recording in progress · %1$s</string>
-    <string name="recording_notification_content">Alt %1$s m · %2$s km/h · %3$s km</string>
+    <string name="recording_notification_content">Alt %1$s %2$s · %3$s %4$s · %5$s %6$s</string>
 
     <!-- Session (trace) detail -->
     <string name="session_default_name_prefix">Track</string>
@@ -143,12 +146,12 @@
     <string name="session_delete_dialog_message">This action is permanent. Attached waypoints will be kept.</string>
     <string name="session_departure_fmt">● start %1$s</string>
     <string name="session_arrival_fmt">○ end %1$s</string>
-    <string name="session_stat_distance">km</string>
+    <string name="session_stat_distance_fmt">%1$s</string>
     <string name="session_stat_duration">duration</string>
-    <string name="session_stat_elevation_gain">m D+</string>
-    <string name="session_stat_elevation_loss">m D−</string>
-    <string name="session_stat_max_speed">km/h max</string>
-    <string name="session_stat_avg_speed">km/h avg</string>
+    <string name="session_stat_elevation_gain_fmt">%1$s D+</string>
+    <string name="session_stat_elevation_loss_fmt">%1$s D−</string>
+    <string name="session_stat_max_speed_fmt">%1$s max</string>
+    <string name="session_stat_avg_speed_fmt">%1$s avg</string>
     <string name="session_rename_dialog_title">Rename track</string>
     <string name="session_name_label">Track name</string>
     <string name="label_altitude_profile">Altitude profile</string>
@@ -245,31 +248,31 @@
 
     <!-- Achievements: altitude reached, including a few famous peaks -->
     <string name="achievement_altitude_1000_title">First summit</string>
-    <string name="achievement_altitude_1000_desc">Reach 1000 m of altitude.</string>
+    <string name="achievement_altitude_1000_desc">Reach %1$s %2$s of altitude.</string>
     <string name="achievement_altitude_puy_de_dome_title">Puy de Dôme</string>
-    <string name="achievement_altitude_puy_de_dome_desc">Reach 1426 m, the altitude of the Puy de Dôme.</string>
+    <string name="achievement_altitude_puy_de_dome_desc">Reach %1$s %2$s, the altitude of the Puy de Dôme.</string>
     <string name="achievement_altitude_2000_title">Gaining height</string>
-    <string name="achievement_altitude_2000_desc">Reach 2000 m of altitude.</string>
+    <string name="achievement_altitude_2000_desc">Reach %1$s %2$s of altitude.</string>
     <string name="achievement_altitude_3000_title">Great mountaineer</string>
-    <string name="achievement_altitude_3000_desc">Reach 3000 m of altitude.</string>
+    <string name="achievement_altitude_3000_desc">Reach %1$s %2$s of altitude.</string>
     <string name="achievement_altitude_fuji_title">Mount Fuji</string>
-    <string name="achievement_altitude_fuji_desc">Reach 3776 m, the altitude of Mount Fuji.</string>
+    <string name="achievement_altitude_fuji_desc">Reach %1$s %2$s, the altitude of Mount Fuji.</string>
     <string name="achievement_altitude_mont_blanc_title">Mont Blanc</string>
-    <string name="achievement_altitude_mont_blanc_desc">Reach 4805 m, the altitude of Mont Blanc.</string>
+    <string name="achievement_altitude_mont_blanc_desc">Reach %1$s %2$s, the altitude of Mont Blanc.</string>
     <string name="achievement_altitude_kilimanjaro_title">Kilimanjaro</string>
-    <string name="achievement_altitude_kilimanjaro_desc">Reach 5825 m, the altitude of Kilimanjaro.</string>
+    <string name="achievement_altitude_kilimanjaro_desc">Reach %1$s %2$s, the altitude of Kilimanjaro.</string>
 
     <!-- Achievements: speed reached, including a few fast modes of transport -->
     <string name="achievement_speed_30_title">Freewheeling</string>
-    <string name="achievement_speed_30_desc">Reach 30 km/h.</string>
+    <string name="achievement_speed_30_desc">Reach %1$s %2$s.</string>
     <string name="achievement_speed_50_title">Good pace</string>
-    <string name="achievement_speed_50_desc">Reach 50 km/h.</string>
+    <string name="achievement_speed_50_desc">Reach %1$s %2$s.</string>
     <string name="achievement_speed_100_title">Pedal to the metal</string>
-    <string name="achievement_speed_100_desc">Reach 100 km/h.</string>
+    <string name="achievement_speed_100_desc">Reach %1$s %2$s.</string>
     <string name="achievement_speed_300_title">High speed</string>
-    <string name="achievement_speed_300_desc">Reach 300 km/h, the speed of a TGV.</string>
+    <string name="achievement_speed_300_desc">Reach %1$s %2$s, the speed of a TGV.</string>
     <string name="achievement_speed_800_title">Long-haul flight</string>
-    <string name="achievement_speed_800_desc">Reach 800 km/h, the speed of an airliner.</string>
+    <string name="achievement_speed_800_desc">Reach %1$s %2$s, the speed of an airliner.</string>
 
     <!-- Achievements: satellites fixed simultaneously -->
     <string name="achievement_satellites_8_title">Good signal</string>
@@ -287,11 +290,11 @@
 
     <!-- Achievements: cumulative distance -->
     <string name="achievement_distance_10_title">First steps</string>
-    <string name="achievement_distance_10_desc">Cover 10 km in total.</string>
+    <string name="achievement_distance_10_desc">Cover %1$s %2$s in total.</string>
     <string name="achievement_distance_50_title">Great walker</string>
-    <string name="achievement_distance_50_desc">Cover 50 km in total.</string>
+    <string name="achievement_distance_50_desc">Cover %1$s %2$s in total.</string>
     <string name="achievement_distance_100_title">Centurion</string>
-    <string name="achievement_distance_100_desc">Cover 100 km in total.</string>
+    <string name="achievement_distance_100_desc">Cover %1$s %2$s in total.</string>
 
     <!-- Achievements: number of sessions -->
     <string name="achievement_sessions_1_title">First outing</string>
@@ -334,7 +337,7 @@
     <string name="level_title_10">Trail Legend</string>
 
     <!-- Profile hub -->
-    <string name="profile_stat_total_km">total km</string>
+    <string name="profile_stat_total_km_fmt">total %1$s</string>
     <string name="profile_stat_sessions">sessions</string>
     <string name="profile_stat_achievements">achievements</string>
     <string name="profile_last_achievement_label">Last achievement</string>

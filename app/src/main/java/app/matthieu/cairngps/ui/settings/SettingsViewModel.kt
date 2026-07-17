@@ -11,6 +11,7 @@ import app.matthieu.cairngps.data.InvalidBackupException
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.ui.common.factoryOf
 import java.io.IOException
 import java.io.InputStream
@@ -70,6 +71,10 @@ class SettingsViewModel(
 
     fun setNorthReference(reference: NorthReference) {
         viewModelScope.launch { repository.setNorthReference(reference) }
+    }
+
+    fun setUnitSystem(unitSystem: UnitSystem) {
+        viewModelScope.launch { repository.setUnitSystem(unitSystem) }
     }
 
     /**

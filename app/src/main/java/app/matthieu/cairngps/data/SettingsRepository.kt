@@ -28,6 +28,7 @@ class SettingsRepository(context: Context) {
         val COORDINATE_FORMAT = stringPreferencesKey("coordinate_format")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val NORTH_REFERENCE = stringPreferencesKey("north_reference")
+        val UNIT_SYSTEM = stringPreferencesKey("unit_system")
     }
 
     // Single source for default values, reused below instead of repeating each enum default in
@@ -51,6 +52,9 @@ class SettingsRepository(context: Context) {
                 northReference = prefs[Keys.NORTH_REFERENCE]
                     ?.let { runCatching { NorthReference.valueOf(it) }.getOrNull() }
                     ?: defaults.northReference,
+                unitSystem = prefs[Keys.UNIT_SYSTEM]
+                    ?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() }
+                    ?: defaults.unitSystem,
             )
         }
 
@@ -66,6 +70,10 @@ class SettingsRepository(context: Context) {
         dataStore.edit { prefs -> prefs[Keys.NORTH_REFERENCE] = reference.name }
     }
 
+    suspend fun setUnitSystem(unitSystem: UnitSystem) {
+        dataStore.edit { prefs -> prefs[Keys.UNIT_SYSTEM] = unitSystem.name }
+    }
+
     /** Snapshot of the current settings, for exporting a backup. */
     suspend fun current(): AppSettings = settings.first()
 
@@ -75,6 +83,7 @@ class SettingsRepository(context: Context) {
             prefs[Keys.COORDINATE_FORMAT] = settings.coordinateFormat.name
             prefs[Keys.THEME_MODE] = settings.themeMode.name
             prefs[Keys.NORTH_REFERENCE] = settings.northReference.name
+            prefs[Keys.UNIT_SYSTEM] = settings.unitSystem.name
         }
     }
 }

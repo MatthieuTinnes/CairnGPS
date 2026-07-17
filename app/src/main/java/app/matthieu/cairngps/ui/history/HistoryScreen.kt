@@ -43,12 +43,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.SessionRepository
+import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.WaypointRepository
-import app.matthieu.cairngps.domain.format.formatDistanceKm
+import app.matthieu.cairngps.domain.format.distanceUnitLabel
+import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatDuration
 import app.matthieu.cairngps.domain.format.formatElevation
 import app.matthieu.cairngps.domain.format.formatWaypointShortDateTime
+import app.matthieu.cairngps.domain.format.shortUnitLabel
 import app.matthieu.cairngps.ui.common.SegmentedToggle
+import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
@@ -67,6 +72,7 @@ import app.matthieu.cairngps.ui.waypoints.WaypointsViewModel
 fun HistoryRoute(
     waypointRepository: WaypointRepository,
     sessionRepository: SessionRepository,
+    settingsRepository: SettingsRepository,
     onOpenWaypoint: (Long) -> Unit,
     onOpenSession: (Long) -> Unit,
     onBack: () -> Unit,
@@ -76,13 +82,17 @@ fun HistoryRoute(
         viewModel(factory = WaypointsViewModel.factory(waypointRepository))
     val sessionsViewModel: SessionsViewModel =
         viewModel(factory = SessionsViewModel.factory(sessionRepository))
+    val settingsViewModel: SettingsViewModel =
+        viewModel(factory = SettingsViewModel.factory(settingsRepository))
 
     val waypointsUiState by waypointsViewModel.uiState.collectAsStateWithLifecycle()
     val sessionsUiState by sessionsViewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
     HistoryScreen(
         waypointsUiState = waypointsUiState,
         sessionsUiState = sessionsUiState,
+        unitSystem = settings.unitSystem,
         onOpenWaypoint = onOpenWaypoint,
         onOpenSession = onOpenSession,
         onBack = onBack,
@@ -100,6 +110,7 @@ private enum class HistoryTab(@StringRes val labelRes: Int) {
 private fun HistoryScreen(
     waypointsUiState: WaypointsUiState,
     sessionsUiState: SessionsUiState,
+    unitSystem: UnitSystem,
     onOpenWaypoint: (Long) -> Unit,
     onOpenSession: (Long) -> Unit,
     onBack: () -> Unit,
@@ -144,12 +155,14 @@ private fun HistoryScreen(
             when (selectedTab) {
                 HistoryTab.WAYPOINTS -> WaypointsListContent(
                     uiState = waypointsUiState,
+                    unitSystem = unitSystem,
                     onOpenWaypoint = onOpenWaypoint,
                     modifier = Modifier.fillMaxSize(),
                 )
 
                 HistoryTab.TRACKS -> SessionsListContent(
                     uiState = sessionsUiState,
+                    unitSystem = unitSystem,
                     onOpenSession = onOpenSession,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -161,6 +174,7 @@ private fun HistoryScreen(
 @Composable
 private fun SessionsListContent(
     uiState: SessionsUiState,
+    unitSystem: UnitSystem,
     onOpenSession: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -183,6 +197,7 @@ private fun SessionsListContent(
             items(uiState.sessions.orEmpty(), key = { it.session.id }) { sessionWithTrack ->
                 SessionRow(
                     sessionWithTrack = sessionWithTrack,
+                    unitSystem = unitSystem,
                     onClick = { onOpenSession(sessionWithTrack.session.id) },
                 )
             }
@@ -191,7 +206,7 @@ private fun SessionsListContent(
 }
 
 @Composable
-private fun SessionRow(sessionWithTrack: SessionWithTrack, onClick: () -> Unit) {
+private fun SessionRow(sessionWithTrack: SessionWithTrack, unitSystem: UnitSystem, onClick: () -> Unit) {
     val (session, track) = sessionWithTrack
 
     Card(
@@ -211,9 +226,9 @@ private fun SessionRow(sessionWithTrack: SessionWithTrack, onClick: () -> Unit) 
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = session.name, fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold)
                 Text(
-                    text = "${formatDistanceKm(session.distanceMeters)} km · " +
+                    text = "${formatDistance(session.distanceMeters, unitSystem)} ${distanceUnitLabel(unitSystem)} · " +
                         "${formatDuration(session.durationMillis, showSecondsPastOneHour = false)} · " +
-                        "+${formatElevation(session.elevationGain)} m",
+                        "+${formatElevation(session.elevationGain, unitSystem)} ${shortUnitLabel(unitSystem)}",
                     fontSize = 12.sp,
                     fontFamily = MonoFontFamily,
                     color = LabelMuted,
