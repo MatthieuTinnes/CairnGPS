@@ -130,6 +130,9 @@ val LightWaypointIconBg = Color(0xFFDCEBD3)
 val OnGreenButtonDark = Color(0xFF12240E)
 val SoftError = Color(0xFFE57373)
 
+// Waypoint/session delete accent, light theme (design 5p): light equivalent of SoftError.
+val SoftErrorLight = Color(0xFFC0392B)
+
 // One distinct hue per GNSS constellation, all bright enough to read on the dark background.
 // GLONASS/Galileo/BeiDou/QZSS match the design system's own palette so the sky plot, 3D globe and
 // constellation legend all read as the same hues; SBAS/IRNSS/UNKNOWN aren't in that design (it only

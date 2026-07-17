@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
@@ -139,6 +140,31 @@ class CompassViewModel(
         navigationTargetRepository.setTarget(waypointId)
     }
 
+    /**
+     * Creates a waypoint at the current position (invoked from the target picker's "Créer un
+     * nouveau repère ici" row) and immediately makes it the navigation target. A no-op when no
+     * position is available yet.
+     */
+    fun createWaypointHere(name: String) {
+        val location = currentLocation ?: return
+        viewModelScope.launch {
+            val id = waypointRepository.save(
+                Waypoint(
+                    name = name,
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    altitude = location.altitude,
+                    speed = location.speed,
+                    horizontalAccuracy = location.horizontalAccuracy,
+                    // The compass screen doesn't observe GnssStatus, so satellite count is unknown.
+                    satellitesUsedInFix = null,
+                    timestamp = System.currentTimeMillis(),
+                ),
+            )
+            navigationTargetRepository.setTarget(id)
+        }
+    }
+
     private fun onReading(reading: CompassReading) {
         smoothedMagnetic = lowPass(reading.azimuthMagneticDegrees, smoothedMagnetic)
         lastAccuracy = reading.accuracy
@@ -179,6 +205,7 @@ class CompassViewModel(
             targetDistanceMeters = targetDistance,
             bearingToTargetDegrees = targetBearing,
             waypoints = waypoints,
+            targetWaypointId = target?.id,
         )
 
         val magnetic = smoothedMagnetic

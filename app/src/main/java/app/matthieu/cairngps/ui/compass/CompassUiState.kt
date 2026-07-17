@@ -25,6 +25,8 @@ import app.matthieu.cairngps.data.Waypoint
  * @property bearingToTargetDegrees True bearing (0..360) from the current position to the target,
  *                                  or `null` without a target or a current fix.
  * @property waypoints              Every saved waypoint, for the "Changer de repère cible" picker.
+ * @property targetWaypointId       Id of the selected target waypoint, so the picker can highlight
+ *                                  the currently active row; `null` when no target is set.
  */
 data class CompassUiState(
     val sensorAvailable: Boolean = true,
@@ -38,6 +40,7 @@ data class CompassUiState(
     val targetDistanceMeters: Double? = null,
     val bearingToTargetDegrees: Float? = null,
     val waypoints: List<Waypoint> = emptyList(),
+    val targetWaypointId: Long? = null,
 ) {
     /** True once a target waypoint is selected, regardless of whether a bearing could be computed. */
     val hasTarget: Boolean get() = targetName != null

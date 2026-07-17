@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -86,6 +87,7 @@ import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.OnGreenButtonDark
 import app.matthieu.cairngps.ui.theme.OutlineSubtle
 import app.matthieu.cairngps.ui.theme.SoftError
+import app.matthieu.cairngps.ui.theme.SoftErrorLight
 import app.matthieu.cairngps.ui.theme.Sym
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -160,10 +162,10 @@ private fun WaypointDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
 
-    if (showDeleteDialog) {
+    if (showDeleteDialog && waypoint != null) {
         DeleteConfirmDialog(
             title = stringResource(R.string.waypoint_delete_dialog_title),
-            message = stringResource(R.string.waypoint_delete_dialog_message),
+            message = stringResource(R.string.waypoint_delete_dialog_message_fmt, waypoint.name),
             onDismiss = { showDeleteDialog = false },
             onConfirm = {
                 showDeleteDialog = false
@@ -201,7 +203,11 @@ private fun WaypointDetailScreen(
                     if (waypoint != null) {
                         val deleteLabel = stringResource(R.string.action_delete)
                         IconButton(onClick = { showDeleteDialog = true }) {
-                            Sym(icon = Glyph.Delete, contentDescription = deleteLabel, tint = SoftError)
+                            Sym(
+                                icon = Glyph.Delete,
+                                contentDescription = deleteLabel,
+                                tint = if (light) SoftErrorLight else SoftError,
+                            )
                         }
                         val renameLabel = stringResource(R.string.action_rename)
                         IconButton(onClick = { showRenameDialog = true }) {
@@ -451,15 +457,23 @@ private fun MeasurementTile(label: String, value: String, unit: String, modifier
 /** Confirmation dialog shared by every "delete this X?" flow (waypoints, sessions). */
 @Composable
 fun DeleteConfirmDialog(title: String, message: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    val light = LocalIsLightTheme.current
+    val errorColor = if (light) SoftErrorLight else SoftError
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = {
+            Column {
+                Sym(icon = Glyph.Warning, contentDescription = null, tint = errorColor)
+                Spacer(Modifier.height(8.dp))
+                Text(title)
+            }
+        },
         text = { Text(message) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
                     text = stringResource(R.string.action_delete),
-                    color = SoftError,
+                    color = errorColor,
                 )
             }
         },
@@ -479,18 +493,33 @@ fun RenameDialog(
     initialName: String,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
+    maxLength: Int = 40,
 ) {
+    val light = LocalIsLightTheme.current
     var name by remember { mutableStateOf(initialName) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = {
+            Column {
+                Sym(icon = Glyph.Edit, contentDescription = null, tint = if (light) LightStatusText else CairnStone)
+                Spacer(Modifier.height(8.dp))
+                Text(title)
+            }
+        },
         text = {
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = { if (it.length <= maxLength) name = it },
                 singleLine = true,
                 label = { Text(label) },
+                supportingText = {
+                    Text(
+                        text = "${name.length} / $maxLength",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         },

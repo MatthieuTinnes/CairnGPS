@@ -70,7 +70,7 @@
     <string name="no_maps_app">Aucune application de carte installée</string>
     <string name="action_delete">Supprimer</string>
     <string name="waypoint_delete_dialog_title">Supprimer ce repère ?</string>
-    <string name="waypoint_delete_dialog_message">Cette action est définitive.</string>
+    <string name="waypoint_delete_dialog_message_fmt">« %1$s » sera définitivement supprimé. La session parente associée n\'est pas affectée. Cette action est irréversible.</string>
     <string name="waypoint_parent_session">Trace parente</string>
     <string name="action_rename">Renommer</string>
     <string name="waypoint_rename_dialog_title">Renommer le repère</string>
@@ -164,7 +164,8 @@
     <string name="compass_target_ref_magnetic">nord magnétique</string>
     <string name="compass_target_bearing_fmt">cap %1$d° · %2$s</string>
     <string name="compass_change_target">Changer de repère cible</string>
-    <string name="compass_select_target_title">Choisir un repère cible</string>
+    <string name="compass_select_target_title">Repère cible</string>
+    <string name="compass_create_target_here">Créer un nouveau repère ici</string>
     <string name="compass_no_waypoints">Aucun repère enregistré.\n\nDepuis l\'écran Position, appuyez sur « Marquer un repère » pour en créer un.</string>
     <string name="compass_no_target_hint">Sélectionnez un repère à atteindre.</string>
     <string name="action_navigate_to_waypoint">Naviguer vers ce repère</string>
