@@ -23,7 +23,10 @@ import app.matthieu.cairngps.domain.format.formatTimeOfDay
 import app.matthieu.cairngps.ui.theme.AchievementLabelGold
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightAchievementLabelGold
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 
 /**
  * The session's route shape (screen 1j), with a filled start marker and a hollow end marker, plus
@@ -38,6 +41,10 @@ fun SessionRouteTrace(
     modifier: Modifier = Modifier,
 ) {
     if (track.size < 2) return
+
+    val light = LocalIsLightTheme.current
+    val traceColor = if (light) CairnGreenDark else CairnGreen
+    val arrivalColor = if (light) LightAchievementLabelGold else AchievementLabelGold
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Canvas(
@@ -54,11 +61,11 @@ fun SessionRouteTrace(
             }
             drawPath(
                 path = path,
-                color = CairnGreen,
+                color = traceColor,
                 style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
             )
 
-            drawCircle(color = CairnGreen, radius = 6.dp.toPx(), center = project(track.first()))
+            drawCircle(color = traceColor, radius = 6.dp.toPx(), center = project(track.first()))
             drawCircle(
                 color = CairnAmber,
                 radius = 6.dp.toPx(),
@@ -75,7 +82,7 @@ fun SessionRouteTrace(
             Text(
                 text = stringResource(R.string.session_arrival_fmt, formatTimeOfDay(endTimestamp)),
                 fontSize = 11.5.sp,
-                color = AchievementLabelGold,
+                color = arrivalColor,
             )
         }
     }

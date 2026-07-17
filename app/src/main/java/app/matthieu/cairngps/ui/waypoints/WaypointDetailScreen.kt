@@ -75,8 +75,12 @@ import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
 import app.matthieu.cairngps.ui.theme.CompassDialBorder
+import app.matthieu.cairngps.ui.theme.CompassDialBorderLight
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightBorderSubtle
+import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.OnGreenButtonDark
@@ -152,6 +156,7 @@ private fun WaypointDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val light = LocalIsLightTheme.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
 
@@ -266,7 +271,7 @@ private fun WaypointDetailScreen(
                             .fillMaxWidth()
                             .padding(top = 12.dp, bottom = 10.dp)
                             .height(1.dp)
-                            .background(CompassDialBorder),
+                            .background(if (light) LightBorderSubtle else CompassDialBorder),
                     )
                     Text(
                         text = formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DMS) +
@@ -275,7 +280,7 @@ private fun WaypointDetailScreen(
                         fontSize = 14.sp,
                         lineHeight = 21.sp,
                         fontFamily = MonoFontFamily,
-                        color = CairnStone,
+                        color = if (light) LightStatusText else CairnStone,
                     )
                 }
             }
@@ -355,9 +360,14 @@ private fun WaypointDetailScreen(
                                 color = LabelMuted,
                                 modifier = Modifier.padding(bottom = 4.dp),
                             )
-                            Text(text = session.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = CairnGreen)
+                            Text(
+                                text = session.name,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (light) CairnGreenDark else CairnGreen,
+                            )
                         }
-                        Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = CairnGreen)
+                        Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = if (light) CairnGreenDark else CairnGreen)
                     }
                 }
             }
@@ -368,7 +378,10 @@ private fun WaypointDetailScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CairnGreen, contentColor = OnGreenButtonDark),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (light) CairnGreenDark else CairnGreen,
+                    contentColor = if (light) Color.White else OnGreenButtonDark,
+                ),
             ) {
                 Sym(icon = Glyph.Navigation, contentDescription = null, filled = true)
                 Spacer(Modifier.width(8.dp))
@@ -384,7 +397,11 @@ private fun WaypointDetailScreen(
                     .fillMaxWidth()
                     .height(52.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .border(width = 1.dp, color = OutlineSubtle, shape = RoundedCornerShape(16.dp))
+                    .border(
+                        width = 1.dp,
+                        color = if (light) CompassDialBorderLight else OutlineSubtle,
+                        shape = RoundedCornerShape(16.dp),
+                    )
                     .clickable { openInMaps(context, waypoint) },
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
@@ -405,6 +422,7 @@ private fun WaypointDetailScreen(
 /** One tile of the altitude/distance grid below the coordinates card (screen 1i). */
 @Composable
 private fun MeasurementTile(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
+    val light = LocalIsLightTheme.current
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
@@ -424,7 +442,7 @@ private fun MeasurementTile(label: String, value: String, unit: String, modifier
             ) {
                 Text(text = value, fontSize = 28.sp, fontFamily = MonoFontFamily)
                 Spacer(Modifier.width(6.dp))
-                Text(text = unit, fontSize = 14.sp, color = CairnStone)
+                Text(text = unit, fontSize = 14.sp, color = if (light) LightStatusText else CairnStone)
             }
         }
     }
@@ -494,10 +512,18 @@ fun RenameDialog(
 
 /** One "label ... value" baseline row inside the Mesures card (screen 1i). */
 @Composable
-private fun MeasurementRow(label: String, value: String, valueColor: Color = CairnStone) {
+private fun MeasurementRow(label: String, value: String, valueColor: Color? = null) {
+    val light = LocalIsLightTheme.current
+    val mutedColor = if (light) LightStatusText else CairnStone
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(text = label, fontSize = 14.sp, color = CairnStone, modifier = Modifier.weight(1f))
-        Text(text = value, fontSize = 15.sp, fontWeight = FontWeight.Medium, fontFamily = MonoFontFamily, color = valueColor)
+        Text(text = label, fontSize = 14.sp, color = mutedColor, modifier = Modifier.weight(1f))
+        Text(
+            text = value,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = MonoFontFamily,
+            color = valueColor ?: mutedColor,
+        )
     }
 }
 

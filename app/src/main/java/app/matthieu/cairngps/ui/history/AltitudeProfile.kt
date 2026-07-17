@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.domain.format.formatElevation
 import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.ValueMuted
 
@@ -32,7 +34,8 @@ fun AltitudeProfile(track: List<TrackPoint>, modifier: Modifier = Modifier) {
 
     val minAltitude = track.minOf { it.altitude }
     val maxAltitude = track.maxOf { it.altitude }
-    val lineColor = CairnGreen
+    val light = LocalIsLightTheme.current
+    val lineColor = if (light) CairnGreenDark else CairnGreen
     val fillColor = lineColor.copy(alpha = 0.18f)
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {

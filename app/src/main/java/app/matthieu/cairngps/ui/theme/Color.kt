@@ -121,6 +121,9 @@ val LightAchievementLabelGold = Color(0xFF8A6410)
 // the CairnGreenDark used for the Compass target card / Profil avatar.
 val WaypointIconBg = Color(0xFF1F2A1C)
 
+// Session waypoint-row icon circle, light theme (design 5j): light equivalent of WaypointIconBg.
+val LightWaypointIconBg = Color(0xFFDCEBD3)
+
 // Waypoint detail (design 1i): the navigate button's dark-green content color (distinct from
 // OnGreenButton's lighter tint used elsewhere) and this screen's soft-red delete color (distinct
 // from QualityPoor, used for live GNSS accuracy).

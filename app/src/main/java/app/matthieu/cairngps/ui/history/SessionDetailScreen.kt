@@ -53,8 +53,11 @@ import app.matthieu.cairngps.domain.format.formatSpeedKmh
 import app.matthieu.cairngps.domain.format.formatTimeOfDay
 import app.matthieu.cairngps.domain.format.formatWaypointMetaLine
 import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LightWaypointIconBg
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.SoftError
 import app.matthieu.cairngps.ui.theme.Sym
@@ -318,6 +321,8 @@ private fun SessionStatTile(value: String, label: String, modifier: Modifier = M
 
 @Composable
 private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
+    val light = LocalIsLightTheme.current
+    val accentColor = if (light) CairnGreenDark else CairnGreen
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -333,14 +338,14 @@ private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(38.dp)
-                    .background(WaypointIconBg, CircleShape),
+                    .background(if (light) LightWaypointIconBg else WaypointIconBg, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = CairnGreen, size = 19.dp)
+                Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = accentColor, size = 19.dp)
             }
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = waypoint.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = CairnGreen)
+                Text(text = waypoint.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accentColor)
                 Text(
                     text = formatWaypointMetaLine(waypoint),
                     fontSize = 12.sp,
