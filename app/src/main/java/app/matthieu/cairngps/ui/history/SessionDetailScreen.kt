@@ -64,6 +64,7 @@ import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.WaypointIconBg
 import app.matthieu.cairngps.ui.waypoints.DeleteConfirmDialog
 import app.matthieu.cairngps.ui.waypoints.RenameDialog
+import app.matthieu.cairngps.ui.waypoints.WaypointIcons
 
 /**
  * Route: loads the session identified by [sessionId] and renders its full detail, including the
@@ -341,7 +342,7 @@ private fun SessionWaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
                     .background(if (light) LightWaypointIconBg else WaypointIconBg, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = accentColor, size = 19.dp)
+                Sym(icon = WaypointIcons.glyphFor(waypoint.icon), contentDescription = null, filled = true, tint = accentColor, size = 19.dp)
             }
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {

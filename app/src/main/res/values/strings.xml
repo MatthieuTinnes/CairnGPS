@@ -75,6 +75,28 @@
     <string name="action_rename">Renommer</string>
     <string name="waypoint_rename_dialog_title">Renommer le repère</string>
 
+    <!-- Waypoint icon picker (screens 6a/6b) -->
+    <string name="action_change_icon">Changer l\'icône</string>
+    <string name="waypoint_icon_sheet_title">Icône du repère</string>
+    <string name="waypoint_icon_current_selection">Sélection actuelle</string>
+    <string name="waypoint_icon_edit_link">Modifier l\'icône ›</string>
+    <string name="waypoint_icon_flag">Drapeau</string>
+    <string name="waypoint_icon_terrain">Terrain</string>
+    <string name="waypoint_icon_forest">Forêt</string>
+    <string name="waypoint_icon_water_drop">Point d\'eau</string>
+    <string name="waypoint_icon_park">Parc</string>
+    <string name="waypoint_icon_hiking">Randonnée</string>
+    <string name="waypoint_icon_cottage">Refuge</string>
+    <string name="waypoint_icon_cabin">Cabane</string>
+    <string name="waypoint_icon_restaurant">Restaurant</string>
+    <string name="waypoint_icon_photo_camera">Point de vue</string>
+    <string name="waypoint_icon_local_parking">Parking</string>
+    <string name="waypoint_icon_warning">Danger</string>
+    <string name="waypoint_icon_star">Favori</string>
+    <string name="waypoint_icon_pin_drop">Point d\'intérêt</string>
+    <string name="waypoint_icon_sailing">Nautique</string>
+    <string name="waypoint_icon_waves">Baignade</string>
+
     <!-- Historique screen -->
     <string name="history_tab_waypoints">Repères</string>
     <string name="history_tab_tracks">Sessions</string>
@@ -189,10 +211,10 @@
     </string-array>
 
     <!-- Gamification : succès & records -->
-    <string name="achievements_open_records">Records</string>
     <string name="achievements_loading">Chargement des succès…</string>
-    <string name="achievements_progress_fmt">%1$s / %2$s</string>
-    <string name="achievement_unlocked_on_fmt">Débloqué le %1$s</string>
+    <string name="achievements_counter_fmt">%1$d/%2$d</string>
+    <string name="achievements_next_label_fmt">PROCHAIN SUCCÈS · %1$s</string>
+    <string name="achievement_xp_fmt">+%1$d XP</string>
     <string name="achievement_unlocked_banner_title">Succès débloqué !</string>
 
     <!-- Familles de succès -->
@@ -202,22 +224,35 @@
     <string name="achievement_family_distance">Distance cumulée</string>
     <string name="achievement_family_sessions">Nombre de sessions</string>
     <string name="achievement_family_geo">Franchissements géographiques</string>
+    <string name="achievement_family_time">Heures notables</string>
 
-    <!-- Succès : altitude franchie -->
+    <!-- Succès : altitude franchie, y compris quelques sommets célèbres -->
     <string name="achievement_altitude_1000_title">Premier sommet</string>
     <string name="achievement_altitude_1000_desc">Atteindre 1000 m d\'altitude.</string>
+    <string name="achievement_altitude_puy_de_dome_title">Puy de Dôme</string>
+    <string name="achievement_altitude_puy_de_dome_desc">Atteindre 1426 m, l\'altitude du puy de Dôme.</string>
     <string name="achievement_altitude_2000_title">Prise de hauteur</string>
     <string name="achievement_altitude_2000_desc">Atteindre 2000 m d\'altitude.</string>
     <string name="achievement_altitude_3000_title">Grand alpiniste</string>
     <string name="achievement_altitude_3000_desc">Atteindre 3000 m d\'altitude.</string>
+    <string name="achievement_altitude_fuji_title">Mont Fuji</string>
+    <string name="achievement_altitude_fuji_desc">Atteindre 3776 m, l\'altitude du mont Fuji.</string>
+    <string name="achievement_altitude_mont_blanc_title">Mont Blanc</string>
+    <string name="achievement_altitude_mont_blanc_desc">Atteindre 4805 m, l\'altitude du mont Blanc.</string>
+    <string name="achievement_altitude_kilimanjaro_title">Kilimandjaro</string>
+    <string name="achievement_altitude_kilimanjaro_desc">Atteindre 5825 m, l\'altitude du Kilimandjaro.</string>
 
-    <!-- Succès : vitesse atteinte -->
+    <!-- Succès : vitesse atteinte, y compris quelques transports rapides -->
     <string name="achievement_speed_30_title">En roue libre</string>
     <string name="achievement_speed_30_desc">Atteindre 30 km/h.</string>
     <string name="achievement_speed_50_title">Bon rythme</string>
     <string name="achievement_speed_50_desc">Atteindre 50 km/h.</string>
     <string name="achievement_speed_100_title">Pied au plancher</string>
     <string name="achievement_speed_100_desc">Atteindre 100 km/h.</string>
+    <string name="achievement_speed_300_title">Grande vitesse</string>
+    <string name="achievement_speed_300_desc">Atteindre 300 km/h, la vitesse d\'un TGV.</string>
+    <string name="achievement_speed_800_title">Vol long-courrier</string>
+    <string name="achievement_speed_800_desc">Atteindre 800 km/h, la vitesse d\'un avion de ligne.</string>
 
     <!-- Succès : satellites fixés simultanément -->
     <string name="achievement_satellites_8_title">Bon signal</string>
@@ -226,6 +261,12 @@
     <string name="achievement_satellites_12_desc">Fixer 12 satellites simultanément.</string>
     <string name="achievement_satellites_20_title">Précision maximale</string>
     <string name="achievement_satellites_20_desc">Fixer 20 satellites simultanément.</string>
+
+    <!-- Succès : heures notables -->
+    <string name="achievement_time_night_owl_title">Oiseau de nuit</string>
+    <string name="achievement_time_night_owl_desc">Enregistrer un repère après 22h.</string>
+    <string name="achievement_time_early_bird_title">Lève-tôt</string>
+    <string name="achievement_time_early_bird_desc">Enregistrer un repère avant 6h.</string>
 
     <!-- Succès : distance cumulée -->
     <string name="achievement_distance_10_title">Premiers pas</string>
@@ -263,6 +304,18 @@
     <string name="record_max_elevation_gain">Plus long dénivelé positif</string>
     <string name="record_max_distance">Plus longue distance</string>
 
+    <!-- Niveaux (dérivés du total d'XP des succès débloqués) -->
+    <string name="level_title_1">Promeneur</string>
+    <string name="level_title_2">Marcheur</string>
+    <string name="level_title_3">Randonneur</string>
+    <string name="level_title_4">Arpenteur</string>
+    <string name="level_title_5">Éclaireur</string>
+    <string name="level_title_6">Trotteur des cimes</string>
+    <string name="level_title_7">Coureur de crêtes</string>
+    <string name="level_title_8">Alpiniste</string>
+    <string name="level_title_9">Grand alpiniste</string>
+    <string name="level_title_10">Légende du sentier</string>
+
     <!-- Profil hub -->
     <string name="profile_stat_total_km">km au total</string>
     <string name="profile_stat_sessions">sessions</string>
@@ -271,4 +324,8 @@
     <string name="profile_hub_history_subtitle_fmt">%1$d repères · %2$d sessions</string>
     <string name="profile_hub_achievements_subtitle_fmt">%1$d / %2$d débloqués</string>
     <string name="profile_hub_records_subtitle">Vos meilleures performances</string>
+    <string name="profile_level_label">NIV.</string>
+    <string name="profile_level_xp_fmt">%1$d XP</string>
+    <string name="profile_level_remaining_fmt">reste %1$d XP</string>
+    <string name="profile_level_max">Niveau maximum atteint</string>
 </resources>

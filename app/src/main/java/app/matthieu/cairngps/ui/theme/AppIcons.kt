@@ -78,6 +78,22 @@ object Glyph {
     const val LocationOff = ''
     const val Lock = ''
     const val BatterySaver = ''
+
+    // Waypoint icon picker (screens 6a/6b) — added to the font subset alongside the glyphs above.
+    const val Terrain = ''
+    const val Forest = ''
+    const val WaterDrop = ''
+    const val Park = ''
+    const val Hiking = ''
+    const val Cottage = ''
+    const val Cabin = ''
+    const val Restaurant = ''
+    const val PhotoCamera = ''
+    const val LocalParking = ''
+    const val Star = ''
+    const val PinDrop = ''
+    const val Sailing = ''
+    const val Waves = ''
 }
 
 /**

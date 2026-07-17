@@ -24,6 +24,10 @@ import androidx.room.PrimaryKey
  * @property sessionId             Id of the [Session] this waypoint was captured during, or `null`
  *                                 when the waypoint was saved outside of a recording. `SET NULL` on
  *                                 delete: removing a trace never deletes the waypoints saved during it.
+ * @property icon                  Stable key into `WaypointIcons` (e.g. `"flag"`) picking which
+ *                                 glyph represents this waypoint. Stored as a name rather than a
+ *                                 font codepoint so it survives font/theme changes; unknown keys
+ *                                 (e.g. from a future app version) fall back to the flag.
  */
 @Entity(
     tableName = "waypoints",
@@ -48,4 +52,5 @@ data class Waypoint(
     val satellitesUsedInFix: Int?,
     val timestamp: Long,
     val sessionId: Long? = null,
+    val icon: String = "flag",
 )

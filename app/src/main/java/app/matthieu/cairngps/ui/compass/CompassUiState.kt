@@ -20,6 +20,8 @@ import app.matthieu.cairngps.data.Waypoint
  *                             the figure-of-eight calibration gesture.
  * @property targetName            Name of the selected target waypoint, or `null` when no target
  *                                  is set (or it was deleted).
+ * @property targetIcon             Icon key of the selected target waypoint (see `WaypointIcons`),
+ *                                  or `null` alongside [targetName] when no target is set.
  * @property targetDistanceMeters   Great-circle distance to the target, or `null` without a target
  *                                  or a current fix.
  * @property bearingToTargetDegrees True bearing (0..360) from the current position to the target,
@@ -37,6 +39,7 @@ data class CompassUiState(
     val declinationDegrees: Float? = null,
     val needsCalibration: Boolean = false,
     val targetName: String? = null,
+    val targetIcon: String? = null,
     val targetDistanceMeters: Double? = null,
     val bearingToTargetDegrees: Float? = null,
     val waypoints: List<Waypoint> = emptyList(),

@@ -94,6 +94,7 @@ import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.WaypointIconBg
 import app.matthieu.cairngps.ui.waypoints.RenameDialog
+import app.matthieu.cairngps.ui.waypoints.WaypointIcons
 import kotlin.math.roundToInt
 import androidx.compose.ui.draw.rotate as rotateModifier
 
@@ -356,7 +357,12 @@ private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
                             .background(if (light) CairnGreenDark else CairnGreen, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = OnGreenButton)
+                        Sym(
+                            icon = WaypointIcons.glyphFor(uiState.targetIcon ?: "flag"),
+                            contentDescription = null,
+                            filled = true,
+                            tint = OnGreenButton,
+                        )
                     }
                     Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -544,7 +550,7 @@ private fun TargetPickerRow(waypoint: Waypoint, selected: Boolean, onClick: () -
                 .background(if (light) LightWaypointIconBg else WaypointIconBg, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = accentColor, size = 20.dp)
+            Sym(icon = WaypointIcons.glyphFor(waypoint.icon), contentDescription = null, filled = true, tint = accentColor, size = 20.dp)
         }
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {

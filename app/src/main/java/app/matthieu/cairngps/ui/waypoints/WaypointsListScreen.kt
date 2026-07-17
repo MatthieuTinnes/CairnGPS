@@ -85,7 +85,7 @@ private fun WaypointRow(waypoint: Waypoint, onClick: () -> Unit) {
                     .background(WaypointIconBg, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = CairnGreen, size = 20.dp)
+                Sym(icon = WaypointIcons.glyphFor(waypoint.icon), contentDescription = null, filled = true, tint = CairnGreen, size = 20.dp)
             }
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {

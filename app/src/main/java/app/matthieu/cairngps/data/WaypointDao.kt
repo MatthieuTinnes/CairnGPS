@@ -36,4 +36,12 @@ interface WaypointDao {
     /** Renames the waypoint with [id]; a no-op if none matches. */
     @Query("UPDATE waypoints SET name = :name WHERE id = :id")
     suspend fun rename(id: Long, name: String)
+
+    /** Changes the icon of the waypoint with [id]; a no-op if none matches. */
+    @Query("UPDATE waypoints SET icon = :icon WHERE id = :id")
+    suspend fun updateIcon(id: Long, icon: String)
+
+    /** Renames the waypoint with [id] and changes its icon in one write; a no-op if none matches. */
+    @Query("UPDATE waypoints SET name = :name, icon = :icon WHERE id = :id")
+    suspend fun updateNameAndIcon(id: Long, name: String, icon: String)
 }

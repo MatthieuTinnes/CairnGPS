@@ -32,4 +32,10 @@ class WaypointRepository(private val dao: WaypointDao) {
 
     /** Renames the waypoint with [id]. */
     suspend fun rename(id: Long, name: String) = dao.rename(id, name)
+
+    /** Changes the icon of the waypoint with [id]. */
+    suspend fun setIcon(id: Long, icon: String) = dao.updateIcon(id, icon)
+
+    /** Renames the waypoint with [id] and changes its icon together. */
+    suspend fun edit(id: Long, name: String, icon: String) = dao.updateNameAndIcon(id, name, icon)
 }

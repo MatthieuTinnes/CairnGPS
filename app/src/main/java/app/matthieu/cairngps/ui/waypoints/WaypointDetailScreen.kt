@@ -89,6 +89,7 @@ import app.matthieu.cairngps.ui.theme.OutlineSubtle
 import app.matthieu.cairngps.ui.theme.SoftError
 import app.matthieu.cairngps.ui.theme.SoftErrorLight
 import app.matthieu.cairngps.ui.theme.Sym
+import app.matthieu.cairngps.ui.theme.WaypointIconBg
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -137,7 +138,8 @@ fun WaypointDetailRoute(
         currentDistanceMeters = uiState.currentDistanceMeters,
         onBack = onBack,
         onDelete = viewModel::delete,
-        onRename = viewModel::rename,
+        onEdit = viewModel::edit,
+        onSetIcon = viewModel::setIcon,
         onOpenSession = onOpenSession,
         onNavigate = { onNavigate(waypointId) },
         modifier = modifier,
@@ -152,7 +154,8 @@ private fun WaypointDetailScreen(
     currentDistanceMeters: Double?,
     onBack: () -> Unit,
     onDelete: () -> Unit,
-    onRename: (String) -> Unit,
+    onEdit: (String, String) -> Unit,
+    onSetIcon: (String) -> Unit,
     onOpenSession: (Long) -> Unit,
     onNavigate: () -> Unit,
     modifier: Modifier = Modifier,
@@ -161,6 +164,18 @@ private fun WaypointDetailScreen(
     val light = LocalIsLightTheme.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
+    // Staged icon for the rename-dialog flow (3a): only persisted once "ENREGISTRER" is tapped,
+    // re-seeded from the waypoint's saved icon every time the dialog (re)opens.
+    var pendingIcon by remember { mutableStateOf(waypoint?.icon ?: "flag") }
+    var showRenameIconPicker by remember { mutableStateOf(false) }
+    // Separate picker for the header-avatar flow (1i): selecting an icon there saves immediately.
+    var showAvatarIconPicker by remember { mutableStateOf(false) }
+
+    // Re-seed the staged icon from the persisted value every time the rename dialog opens, so a
+    // cancelled edit (or a picker choice made then abandoned) never leaks into the next open.
+    LaunchedEffect(showRenameDialog) {
+        if (showRenameDialog) pendingIcon = waypoint?.icon ?: "flag"
+    }
 
     if (showDeleteDialog && waypoint != null) {
         DeleteConfirmDialog(
@@ -182,8 +197,57 @@ private fun WaypointDetailScreen(
             onDismiss = { showRenameDialog = false },
             onConfirm = { newName ->
                 showRenameDialog = false
-                onRename(newName)
+                onEdit(newName, pendingIcon)
             },
+            iconRow = {
+                val changeIconLabel = stringResource(R.string.action_change_icon)
+                val accent = if (light) CairnGreenDark else CairnGreen
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable(onClickLabel = changeIconLabel) { showRenameIconPicker = true }
+                        .padding(vertical = 2.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (light) CairnGreenDark.copy(alpha = 0.12f) else WaypointIconBg),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Sym(icon = WaypointIcons.glyphFor(pendingIcon), contentDescription = null, tint = accent, size = 22.dp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(R.string.waypoint_icon_edit_link),
+                        color = accent,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.5.sp,
+                    )
+                }
+            },
+        )
+    }
+
+    if (showRenameIconPicker) {
+        WaypointIconPickerSheet(
+            selectedKey = pendingIcon,
+            onSelect = { key ->
+                pendingIcon = key
+                showRenameIconPicker = false
+            },
+            onDismiss = { showRenameIconPicker = false },
+        )
+    }
+
+    if (showAvatarIconPicker && waypoint != null) {
+        WaypointIconPickerSheet(
+            selectedKey = waypoint.icon,
+            onSelect = { key ->
+                onSetIcon(key)
+                showAvatarIconPicker = false
+            },
+            onDismiss = { showAvatarIconPicker = false },
         )
     }
 
@@ -230,13 +294,22 @@ private fun WaypointDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val changeIconLabel = stringResource(R.string.action_change_icon)
                 Box(
                     modifier = Modifier
                         .size(52.dp)
-                        .background(CairnGreenDark, CircleShape),
+                        .clip(CircleShape)
+                        .background(CairnGreenDark, CircleShape)
+                        .clickable(onClickLabel = changeIconLabel) { showAvatarIconPicker = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Sym(icon = Glyph.Flag, contentDescription = null, filled = true, tint = OnGreenButton, size = 26.dp)
+                    Sym(
+                        icon = WaypointIcons.glyphFor(waypoint.icon),
+                        contentDescription = null,
+                        filled = true,
+                        tint = OnGreenButton,
+                        size = 26.dp,
+                    )
                 }
                 Spacer(Modifier.width(14.dp))
                 Column {
@@ -485,7 +558,14 @@ fun DeleteConfirmDialog(title: String, message: String, onDismiss: () -> Unit, o
     )
 }
 
-/** Dialog to edit a saved item's name, pre-filled with its current value. */
+/**
+ * Dialog to edit a saved item's name, pre-filled with its current value.
+ *
+ * [iconRow], when set, renders below the name field/counter (screens 3a/5o's icon tile + "Modifier
+ * l'icône" link, used by the waypoint rename dialog to also let the user change the icon in the
+ * same flow). Other callers (session rename, compass "create waypoint here") leave it `null` and
+ * get the plain field.
+ */
 @Composable
 fun RenameDialog(
     title: String,
@@ -494,6 +574,7 @@ fun RenameDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
     maxLength: Int = 40,
+    iconRow: (@Composable () -> Unit)? = null,
 ) {
     val light = LocalIsLightTheme.current
     var name by remember { mutableStateOf(initialName) }
@@ -508,20 +589,26 @@ fun RenameDialog(
             }
         },
         text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { if (it.length <= maxLength) name = it },
-                singleLine = true,
-                label = { Text(label) },
-                supportingText = {
-                    Text(
-                        text = "${name.length} / $maxLength",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { if (it.length <= maxLength) name = it },
+                    singleLine = true,
+                    label = { Text(label) },
+                    supportingText = {
+                        Text(
+                            text = "${name.length} / $maxLength",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (iconRow != null) {
+                    Spacer(Modifier.height(2.dp))
+                    iconRow()
+                }
+            }
         },
         confirmButton = {
             TextButton(

@@ -84,11 +84,19 @@ class WaypointDetailViewModel(
         }
     }
 
-    /** Renames the current waypoint to [name]. */
-    fun rename(name: String) {
+    /** Renames the current waypoint to [name] and sets its icon to [icon] in one write. */
+    fun edit(name: String, icon: String) {
         viewModelScope.launch {
-            repository.rename(waypointId, name)
-            _uiState.update { state -> state.copy(waypoint = state.waypoint?.copy(name = name)) }
+            repository.edit(waypointId, name, icon)
+            _uiState.update { state -> state.copy(waypoint = state.waypoint?.copy(name = name, icon = icon)) }
+        }
+    }
+
+    /** Changes the current waypoint's icon to [icon], independent of a rename (screen 1i avatar). */
+    fun setIcon(icon: String) {
+        viewModelScope.launch {
+            repository.setIcon(waypointId, icon)
+            _uiState.update { state -> state.copy(waypoint = state.waypoint?.copy(icon = icon)) }
         }
     }
 

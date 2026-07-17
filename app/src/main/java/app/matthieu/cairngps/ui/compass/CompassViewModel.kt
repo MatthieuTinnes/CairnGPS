@@ -202,6 +202,7 @@ class CompassViewModel(
             useTrueNorth = useTrueNorth,
             declinationDegrees = declination,
             targetName = target?.name,
+            targetIcon = target?.icon,
             targetDistanceMeters = targetDistance,
             bearingToTargetDegrees = targetBearing,
             waypoints = waypoints,
