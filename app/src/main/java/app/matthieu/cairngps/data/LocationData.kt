@@ -7,7 +7,10 @@ import android.location.Location
  *
  * @property latitude       Latitude in decimal degrees.
  * @property longitude      Longitude in decimal degrees.
- * @property altitude       Altitude above the WGS84 ellipsoid, in meters.
+ * @property altitude       Altitude above mean sea level (EGM96 geoid), in meters. GPS chips
+ *                          report altitude above the WGS84 ellipsoid, which reads tens of
+ *                          meters off from map altitudes (Komoot, IGN...); [toLocationData]
+ *                          corrects for that using [Egm96Geoid].
  * @property speed          Ground speed, in meters per second.
  * @property horizontalAccuracy Estimated horizontal accuracy (radius, 68% confidence), in meters.
  * @property verticalAccuracy   Estimated vertical accuracy, in meters, or `null` if the
@@ -24,11 +27,15 @@ data class LocationData(
     val timestamp: Long,
 )
 
-/** Maps a framework [Location] into our domain [LocationData]. */
-fun Location.toLocationData(): LocationData = LocationData(
+/**
+ * Maps a framework [Location] into our domain [LocationData], converting altitude from the
+ * WGS84 ellipsoid to mean sea level using [geoidSeparationMeters] (the local EGM96 undulation,
+ * see [Egm96Geoid.separationMeters]).
+ */
+fun Location.toLocationData(geoidSeparationMeters: Double): LocationData = LocationData(
     latitude = latitude,
     longitude = longitude,
-    altitude = altitude,
+    altitude = altitude - geoidSeparationMeters,
     speed = speed,
     horizontalAccuracy = accuracy,
     verticalAccuracy = if (hasVerticalAccuracy()) verticalAccuracyMeters else null,

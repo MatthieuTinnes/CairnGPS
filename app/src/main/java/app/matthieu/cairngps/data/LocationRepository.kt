@@ -34,6 +34,9 @@ class LocationRepository(context: Context) {
             "LocationManager service is unavailable on this device"
         }
 
+    // Converts raw ellipsoidal GPS altitude to mean sea level; see Egm96Geoid for why.
+    private val geoid = Egm96Geoid.fromAssets(context)
+
     /**
      * The most recent cached GPS fix the OS holds, or `null` if it has none. Cheap and does *not*
      * power up the GPS chip — used e.g. to seed magnetic declination for the compass without
@@ -41,7 +44,9 @@ class LocationRepository(context: Context) {
      */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun lastKnownLocation(): LocationData? =
-        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.toLocationData()
+        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let {
+            it.toLocationData(geoid.separationMeters(it.latitude, it.longitude))
+        }
 
     /**
      * Cold [Flow] of GPS fixes. A new registration is created for each collector and torn down
@@ -59,7 +64,8 @@ class LocationRepository(context: Context) {
     ): Flow<LocationData> = callbackFlow {
         val listener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
-                trySend(location.toLocationData())
+                val separation = geoid.separationMeters(location.latitude, location.longitude)
+                trySend(location.toLocationData(separation))
             }
 
             // Overridden for source/binary compatibility across API levels; nothing to do here.
