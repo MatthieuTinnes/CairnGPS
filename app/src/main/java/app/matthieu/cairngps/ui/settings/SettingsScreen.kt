@@ -2,7 +2,10 @@ package app.matthieu.cairngps.ui.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -38,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
@@ -61,6 +65,14 @@ import kotlinx.coroutines.flow.SharedFlow
 // Default export file name, e.g. "cairn-backup-2026-07-17.json" — sortable, filesystem-safe.
 private val BackupFileNameDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
+// Maps the current per-app locale override to the language SegmentedToggle's index. An empty
+// list means "follow the system language" (the default, nothing set yet).
+private fun languageIndexOf(locales: LocaleListCompat): Int = when {
+    locales.isEmpty -> 0
+    locales[0]?.language == "fr" -> 1
+    else -> 2
+}
+
 /** Route: wires up the shared [SettingsViewModel] and renders the settings UI. */
 @Composable
 fun SettingsRoute(
@@ -80,6 +92,19 @@ fun SettingsRoute(
         onCoordinateFormatChange = viewModel::setCoordinateFormat,
         themeMode = settings.themeMode,
         onThemeModeChange = viewModel::setThemeMode,
+        // Language is deliberately not part of AppSettings/DataStore: AppCompat's per-app
+        // language API owns its own persistence (autoStoreLocales in the manifest) and
+        // integrates with the Android 13+ system language picker.
+        languageIndex = languageIndexOf(AppCompatDelegate.getApplicationLocales()),
+        onLanguageChange = { index ->
+            AppCompatDelegate.setApplicationLocales(
+                when (index) {
+                    1 -> LocaleListCompat.forLanguageTags("fr")
+                    2 -> LocaleListCompat.forLanguageTags("en")
+                    else -> LocaleListCompat.getEmptyLocaleList()
+                },
+            )
+        },
         northReference = settings.northReference,
         onNorthReferenceChange = viewModel::setNorthReference,
         isBackupWorking = isBackupWorking,
@@ -98,6 +123,8 @@ private fun SettingsScreen(
     onCoordinateFormatChange: (CoordinateFormat) -> Unit,
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    languageIndex: Int,
+    onLanguageChange: (Int) -> Unit,
     northReference: NorthReference,
     onNorthReferenceChange: (NorthReference) -> Unit,
     isBackupWorking: Boolean,
@@ -186,6 +213,7 @@ private fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
@@ -238,6 +266,17 @@ private fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                }
+                SettingCard(stringResource(R.string.settings_language)) {
+                    SegmentedToggle(
+                        options = listOf(
+                            stringResource(R.string.language_system),
+                            stringResource(R.string.language_french),
+                            stringResource(R.string.language_english),
+                        ),
+                        selectedIndex = languageIndex,
+                        onSelect = onLanguageChange,
+                    )
                 }
             }
 

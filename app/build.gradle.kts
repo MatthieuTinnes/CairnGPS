@@ -67,6 +67,9 @@ dependencies {
     // Backup export/import (Settings)
     implementation(libs.kotlinx.serialization.json)
 
+    // Per-app language switching (AppCompatDelegate.setApplicationLocales)
+    implementation(libs.androidx.appcompat)
+
     // Compose
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))

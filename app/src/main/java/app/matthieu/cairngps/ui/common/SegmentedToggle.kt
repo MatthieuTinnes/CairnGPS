@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
@@ -49,8 +51,11 @@ fun SegmentedToggle(
     val dividerColor = if (light) CompassDialBorderLight else OutlineSubtle
 
     Row(
+        // Height follows content (min 40dp via segment padding) rather than a fixed 40dp, so a
+        // long label that wraps to two lines (e.g. "Nord géographique" sharing its segment with
+        // the checkmark glyph) grows the pill instead of being clipped/overlapping neighbors.
         modifier = modifier
-            .height(40.dp)
+            .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(20.dp))
             .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
             .selectableGroup(),
@@ -63,7 +68,7 @@ fun SegmentedToggle(
                     .fillMaxHeight()
                     .background(if (selected) CairnGreenDark else Color.Transparent)
                     .selectable(selected = selected, onClick = { onSelect(index) }, role = Role.RadioButton)
-                    .padding(horizontal = 14.dp),
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -80,6 +85,7 @@ fun SegmentedToggle(
                     text = label,
                     fontSize = 14.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                    textAlign = TextAlign.Center,
                     // The selected pill's background is the fixed CairnGreenDark literal in both
                     // themes, so its text uses the matching fixed OnGreenButton rather than
                     // colorScheme.onSurface — that role flips to near-black in light theme and

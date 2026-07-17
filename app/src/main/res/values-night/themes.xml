@@ -1,7 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base theme. Colors are driven by the Compose Material3 theme (CairnGpsTheme),
-         so this only needs to provide a windowing shell with no ActionBar. -->
-    <style name="Theme.CairnGPS" parent="android:Theme.Material.NoActionBar">
+         so this only needs to provide a windowing shell with no ActionBar. AppCompat.DayNight
+         (rather than the platform Material theme) is required for MainActivity to extend
+         AppCompatActivity, which per-app language switching (AppCompatDelegate) needs. -->
+    <style name="Theme.CairnGPS" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/black</item>
     </style>
 </resources>

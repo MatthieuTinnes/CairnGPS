@@ -2,343 +2,347 @@
     <string name="app_name">CairnGPS</string>
 
     <!-- GPS status -->
-    <string name="waiting_for_fix">Recherche de satellites…</string>
-    <string name="waiting_for_fix_with_satellites">Recherche de satellites… %1$d visibles, %2$d utilisé</string>
-    <string name="fix_obtained">Fix obtenu</string>
-    <string name="fix_obtained_with_satellites">Fix 3D · %1$d satellites</string>
-    <string name="hint_clear_sky">Dégagez la vue du ciel pour accélérer l\'acquisition du fix.</string>
+    <string name="waiting_for_fix">Searching for satellites…</string>
+    <string name="waiting_for_fix_with_satellites">Searching for satellites… %1$d visible, %2$d used</string>
+    <string name="fix_obtained">Fix acquired</string>
+    <string name="fix_obtained_with_satellites">3D fix · %1$d satellites</string>
+    <string name="hint_clear_sky">Clear the view of the sky to speed up fix acquisition.</string>
 
     <!-- Permission -->
-    <string name="permission_title">Accès à la position requis</string>
-    <string name="permission_rationale">CairnGPS a besoin d\'accéder à votre position GPS précise pour afficher vos coordonnées, votre altitude, etc.\n\nAucune donnée n\'est envoyée en ligne : tout reste sur votre appareil.</string>
-    <string name="permission_grant">Autoriser l\'accès</string>
-    <string name="permission_denied_rationale">La permission a été refusée. CairnGPS ne peut pas fonctionner sans accès à la position. Vous pouvez l\'activer depuis les réglages de l\'application.</string>
-    <string name="permission_open_settings">Ouvrir les réglages</string>
+    <string name="permission_title">Location access required</string>
+    <string name="permission_rationale">CairnGPS needs access to your precise GPS location to show your coordinates, altitude, and more.\n\nNo data is sent online: everything stays on your device.</string>
+    <string name="permission_grant">Allow access</string>
+    <string name="permission_denied_rationale">Permission was denied. CairnGPS can\'t work without location access. You can enable it from the app settings.</string>
+    <string name="permission_open_settings">Open settings</string>
 
     <!-- Main screen: data labels -->
-    <string name="label_coordinates">Coordonnées</string>
+    <string name="label_coordinates">Coordinates</string>
     <string name="label_latitude">Latitude</string>
     <string name="label_longitude">Longitude</string>
     <string name="label_altitude">Altitude</string>
-    <string name="label_speed">Vitesse</string>
-    <string name="label_accuracy">Précision horizontale</string>
-    <string name="label_precision">Précision</string>
+    <string name="label_speed">Speed</string>
+    <string name="label_accuracy">Horizontal accuracy</string>
+    <string name="label_precision">Accuracy</string>
     <string name="label_accuracy_h">H</string>
     <string name="label_accuracy_v">V</string>
 
     <!-- Bottom navigation tabs -->
     <string name="tab_home">Position</string>
-    <string name="tab_compass">Naviguer</string>
+    <string name="tab_compass">Navigate</string>
     <string name="tab_satellites">Satellites</string>
-    <string name="tab_history">Carnet</string>
-    <string name="tab_achievements">Succès</string>
-    <string name="tab_profile">Profil</string>
+    <string name="tab_history">Logbook</string>
+    <string name="tab_achievements">Achievements</string>
+    <string name="tab_profile">Profile</string>
 
     <!-- Actions -->
-    <string name="coordinates_copied">Coordonnées copiées</string>
-    <string name="action_open_settings">Paramètres</string>
-    <string name="action_back">Retour</string>
+    <string name="coordinates_copied">Coordinates copied</string>
+    <string name="action_open_settings">Settings</string>
+    <string name="action_back">Back</string>
 
     <!-- Settings screen -->
-    <string name="settings_title">Paramètres</string>
-    <string name="settings_display_section">Affichage</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_display_section">Display</string>
     <string name="settings_navigation_section">Navigation</string>
-    <string name="settings_theme">Thème</string>
-    <string name="settings_theme_battery_hint">Le thème sombre économise la batterie sur écran OLED.</string>
-    <string name="theme_system">Système</string>
-    <string name="theme_light">Clair</string>
-    <string name="theme_dark">Sombre</string>
-    <string name="settings_coordinate_format">Format des coordonnées</string>
-    <string name="coordinate_format_decimal">Décimal</string>
-    <string name="settings_north_reference">Nord de la boussole</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_battery_hint">Dark theme saves battery on OLED screens.</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_french">Français</string>
+    <string name="language_english">English</string>
+    <string name="settings_coordinate_format">Coordinate format</string>
+    <string name="coordinate_format_decimal">Decimal</string>
+    <string name="settings_north_reference">Compass north</string>
     <string name="coordinate_format_dms">DMS</string>
-    <string name="settings_data_section">Données</string>
-    <string name="settings_export_title">Exporter les données</string>
-    <string name="settings_export_subtitle">Repères, sessions, succès et réglages dans un fichier</string>
-    <string name="settings_export_success">Sauvegarde exportée</string>
-    <string name="settings_export_error">Échec de l\'export de la sauvegarde</string>
-    <string name="settings_import_title">Importer une sauvegarde</string>
-    <string name="settings_import_subtitle">Restaure un fichier de sauvegarde précédemment exporté</string>
-    <string name="settings_import_confirm_title">Remplacer toutes les données ?</string>
-    <string name="settings_import_confirm_message">Repères, sessions, succès, records et réglages actuels seront définitivement remplacés par le contenu du fichier importé. Cette action est irréversible.</string>
-    <string name="settings_import_confirm_action">Remplacer</string>
-    <string name="settings_import_success">Données restaurées avec succès</string>
-    <string name="settings_import_error_unreadable">Fichier de sauvegarde illisible</string>
-    <string name="settings_import_error_future_version">Cette sauvegarde provient d\'une version plus récente de l\'application</string>
+    <string name="settings_data_section">Data</string>
+    <string name="settings_export_title">Export data</string>
+    <string name="settings_export_subtitle">Waypoints, tracks, achievements and settings in a single file</string>
+    <string name="settings_export_success">Backup exported</string>
+    <string name="settings_export_error">Failed to export backup</string>
+    <string name="settings_import_title">Import a backup</string>
+    <string name="settings_import_subtitle">Restore a previously exported backup file</string>
+    <string name="settings_import_confirm_title">Replace all data?</string>
+    <string name="settings_import_confirm_message">Waypoints, tracks, achievements, records and current settings will be permanently replaced with the imported file\'s content. This action is irreversible.</string>
+    <string name="settings_import_confirm_action">Replace</string>
+    <string name="settings_import_success">Data restored successfully</string>
+    <string name="settings_import_error_unreadable">Unreadable backup file</string>
+    <string name="settings_import_error_future_version">This backup comes from a newer version of the app</string>
 
     <!-- Waypoints -->
-    <string name="action_save_waypoint">Marquer un repère</string>
-    <string name="waypoint_save_dialog_title">Nouveau repère</string>
-    <string name="waypoint_name_label">Nom du repère</string>
-    <string name="waypoint_default_name_prefix">Repère</string>
-    <string name="waypoint_saved">Repère enregistré</string>
-    <string name="action_save">Enregistrer</string>
-    <string name="action_cancel">Annuler</string>
-    <string name="waypoints_empty">Aucun repère enregistré pour le moment.\n\nDepuis l\'écran Position, appuyez sur « Enregistrer ce point » pour capturer votre position actuelle.</string>
-    <string name="waypoint_detail_title">Repère</string>
-    <string name="label_measurements">Mesures</string>
-    <string name="label_satellites_used">Satellites fixés</string>
-    <string name="waypoint_created_at_fmt">Enregistré le %1$s</string>
-    <string name="action_open_in_maps">Ouvrir dans une carte</string>
-    <string name="no_maps_app">Aucune application de carte installée</string>
-    <string name="action_delete">Supprimer</string>
-    <string name="waypoint_delete_dialog_title">Supprimer ce repère ?</string>
-    <string name="waypoint_delete_dialog_message_fmt">« %1$s » sera définitivement supprimé. La session parente associée n\'est pas affectée. Cette action est irréversible.</string>
-    <string name="waypoint_parent_session">Trace parente</string>
-    <string name="action_rename">Renommer</string>
-    <string name="waypoint_rename_dialog_title">Renommer le repère</string>
+    <string name="action_save_waypoint">Save a waypoint</string>
+    <string name="waypoint_save_dialog_title">New waypoint</string>
+    <string name="waypoint_name_label">Waypoint name</string>
+    <string name="waypoint_default_name_prefix">Waypoint</string>
+    <string name="waypoint_saved">Waypoint saved</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="waypoints_empty">No waypoints saved yet.\n\nFrom the Position screen, tap \"Save this point\" to capture your current position.</string>
+    <string name="waypoint_detail_title">Waypoint</string>
+    <string name="label_measurements">Measurements</string>
+    <string name="label_satellites_used">Satellites fixed</string>
+    <string name="waypoint_created_at_fmt">Saved on %1$s</string>
+    <string name="action_open_in_maps">Open in a map app</string>
+    <string name="no_maps_app">No map app installed</string>
+    <string name="action_delete">Delete</string>
+    <string name="waypoint_delete_dialog_title">Delete this waypoint?</string>
+    <string name="waypoint_delete_dialog_message_fmt">\"%1$s\" will be permanently deleted. The parent track is not affected. This action is irreversible.</string>
+    <string name="waypoint_parent_session">Parent track</string>
+    <string name="action_rename">Rename</string>
+    <string name="waypoint_rename_dialog_title">Rename waypoint</string>
 
     <!-- Waypoint icon picker (screens 6a/6b) -->
-    <string name="action_change_icon">Changer l\'icône</string>
-    <string name="waypoint_icon_sheet_title">Icône du repère</string>
-    <string name="waypoint_icon_current_selection">Sélection actuelle</string>
-    <string name="waypoint_icon_edit_link">Modifier l\'icône ›</string>
-    <string name="waypoint_icon_flag">Drapeau</string>
+    <string name="action_change_icon">Change icon</string>
+    <string name="waypoint_icon_sheet_title">Waypoint icon</string>
+    <string name="waypoint_icon_current_selection">Current selection</string>
+    <string name="waypoint_icon_edit_link">Change icon ›</string>
+    <string name="waypoint_icon_flag">Flag</string>
     <string name="waypoint_icon_terrain">Terrain</string>
-    <string name="waypoint_icon_forest">Forêt</string>
-    <string name="waypoint_icon_water_drop">Point d\'eau</string>
-    <string name="waypoint_icon_park">Parc</string>
-    <string name="waypoint_icon_hiking">Randonnée</string>
-    <string name="waypoint_icon_cottage">Refuge</string>
-    <string name="waypoint_icon_cabin">Cabane</string>
+    <string name="waypoint_icon_forest">Forest</string>
+    <string name="waypoint_icon_water_drop">Water point</string>
+    <string name="waypoint_icon_park">Park</string>
+    <string name="waypoint_icon_hiking">Hiking</string>
+    <string name="waypoint_icon_cottage">Shelter</string>
+    <string name="waypoint_icon_cabin">Cabin</string>
     <string name="waypoint_icon_restaurant">Restaurant</string>
-    <string name="waypoint_icon_photo_camera">Point de vue</string>
+    <string name="waypoint_icon_photo_camera">Viewpoint</string>
     <string name="waypoint_icon_local_parking">Parking</string>
-    <string name="waypoint_icon_warning">Danger</string>
-    <string name="waypoint_icon_star">Favori</string>
-    <string name="waypoint_icon_pin_drop">Point d\'intérêt</string>
-    <string name="waypoint_icon_sailing">Nautique</string>
-    <string name="waypoint_icon_waves">Baignade</string>
+    <string name="waypoint_icon_warning">Hazard</string>
+    <string name="waypoint_icon_star">Favorite</string>
+    <string name="waypoint_icon_pin_drop">Point of interest</string>
+    <string name="waypoint_icon_sailing">Nautical</string>
+    <string name="waypoint_icon_waves">Swimming</string>
 
     <!-- Historique screen -->
-    <string name="history_tab_waypoints">Repères</string>
-    <string name="history_tab_tracks">Sessions</string>
-    <string name="sessions_empty">Aucune trace enregistrée pour le moment.\n\nDepuis l\'écran Position, appuyez sur « Démarrer » pour commencer une trace.</string>
-    <string name="label_current_distance">Distance actuelle</string>
+    <string name="history_tab_waypoints">Waypoints</string>
+    <string name="history_tab_tracks">Tracks</string>
+    <string name="sessions_empty">No track recorded yet.\n\nFrom the Position screen, tap \"Start\" to begin recording a track.</string>
+    <string name="label_current_distance">Current distance</string>
 
     <!-- Recording (Position screen) -->
-    <string name="recording_title">Session en cours</string>
-    <string name="recording_start">Démarrer</string>
-    <string name="recording_stop">Arrêter</string>
-    <string name="recording_duration">Durée</string>
+    <string name="recording_title">Recording in progress</string>
+    <string name="recording_start">Start</string>
+    <string name="recording_stop">Stop</string>
+    <string name="recording_duration">Duration</string>
     <string name="recording_distance">Distance</string>
-    <string name="recording_avg_speed">Vitesse moy.</string>
-    <string name="recording_max_speed">Vitesse max</string>
+    <string name="recording_avg_speed">Avg. speed</string>
+    <string name="recording_max_speed">Max speed</string>
     <string name="recording_elevation_gain">D+</string>
     <string name="recording_elevation_loss">D−</string>
-    <string name="recording_notification_channel_name">Enregistrement</string>
-    <string name="recording_notification_title_fmt">Enregistrement en cours · %1$s</string>
+    <string name="recording_notification_channel_name">Recording</string>
+    <string name="recording_notification_title_fmt">Recording in progress · %1$s</string>
     <string name="recording_notification_content">Alt %1$s m · %2$s km/h · %3$s km</string>
 
     <!-- Session (trace) detail -->
-    <string name="session_default_name_prefix">Trace</string>
-    <string name="session_detail_title">Trace</string>
-    <string name="session_waypoints_label">Repères de la session</string>
-    <string name="session_waypoints_empty">Aucun repère rattaché à cette session.</string>
-    <string name="session_delete_dialog_title">Supprimer cette trace ?</string>
-    <string name="session_delete_dialog_message">Cette action est définitive. Les repères rattachés seront conservés.</string>
-    <string name="session_departure_fmt">● départ %1$s</string>
-    <string name="session_arrival_fmt">○ arrivée %1$s</string>
+    <string name="session_default_name_prefix">Track</string>
+    <string name="session_detail_title">Track</string>
+    <string name="session_waypoints_label">Track waypoints</string>
+    <string name="session_waypoints_empty">No waypoints attached to this track.</string>
+    <string name="session_delete_dialog_title">Delete this track?</string>
+    <string name="session_delete_dialog_message">This action is permanent. Attached waypoints will be kept.</string>
+    <string name="session_departure_fmt">● start %1$s</string>
+    <string name="session_arrival_fmt">○ end %1$s</string>
     <string name="session_stat_distance">km</string>
-    <string name="session_stat_duration">durée</string>
+    <string name="session_stat_duration">duration</string>
     <string name="session_stat_elevation_gain">m D+</string>
     <string name="session_stat_elevation_loss">m D−</string>
     <string name="session_stat_max_speed">km/h max</string>
-    <string name="session_stat_avg_speed">km/h moy</string>
-    <string name="session_rename_dialog_title">Renommer la trace</string>
-    <string name="session_name_label">Nom de la trace</string>
-    <string name="label_altitude_profile">Profil d\'altitude</string>
+    <string name="session_stat_avg_speed">km/h avg</string>
+    <string name="session_rename_dialog_title">Rename track</string>
+    <string name="session_name_label">Track name</string>
+    <string name="label_altitude_profile">Altitude profile</string>
 
     <!-- Satellites screen -->
     <string name="satellites_title">Satellites</string>
-    <string name="sats_waiting">En attente des données satellites…</string>
-    <string name="sats_status_chip_fmt">%1$d vus · %2$d fix</string>
-    <string name="sat_elevation_azimuth">él. %1$d° · az. %2$d°</string>
+    <string name="sats_waiting">Waiting for satellite data…</string>
+    <string name="sats_status_chip_fmt">%1$d seen · %2$d fixed</string>
+    <string name="sat_elevation_azimuth">el. %1$d° · az. %2$d°</string>
     <string name="unit_dbhz">dB-Hz</string>
 
     <!-- 3D satellite globe -->
-    <string name="action_open_satellite_globe">Globe 3D</string>
-    <string name="satellite_globe_title">Satellites en 3D</string>
-    <string name="globe_no_fixed_satellites">Aucun satellite fixé pour le moment</string>
+    <string name="action_open_satellite_globe">3D globe</string>
+    <string name="satellite_globe_title">Satellites in 3D</string>
+    <string name="globe_no_fixed_satellites">No satellites fixed yet</string>
 
     <!-- Constellation info page -->
     <string name="action_open_constellation_info">Constellations</string>
-    <string name="constellation_info_title">Les constellations GNSS</string>
-    <string name="constellation_info_intro">Un récepteur GNSS combine les signaux de plusieurs constellations de satellites pour calculer votre position. Plus il y a de systèmes visibles, meilleurs sont la précision et le temps de fixation.</string>
+    <string name="constellation_info_title">GNSS constellations</string>
+    <string name="constellation_info_intro">A GNSS receiver combines signals from several satellite constellations to compute your position. The more systems are visible, the better the accuracy and time to fix.</string>
 
-    <string name="constellation_gps_region">États-Unis</string>
-    <string name="constellation_gps_stats">31 satellites · MEO 20 180 km · L1 C/A, L2C, L5</string>
-    <string name="constellation_gps_desc">Le système historique, couverture mondiale. La bande L5 améliore la précision en montagne et en canyon urbain.</string>
+    <string name="constellation_gps_region">United States</string>
+    <string name="constellation_gps_stats">31 satellites · MEO 20,180 km · L1 C/A, L2C, L5</string>
+    <string name="constellation_gps_desc">The historic system, with worldwide coverage. The L5 band improves accuracy in mountains and urban canyons.</string>
 
-    <string name="constellation_glonass_region">Russie</string>
-    <string name="constellation_glonass_stats">24 satellites · MEO 19 130 km · L1OF, L2OF</string>
-    <string name="constellation_glonass_desc">Orbites très inclinées : meilleure visibilité aux latitudes élevées, utile en haute montagne nordique.</string>
+    <string name="constellation_glonass_region">Russia</string>
+    <string name="constellation_glonass_stats">24 satellites · MEO 19,130 km · L1OF, L2OF</string>
+    <string name="constellation_glonass_desc">Highly inclined orbits: better visibility at high latitudes, useful in northern high mountains.</string>
 
-    <string name="constellation_galileo_region">Union européenne</string>
-    <string name="constellation_galileo_stats">28 satellites · MEO 23 222 km · E1, E5a, E5b</string>
-    <string name="constellation_galileo_desc">Le plus précis en usage civil (&lt; 1 m avec E5). Service de retour de détresse intégré.</string>
+    <string name="constellation_galileo_region">European Union</string>
+    <string name="constellation_galileo_stats">28 satellites · MEO 23,222 km · E1, E5a, E5b</string>
+    <string name="constellation_galileo_desc">The most accurate for civilian use (&lt; 1 m with E5). Built-in distress return service.</string>
 
-    <string name="constellation_beidou_region">Chine</string>
+    <string name="constellation_beidou_region">China</string>
     <string name="constellation_beidou_stats">44 satellites · MEO + IGSO + GEO · B1, B2, B3</string>
-    <string name="constellation_beidou_desc">Constellation hybride : des satellites géostationnaires complètent la couverture en Asie-Pacifique.</string>
+    <string name="constellation_beidou_desc">Hybrid constellation: geostationary satellites supplement coverage across Asia-Pacific.</string>
 
-    <string name="constellation_qzss_region">Japon</string>
-    <string name="constellation_qzss_stats">4 satellites · orbite quasi-zénithale · L1, L2, L5, L6</string>
-    <string name="constellation_qzss_desc">Régional : passe près du zénith au-dessus du Japon, fiabilise le fix entre les immeubles et les vallées.</string>
+    <string name="constellation_qzss_region">Japan</string>
+    <string name="constellation_qzss_stats">4 satellites · quasi-zenith orbit · L1, L2, L5, L6</string>
+    <string name="constellation_qzss_desc">Regional: passes near the zenith over Japan, improving fix reliability between buildings and valleys.</string>
 
     <!-- Compass screen -->
-    <string name="compass_title">Boussole</string>
-    <string name="compass_north_magnetic">Nord magnétique</string>
-    <string name="compass_north_true">Nord géographique</string>
-    <string name="compass_declination">Déclinaison : %1$s° %2$s</string>
-    <string name="compass_true_north_unavailable">Position GPS inconnue — nord géographique indisponible</string>
-    <string name="compass_calibration_needed">Boussole à calibrer</string>
-    <string name="compass_calibration_hint">Bougez l\'appareil en formant un 8 dans l\'air.</string>
-    <string name="compass_sensor_unavailable">Cet appareil ne dispose pas de capteur de boussole.</string>
-    <string name="compass_target_ref_true">nord géographique</string>
-    <string name="compass_target_ref_magnetic">nord magnétique</string>
-    <string name="compass_target_bearing_fmt">cap %1$d° · %2$s</string>
-    <string name="compass_change_target">Changer de repère cible</string>
-    <string name="compass_select_target_title">Repère cible</string>
-    <string name="compass_create_target_here">Créer un nouveau repère ici</string>
-    <string name="compass_no_waypoints">Aucun repère enregistré.\n\nDepuis l\'écran Position, appuyez sur « Marquer un repère » pour en créer un.</string>
-    <string name="compass_no_target_hint">Sélectionnez un repère à atteindre.</string>
-    <string name="action_navigate_to_waypoint">Naviguer vers ce repère</string>
-    <!-- Rose des vents : 4 points cardinaux, dans l'ordre N, E, S, O -->
+    <string name="compass_title">Compass</string>
+    <string name="compass_north_magnetic">Magnetic north</string>
+    <string name="compass_north_true">True north</string>
+    <string name="compass_declination">Declination: %1$s° %2$s</string>
+    <string name="compass_true_north_unavailable">GPS position unknown — true north unavailable</string>
+    <string name="compass_calibration_needed">Compass needs calibration</string>
+    <string name="compass_calibration_hint">Move the device in a figure-8 pattern.</string>
+    <string name="compass_sensor_unavailable">This device doesn\'t have a compass sensor.</string>
+    <string name="compass_target_ref_true">true north</string>
+    <string name="compass_target_ref_magnetic">magnetic north</string>
+    <string name="compass_target_bearing_fmt">bearing %1$d° · %2$s</string>
+    <string name="compass_change_target">Change target waypoint</string>
+    <string name="compass_select_target_title">Target waypoint</string>
+    <string name="compass_create_target_here">Create a new waypoint here</string>
+    <string name="compass_no_waypoints">No waypoints saved.\n\nFrom the Position screen, tap \"Save a waypoint\" to create one.</string>
+    <string name="compass_no_target_hint">Select a waypoint to head to.</string>
+    <string name="action_navigate_to_waypoint">Navigate to this waypoint</string>
+    <!-- Compass rose: 4 cardinal points, in order N, E, S, W -->
     <string-array name="compass_rose_labels">
         <item>N</item>
         <item>E</item>
         <item>S</item>
-        <item>O</item>
+        <item>W</item>
     </string-array>
-    <!-- 8 points cardinaux, dans l'ordre horaire à partir du nord -->
+    <!-- 8 cardinal points, clockwise starting from north -->
     <string-array name="compass_cardinals">
         <item>N</item>
         <item>NE</item>
         <item>E</item>
         <item>SE</item>
         <item>S</item>
-        <item>SO</item>
-        <item>O</item>
-        <item>NO</item>
+        <item>SW</item>
+        <item>W</item>
+        <item>NW</item>
     </string-array>
 
-    <!-- Gamification : succès & records -->
-    <string name="achievements_loading">Chargement des succès…</string>
+    <!-- Gamification: achievements & records -->
+    <string name="achievements_loading">Loading achievements…</string>
     <string name="achievements_counter_fmt">%1$d/%2$d</string>
-    <string name="achievements_next_label_fmt">PROCHAIN SUCCÈS · %1$s</string>
+    <string name="achievements_next_label_fmt">NEXT ACHIEVEMENT · %1$s</string>
     <string name="achievement_xp_fmt">+%1$d XP</string>
-    <string name="achievement_unlocked_banner_title">Succès débloqué !</string>
+    <string name="achievement_unlocked_banner_title">Achievement unlocked!</string>
 
-    <!-- Familles de succès -->
-    <string name="achievement_family_altitude">Altitude franchie</string>
-    <string name="achievement_family_speed">Vitesse atteinte</string>
-    <string name="achievement_family_satellites">Satellites simultanés</string>
-    <string name="achievement_family_distance">Distance cumulée</string>
-    <string name="achievement_family_sessions">Nombre de sessions</string>
-    <string name="achievement_family_geo">Franchissements géographiques</string>
-    <string name="achievement_family_time">Heures notables</string>
+    <!-- Achievement families -->
+    <string name="achievement_family_altitude">Altitude reached</string>
+    <string name="achievement_family_speed">Speed reached</string>
+    <string name="achievement_family_satellites">Simultaneous satellites</string>
+    <string name="achievement_family_distance">Cumulative distance</string>
+    <string name="achievement_family_sessions">Number of sessions</string>
+    <string name="achievement_family_geo">Geographic crossings</string>
+    <string name="achievement_family_time">Notable times</string>
 
-    <!-- Succès : altitude franchie, y compris quelques sommets célèbres -->
-    <string name="achievement_altitude_1000_title">Premier sommet</string>
-    <string name="achievement_altitude_1000_desc">Atteindre 1000 m d\'altitude.</string>
+    <!-- Achievements: altitude reached, including a few famous peaks -->
+    <string name="achievement_altitude_1000_title">First summit</string>
+    <string name="achievement_altitude_1000_desc">Reach 1000 m of altitude.</string>
     <string name="achievement_altitude_puy_de_dome_title">Puy de Dôme</string>
-    <string name="achievement_altitude_puy_de_dome_desc">Atteindre 1426 m, l\'altitude du puy de Dôme.</string>
-    <string name="achievement_altitude_2000_title">Prise de hauteur</string>
-    <string name="achievement_altitude_2000_desc">Atteindre 2000 m d\'altitude.</string>
-    <string name="achievement_altitude_3000_title">Grand alpiniste</string>
-    <string name="achievement_altitude_3000_desc">Atteindre 3000 m d\'altitude.</string>
-    <string name="achievement_altitude_fuji_title">Mont Fuji</string>
-    <string name="achievement_altitude_fuji_desc">Atteindre 3776 m, l\'altitude du mont Fuji.</string>
+    <string name="achievement_altitude_puy_de_dome_desc">Reach 1426 m, the altitude of the Puy de Dôme.</string>
+    <string name="achievement_altitude_2000_title">Gaining height</string>
+    <string name="achievement_altitude_2000_desc">Reach 2000 m of altitude.</string>
+    <string name="achievement_altitude_3000_title">Great mountaineer</string>
+    <string name="achievement_altitude_3000_desc">Reach 3000 m of altitude.</string>
+    <string name="achievement_altitude_fuji_title">Mount Fuji</string>
+    <string name="achievement_altitude_fuji_desc">Reach 3776 m, the altitude of Mount Fuji.</string>
     <string name="achievement_altitude_mont_blanc_title">Mont Blanc</string>
-    <string name="achievement_altitude_mont_blanc_desc">Atteindre 4805 m, l\'altitude du mont Blanc.</string>
-    <string name="achievement_altitude_kilimanjaro_title">Kilimandjaro</string>
-    <string name="achievement_altitude_kilimanjaro_desc">Atteindre 5825 m, l\'altitude du Kilimandjaro.</string>
+    <string name="achievement_altitude_mont_blanc_desc">Reach 4805 m, the altitude of Mont Blanc.</string>
+    <string name="achievement_altitude_kilimanjaro_title">Kilimanjaro</string>
+    <string name="achievement_altitude_kilimanjaro_desc">Reach 5825 m, the altitude of Kilimanjaro.</string>
 
-    <!-- Succès : vitesse atteinte, y compris quelques transports rapides -->
-    <string name="achievement_speed_30_title">En roue libre</string>
-    <string name="achievement_speed_30_desc">Atteindre 30 km/h.</string>
-    <string name="achievement_speed_50_title">Bon rythme</string>
-    <string name="achievement_speed_50_desc">Atteindre 50 km/h.</string>
-    <string name="achievement_speed_100_title">Pied au plancher</string>
-    <string name="achievement_speed_100_desc">Atteindre 100 km/h.</string>
-    <string name="achievement_speed_300_title">Grande vitesse</string>
-    <string name="achievement_speed_300_desc">Atteindre 300 km/h, la vitesse d\'un TGV.</string>
-    <string name="achievement_speed_800_title">Vol long-courrier</string>
-    <string name="achievement_speed_800_desc">Atteindre 800 km/h, la vitesse d\'un avion de ligne.</string>
+    <!-- Achievements: speed reached, including a few fast modes of transport -->
+    <string name="achievement_speed_30_title">Freewheeling</string>
+    <string name="achievement_speed_30_desc">Reach 30 km/h.</string>
+    <string name="achievement_speed_50_title">Good pace</string>
+    <string name="achievement_speed_50_desc">Reach 50 km/h.</string>
+    <string name="achievement_speed_100_title">Pedal to the metal</string>
+    <string name="achievement_speed_100_desc">Reach 100 km/h.</string>
+    <string name="achievement_speed_300_title">High speed</string>
+    <string name="achievement_speed_300_desc">Reach 300 km/h, the speed of a TGV.</string>
+    <string name="achievement_speed_800_title">Long-haul flight</string>
+    <string name="achievement_speed_800_desc">Reach 800 km/h, the speed of an airliner.</string>
 
-    <!-- Succès : satellites fixés simultanément -->
-    <string name="achievement_satellites_8_title">Bon signal</string>
-    <string name="achievement_satellites_8_desc">Fixer 8 satellites simultanément.</string>
-    <string name="achievement_satellites_12_title">Ciel dégagé</string>
-    <string name="achievement_satellites_12_desc">Fixer 12 satellites simultanément.</string>
-    <string name="achievement_satellites_20_title">Précision maximale</string>
-    <string name="achievement_satellites_20_desc">Fixer 20 satellites simultanément.</string>
+    <!-- Achievements: satellites fixed simultaneously -->
+    <string name="achievement_satellites_8_title">Good signal</string>
+    <string name="achievement_satellites_8_desc">Fix 8 satellites simultaneously.</string>
+    <string name="achievement_satellites_12_title">Clear sky</string>
+    <string name="achievement_satellites_12_desc">Fix 12 satellites simultaneously.</string>
+    <string name="achievement_satellites_20_title">Maximum accuracy</string>
+    <string name="achievement_satellites_20_desc">Fix 20 satellites simultaneously.</string>
 
-    <!-- Succès : heures notables -->
-    <string name="achievement_time_night_owl_title">Oiseau de nuit</string>
-    <string name="achievement_time_night_owl_desc">Enregistrer un repère après 22h.</string>
-    <string name="achievement_time_early_bird_title">Lève-tôt</string>
-    <string name="achievement_time_early_bird_desc">Enregistrer un repère avant 6h.</string>
+    <!-- Achievements: notable times -->
+    <string name="achievement_time_night_owl_title">Night owl</string>
+    <string name="achievement_time_night_owl_desc">Save a waypoint after 10 PM.</string>
+    <string name="achievement_time_early_bird_title">Early bird</string>
+    <string name="achievement_time_early_bird_desc">Save a waypoint before 6 AM.</string>
 
-    <!-- Succès : distance cumulée -->
-    <string name="achievement_distance_10_title">Premiers pas</string>
-    <string name="achievement_distance_10_desc">Parcourir 10 km au total.</string>
-    <string name="achievement_distance_50_title">Grand marcheur</string>
-    <string name="achievement_distance_50_desc">Parcourir 50 km au total.</string>
+    <!-- Achievements: cumulative distance -->
+    <string name="achievement_distance_10_title">First steps</string>
+    <string name="achievement_distance_10_desc">Cover 10 km in total.</string>
+    <string name="achievement_distance_50_title">Great walker</string>
+    <string name="achievement_distance_50_desc">Cover 50 km in total.</string>
     <string name="achievement_distance_100_title">Centurion</string>
-    <string name="achievement_distance_100_desc">Parcourir 100 km au total.</string>
+    <string name="achievement_distance_100_desc">Cover 100 km in total.</string>
 
-    <!-- Succès : nombre de sessions -->
-    <string name="achievement_sessions_1_title">Première sortie</string>
-    <string name="achievement_sessions_1_desc">Enregistrer une première session.</string>
-    <string name="achievement_sessions_10_title">Habitué du terrain</string>
-    <string name="achievement_sessions_10_desc">Enregistrer 10 sessions.</string>
-    <string name="achievement_sessions_50_title">Vétéran</string>
-    <string name="achievement_sessions_50_desc">Enregistrer 50 sessions.</string>
+    <!-- Achievements: number of sessions -->
+    <string name="achievement_sessions_1_title">First outing</string>
+    <string name="achievement_sessions_1_desc">Record a first session.</string>
+    <string name="achievement_sessions_10_title">Familiar with the terrain</string>
+    <string name="achievement_sessions_10_desc">Record 10 sessions.</string>
+    <string name="achievement_sessions_50_title">Veteran</string>
+    <string name="achievement_sessions_50_desc">Record 50 sessions.</string>
 
-    <!-- Succès : franchissements géographiques -->
-    <string name="achievement_geo_45th_parallel_title">Vers le nord</string>
-    <string name="achievement_geo_45th_parallel_desc">Franchir le 45e parallèle nord.</string>
-    <string name="achievement_geo_equator_title">Les deux hémisphères</string>
-    <string name="achievement_geo_equator_desc">Avoir été repéré au nord et au sud de l\'équateur.</string>
-    <string name="achievement_geo_greenwich_title">D\'un méridien à l\'autre</string>
-    <string name="achievement_geo_greenwich_desc">Avoir été repéré à l\'est et à l\'ouest du méridien de Greenwich.</string>
+    <!-- Achievements: geographic crossings -->
+    <string name="achievement_geo_45th_parallel_title">Heading north</string>
+    <string name="achievement_geo_45th_parallel_desc">Cross the 45th parallel north.</string>
+    <string name="achievement_geo_equator_title">Both hemispheres</string>
+    <string name="achievement_geo_equator_desc">Have been located north and south of the equator.</string>
+    <string name="achievement_geo_greenwich_title">From one meridian to another</string>
+    <string name="achievement_geo_greenwich_desc">Have been located east and west of the Greenwich meridian.</string>
 
-    <!-- Écran Records -->
+    <!-- Records screen -->
     <string name="records_title">Records</string>
-    <string name="record_max_speed">Vitesse maximale</string>
-    <string name="record_max_altitude">Altitude maximale</string>
-    <string name="record_min_altitude">Altitude minimale</string>
-    <string name="record_northernmost">Point le plus au nord</string>
-    <string name="record_southernmost">Point le plus au sud</string>
-    <string name="record_easternmost">Point le plus à l\'est</string>
-    <string name="record_westernmost">Point le plus à l\'ouest</string>
-    <string name="record_max_elevation_gain">Plus long dénivelé positif</string>
-    <string name="record_max_distance">Plus longue distance</string>
+    <string name="record_max_speed">Maximum speed</string>
+    <string name="record_max_altitude">Maximum altitude</string>
+    <string name="record_min_altitude">Minimum altitude</string>
+    <string name="record_northernmost">Northernmost point</string>
+    <string name="record_southernmost">Southernmost point</string>
+    <string name="record_easternmost">Easternmost point</string>
+    <string name="record_westernmost">Westernmost point</string>
+    <string name="record_max_elevation_gain">Longest elevation gain</string>
+    <string name="record_max_distance">Longest distance</string>
 
-    <!-- Niveaux (dérivés du total d'XP des succès débloqués) -->
-    <string name="level_title_1">Promeneur</string>
-    <string name="level_title_2">Marcheur</string>
-    <string name="level_title_3">Randonneur</string>
-    <string name="level_title_4">Arpenteur</string>
-    <string name="level_title_5">Éclaireur</string>
-    <string name="level_title_6">Trotteur des cimes</string>
-    <string name="level_title_7">Coureur de crêtes</string>
-    <string name="level_title_8">Alpiniste</string>
-    <string name="level_title_9">Chasseur de sommets</string>
-    <string name="level_title_10">Légende du sentier</string>
+    <!-- Levels (derived from the total XP of unlocked achievements) -->
+    <string name="level_title_1">Walker</string>
+    <string name="level_title_2">Rambler</string>
+    <string name="level_title_3">Hiker</string>
+    <string name="level_title_4">Surveyor</string>
+    <string name="level_title_5">Scout</string>
+    <string name="level_title_6">Ridge Runner</string>
+    <string name="level_title_7">Crest Chaser</string>
+    <string name="level_title_8">Mountaineer</string>
+    <string name="level_title_9">Summit Hunter</string>
+    <string name="level_title_10">Trail Legend</string>
 
-    <!-- Profil hub -->
-    <string name="profile_stat_total_km">km au total</string>
+    <!-- Profile hub -->
+    <string name="profile_stat_total_km">total km</string>
     <string name="profile_stat_sessions">sessions</string>
-    <string name="profile_stat_achievements">succès</string>
-    <string name="profile_last_achievement_label">Dernier succès</string>
-    <string name="profile_hub_history_subtitle_fmt">%1$d repères · %2$d sessions</string>
-    <string name="profile_hub_achievements_subtitle_fmt">%1$d / %2$d débloqués</string>
-    <string name="profile_hub_records_subtitle">Vos meilleures performances</string>
-    <string name="profile_level_label">NIV.</string>
+    <string name="profile_stat_achievements">achievements</string>
+    <string name="profile_last_achievement_label">Last achievement</string>
+    <string name="profile_hub_history_subtitle_fmt">%1$d waypoints · %2$d sessions</string>
+    <string name="profile_hub_achievements_subtitle_fmt">%1$d / %2$d unlocked</string>
+    <string name="profile_hub_records_subtitle">Your best performances</string>
+    <string name="profile_level_label">LVL</string>
     <string name="profile_level_xp_fmt">%1$d XP</string>
-    <string name="profile_level_remaining_fmt">reste %1$d XP</string>
-    <string name="profile_level_max">Niveau maximum atteint</string>
+    <string name="profile_level_remaining_fmt">%1$d XP remaining</string>
+    <string name="profile_level_max">Maximum level reached</string>
 </resources>
