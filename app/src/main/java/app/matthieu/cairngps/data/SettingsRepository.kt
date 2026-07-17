@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 // Single DataStore instance for the process, scoped to the application context via this delegate.
@@ -63,5 +64,17 @@ class SettingsRepository(context: Context) {
 
     suspend fun setNorthReference(reference: NorthReference) {
         dataStore.edit { prefs -> prefs[Keys.NORTH_REFERENCE] = reference.name }
+    }
+
+    /** Snapshot of the current settings, for exporting a backup. */
+    suspend fun current(): AppSettings = settings.first()
+
+    /** Overwrites every preference at once from a restored backup. */
+    suspend fun replaceAll(settings: AppSettings) {
+        dataStore.edit { prefs ->
+            prefs[Keys.COORDINATE_FORMAT] = settings.coordinateFormat.name
+            prefs[Keys.THEME_MODE] = settings.themeMode.name
+            prefs[Keys.NORTH_REFERENCE] = settings.northReference.name
+        }
     }
 }

@@ -1,6 +1,9 @@
 package app.matthieu.cairngps.data
 
+import kotlinx.serialization.Serializable
+
 /** How latitude/longitude are rendered on screen. Persisted as an app-wide preference. */
+@Serializable
 enum class CoordinateFormat {
     /** Decimal degrees, e.g. `47.123456°`. */
     DECIMAL,
@@ -10,6 +13,7 @@ enum class CoordinateFormat {
 }
 
 /** Which color scheme the app uses. Persisted as an app-wide preference. */
+@Serializable
 enum class ThemeMode {
     SYSTEM,
     LIGHT,
@@ -17,6 +21,7 @@ enum class ThemeMode {
 }
 
 /** Reference the compass expresses headings against. Persisted as an app-wide preference. */
+@Serializable
 enum class NorthReference {
     MAGNETIC,
     TRUE,
@@ -27,6 +32,7 @@ enum class NorthReference {
  *
  * The default values here are also the fallback used before anything has been persisted.
  */
+@Serializable
 data class AppSettings(
     val coordinateFormat: CoordinateFormat = CoordinateFormat.DECIMAL,
     val themeMode: ThemeMode = ThemeMode.DARK,

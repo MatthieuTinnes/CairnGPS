@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * A user-saved GPS waypoint: a snapshot of the GPS state at capture time, tagged with a name.
@@ -41,6 +42,7 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index("sessionId")],
 )
+@Serializable
 data class Waypoint(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

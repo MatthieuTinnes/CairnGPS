@@ -2,6 +2,7 @@ package app.matthieu.cairngps.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * Marks an achievement as unlocked. The catalog of achievements (id, title, description,
@@ -13,6 +14,7 @@ import androidx.room.PrimaryKey
  * @property unlockedAt  When it was unlocked, in milliseconds since the epoch.
  */
 @Entity(tableName = "achievements")
+@Serializable
 data class AchievementState(
     @PrimaryKey val id: String,
     val unlockedAt: Long,

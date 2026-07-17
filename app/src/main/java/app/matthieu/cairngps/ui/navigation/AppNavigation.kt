@@ -265,6 +265,7 @@ fun MainScaffold(app: CairnApplication) {
                 composable(Routes.SETTINGS) {
                     SettingsRoute(
                         repository = app.settingsRepository,
+                        backupRepository = app.backupRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }

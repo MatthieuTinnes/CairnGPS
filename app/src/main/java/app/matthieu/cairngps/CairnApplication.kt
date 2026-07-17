@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.AppDatabase
+import app.matthieu.cairngps.data.BackupRepository
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.GamificationManager
 import app.matthieu.cairngps.data.LocationRepository
@@ -47,6 +48,18 @@ class CairnApplication : Application() {
 
     val achievementsRepository: AchievementsRepository by lazy {
         AchievementsRepository(database.achievementDao())
+    }
+
+    val backupRepository: BackupRepository by lazy {
+        BackupRepository(
+            database = database,
+            waypointDao = database.waypointDao(),
+            sessionDao = database.sessionDao(),
+            trackPointDao = database.trackPointDao(),
+            recordDao = database.recordDao(),
+            achievementDao = database.achievementDao(),
+            settingsRepository = settingsRepository,
+        )
     }
 
     val gamificationManager: GamificationManager by lazy {

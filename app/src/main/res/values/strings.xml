@@ -52,6 +52,19 @@
     <string name="coordinate_format_decimal">Décimal</string>
     <string name="settings_north_reference">Nord de la boussole</string>
     <string name="coordinate_format_dms">DMS</string>
+    <string name="settings_data_section">Données</string>
+    <string name="settings_export_title">Exporter les données</string>
+    <string name="settings_export_subtitle">Repères, sessions, succès et réglages dans un fichier</string>
+    <string name="settings_export_success">Sauvegarde exportée</string>
+    <string name="settings_export_error">Échec de l\'export de la sauvegarde</string>
+    <string name="settings_import_title">Importer une sauvegarde</string>
+    <string name="settings_import_subtitle">Restaure un fichier de sauvegarde précédemment exporté</string>
+    <string name="settings_import_confirm_title">Remplacer toutes les données ?</string>
+    <string name="settings_import_confirm_message">Repères, sessions, succès, records et réglages actuels seront définitivement remplacés par le contenu du fichier importé. Cette action est irréversible.</string>
+    <string name="settings_import_confirm_action">Remplacer</string>
+    <string name="settings_import_success">Données restaurées avec succès</string>
+    <string name="settings_import_error_unreadable">Fichier de sauvegarde illisible</string>
+    <string name="settings_import_error_future_version">Cette sauvegarde provient d\'une version plus récente de l\'application</string>
 
     <!-- Waypoints -->
     <string name="action_save_waypoint">Marquer un repère</string>

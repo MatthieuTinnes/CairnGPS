@@ -2,6 +2,7 @@ package app.matthieu.cairngps.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * A recorded track (session): the aggregated stats of a GPS recording between a start and an end
@@ -28,6 +29,7 @@ import androidx.room.PrimaryKey
  * @property longitudeMin     Westernmost longitude reached.
  */
 @Entity(tableName = "sessions")
+@Serializable
 data class Session(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

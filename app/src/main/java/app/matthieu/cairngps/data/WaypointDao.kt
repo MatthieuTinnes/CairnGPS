@@ -2,6 +2,7 @@ package app.matthieu.cairngps.data
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -12,6 +13,21 @@ interface WaypointDao {
     /** Inserts a waypoint and returns its generated [Waypoint.id]. */
     @Insert
     suspend fun insert(waypoint: Waypoint): Long
+
+    /**
+     * Inserts every waypoint in [waypoints], replacing any existing row with the same id. Used to
+     * restore a backup, where ids must be preserved to keep [Waypoint.sessionId] references valid.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(waypoints: List<Waypoint>)
+
+    /** Returns every waypoint currently stored, for exporting a backup. */
+    @Query("SELECT * FROM waypoints")
+    suspend fun getAll(): List<Waypoint>
+
+    /** Deletes every waypoint, used before restoring a backup. */
+    @Query("DELETE FROM waypoints")
+    suspend fun deleteAll()
 
     /** Observes every waypoint, most recent first. Re-emits on any change to the table. */
     @Query("SELECT * FROM waypoints ORDER BY timestamp DESC")

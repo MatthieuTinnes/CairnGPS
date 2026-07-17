@@ -79,6 +79,10 @@ object Glyph {
     const val Lock = ''
     const val BatterySaver = ''
 
+    // Backup export/import (Settings) glyphs, added to the font subset alongside those above.
+    const val FileDownload = ''
+    const val FileUpload = ''
+
     // Waypoint icon picker (screens 6a/6b) — added to the font subset alongside the glyphs above.
     const val Terrain = ''
     const val Forest = ''

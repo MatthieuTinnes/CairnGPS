@@ -2,6 +2,7 @@ package app.matthieu.cairngps.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * The kind of extreme tracked by a [RecordEntry]. [higherIsBetter] decides whether
@@ -36,6 +37,7 @@ enum class RecordType(val higherIsBetter: Boolean) {
  * @property sessionId    The session the record came from, or `null` if set from live tracking.
  */
 @Entity(tableName = "records")
+@Serializable
 data class RecordEntry(
     @PrimaryKey val type: String,
     val value: Double,

@@ -22,4 +22,19 @@ interface AchievementDao {
      */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(state: AchievementState): Long
+
+    /** Returns every unlocked achievement, for exporting a backup. */
+    @Query("SELECT * FROM achievements")
+    suspend fun getAll(): List<AchievementState>
+
+    /**
+     * Inserts every achievement in [states], replacing any existing row with the same id. Used to
+     * restore a backup, where the original unlock date must be preserved exactly.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(states: List<AchievementState>)
+
+    /** Deletes every unlocked achievement, used before restoring a backup. */
+    @Query("DELETE FROM achievements")
+    suspend fun deleteAll()
 }
