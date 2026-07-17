@@ -246,7 +246,7 @@ fun MainScaffold(app: CairnApplication) {
                         achievementsRepository = app.achievementsRepository,
                         recordsRepository = app.recordsRepository,
                         sessionRepository = app.sessionRepository,
-                        onOpenRecords = { navController.navigate(Routes.RECORDS) },
+                        waypointRepository = app.waypointRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }

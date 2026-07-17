@@ -8,6 +8,7 @@ import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.common.factoryOf
 import app.matthieu.cairngps.ui.gamification.Achievements
+import app.matthieu.cairngps.ui.gamification.Levels
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -37,6 +38,7 @@ class ProfileViewModel(
             totalAchievements = Achievements.ALL.size,
             lastUnlocked = lastUnlockedDef,
             lastUnlockedAt = lastUnlockedState?.unlockedAt,
+            level = Levels.forXp(Achievements.xpFor(unlocked.map { it.id }.toSet())),
         )
     }.stateIn(
         scope = viewModelScope,

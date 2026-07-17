@@ -50,7 +50,14 @@ class CairnApplication : Application() {
     }
 
     val gamificationManager: GamificationManager by lazy {
-        GamificationManager(this, locationRepository, sessionRepository, recordsRepository, achievementsRepository)
+        GamificationManager(
+            this,
+            locationRepository,
+            sessionRepository,
+            waypointRepository,
+            recordsRepository,
+            achievementsRepository,
+        )
     }
 
     override fun onCreate() {

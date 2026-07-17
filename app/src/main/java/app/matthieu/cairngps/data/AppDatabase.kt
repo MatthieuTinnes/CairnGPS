@@ -18,7 +18,7 @@ import androidx.room.migration.Migration
         AchievementState::class,
         TrackPoint::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -117,6 +117,17 @@ abstract class AppDatabase : RoomDatabase() {
             )
         }
 
+        /**
+         * Adds the `icon` column backing the waypoint icon picker (screens 6a/6b): a stable key
+         * (e.g. `"flag"`) into `WaypointIcons`, not a raw font codepoint, so it survives font
+         * changes. Every existing waypoint defaults to `"flag"`, preserving today's look.
+         */
+        private val MIGRATION_4_5 = Migration(4, 5) { db ->
+            db.execSQL(
+                "ALTER TABLE `waypoints` ADD COLUMN `icon` TEXT NOT NULL DEFAULT 'flag'",
+            )
+        }
+
         /** Returns the process-wide database singleton, building it on first access. */
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
@@ -129,7 +140,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "cairn.db",
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
     }
 }

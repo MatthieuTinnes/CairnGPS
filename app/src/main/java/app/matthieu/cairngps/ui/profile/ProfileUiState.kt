@@ -1,6 +1,8 @@
 package app.matthieu.cairngps.ui.profile
 
 import app.matthieu.cairngps.ui.gamification.AchievementDef
+import app.matthieu.cairngps.ui.gamification.LevelInfo
+import app.matthieu.cairngps.ui.gamification.Levels
 
 /**
  * State of the Profil hub (screen 1g): a few lifetime totals plus shortcuts to Carnet / Succès /
@@ -13,6 +15,7 @@ import app.matthieu.cairngps.ui.gamification.AchievementDef
  * @property totalAchievements   Size of the achievement catalog (denominator for "X / total").
  * @property lastUnlocked        The most recently unlocked achievement, or `null` if none yet.
  * @property lastUnlockedAt      When [lastUnlocked] was unlocked, in epoch millis.
+ * @property level               The user's level, derived from the XP of every unlocked achievement.
  */
 data class ProfileUiState(
     val totalDistanceMeters: Double = 0.0,
@@ -22,4 +25,5 @@ data class ProfileUiState(
     val totalAchievements: Int = 0,
     val lastUnlocked: AchievementDef? = null,
     val lastUnlockedAt: Long? = null,
+    val level: LevelInfo = Levels.forXp(0),
 )

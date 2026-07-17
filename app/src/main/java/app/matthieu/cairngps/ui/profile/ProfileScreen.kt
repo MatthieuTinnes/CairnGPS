@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,6 +49,7 @@ import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.domain.format.formatDistanceKm
 import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
 import app.matthieu.cairngps.ui.common.StatTile
+import app.matthieu.cairngps.ui.gamification.LevelInfo
 import app.matthieu.cairngps.ui.theme.AchievementBannerBg
 import app.matthieu.cairngps.ui.theme.AchievementBannerBorder
 import app.matthieu.cairngps.ui.theme.AchievementLabelGold
@@ -61,6 +64,7 @@ import app.matthieu.cairngps.ui.theme.LightAchievementBannerBorder
 import app.matthieu.cairngps.ui.theme.LightAchievementLabelGold
 import app.matthieu.cairngps.ui.theme.LightStatusText
 import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
+import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OnAmberButton
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
@@ -144,6 +148,10 @@ private fun ProfileScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 }
+            }
+
+            item(key = "level") {
+                LevelCard(uiState.level)
             }
 
             item(key = "stats") {
@@ -269,6 +277,78 @@ private fun ProfileScreen(
                     title = stringResource(R.string.records_title),
                     subtitle = stringResource(R.string.profile_hub_records_subtitle),
                     onClick = onOpenRecords,
+                )
+            }
+        }
+    }
+}
+
+/** The gold Level card (screen 1g): level number, title, XP total, progress bar to next level. */
+@Composable
+private fun LevelCard(level: LevelInfo) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(CairnAmber, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.profile_level_label),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp,
+                        color = OnAmberButton,
+                    )
+                    Text(
+                        text = level.level.toString(),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = MonoFontFamily,
+                        color = OnAmberButton,
+                    )
+                }
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(level.titleRes),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = stringResource(R.string.profile_level_xp_fmt, level.totalXp),
+                    fontSize = 12.5.sp,
+                    fontFamily = MonoFontFamily,
+                    color = AchievementLabelGold,
+                )
+                LinearProgressIndicator(
+                    progress = { level.fraction },
+                    color = CairnAmber,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .padding(top = 8.dp),
+                )
+                Text(
+                    text = if (level.isMaxLevel) {
+                        stringResource(R.string.profile_level_max)
+                    } else {
+                        stringResource(R.string.profile_level_remaining_fmt, level.xpRemaining ?: 0)
+                    },
+                    fontSize = 11.sp,
+                    color = AchievementLabelGold,
+                    modifier = Modifier.padding(top = 5.dp),
                 )
             }
         }

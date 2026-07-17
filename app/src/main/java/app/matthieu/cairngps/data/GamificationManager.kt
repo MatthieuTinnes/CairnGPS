@@ -33,6 +33,7 @@ class GamificationManager(
     context: Context,
     private val locationRepository: LocationRepository,
     sessionRepository: SessionRepository,
+    waypointRepository: WaypointRepository,
     private val recordsRepository: RecordsRepository,
     private val achievementsRepository: AchievementsRepository,
 ) {
@@ -49,8 +50,12 @@ class GamificationManager(
     init {
         scope.launch { sessionRepository.sessions().collect { sessions -> submitSessionRecords(sessions) } }
         scope.launch {
-            combine(recordsRepository.records(), sessionRepository.sessions()) { records, sessions ->
-                Achievements.metricsFrom(records, sessions)
+            combine(
+                recordsRepository.records(),
+                sessionRepository.sessions(),
+                waypointRepository.waypoints(),
+            ) { records, sessions, waypoints ->
+                Achievements.metricsFrom(records, sessions, waypoints)
             }.collect { metrics -> evaluateAndUnlock(metrics) }
         }
     }
