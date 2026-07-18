@@ -82,11 +82,10 @@ fun SettingsRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val viewModel: SettingsViewModel = viewModel(
-        factory = SettingsViewModel.factory(repository, backupRepository),
-    )
+    val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(repository))
+    val backupViewModel: BackupViewModel = viewModel(factory = BackupViewModel.factory(backupRepository))
     val settings by viewModel.settings.collectAsStateWithLifecycle()
-    val isBackupWorking by viewModel.isBackupWorking.collectAsStateWithLifecycle()
+    val isBackupWorking by backupViewModel.isBackupWorking.collectAsStateWithLifecycle()
 
     SettingsScreen(
         coordinateFormat = settings.coordinateFormat,
@@ -111,9 +110,9 @@ fun SettingsRoute(
         unitSystem = settings.unitSystem,
         onUnitSystemChange = viewModel::setUnitSystem,
         isBackupWorking = isBackupWorking,
-        backupEvents = viewModel.backupEvents,
-        onExport = viewModel::exportBackup,
-        onImport = viewModel::importBackup,
+        backupEvents = backupViewModel.backupEvents,
+        onExport = backupViewModel::exportBackup,
+        onImport = backupViewModel::importBackup,
         onBack = onBack,
         modifier = modifier,
     )

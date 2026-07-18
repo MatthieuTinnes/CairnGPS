@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
-import app.matthieu.cairngps.ui.gamification.Achievements
-import app.matthieu.cairngps.ui.gamification.AchievementDef
-import app.matthieu.cairngps.ui.gamification.GamificationMetrics
+import app.matthieu.cairngps.domain.gamification.Achievements
+import app.matthieu.cairngps.domain.gamification.AchievementDef
+import app.matthieu.cairngps.domain.gamification.GamificationMetrics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

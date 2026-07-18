@@ -17,8 +17,9 @@ import androidx.room.migration.Migration
         RecordEntry::class,
         AchievementState::class,
         TrackPoint::class,
+        RecordingCheckpoint::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,6 +33,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun achievementDao(): AchievementDao
 
     abstract fun trackPointDao(): TrackPointDao
+
+    abstract fun recordingCheckpointDao(): RecordingCheckpointDao
 
     companion object {
         @Volatile
@@ -128,6 +131,33 @@ abstract class AppDatabase : RoomDatabase() {
             )
         }
 
+        /**
+         * Adds what [RecordingRepository] needs to resume an in-progress recording after the
+         * process is killed mid-hike: an `isActive` flag on `sessions` (0 for every session that
+         * existed before this migration — they are all finished) and the single-row
+         * `recording_checkpoint` table holding the live accumulator. See [Session.isActive] and
+         * [RecordingCheckpoint].
+         */
+        private val MIGRATION_5_6 = Migration(5, 6) { db ->
+            db.execSQL(
+                "ALTER TABLE `sessions` ADD COLUMN `isActive` INTEGER NOT NULL DEFAULT 0",
+            )
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `recording_checkpoint` (" +
+                    "`sessionId` INTEGER PRIMARY KEY NOT NULL, " +
+                    "`movingDistanceMeters` REAL NOT NULL, " +
+                    "`movingTimeMs` INTEGER NOT NULL, " +
+                    "`referenceAltitude` REAL, " +
+                    "`lastLatitude` REAL NOT NULL, " +
+                    "`lastLongitude` REAL NOT NULL, " +
+                    "`lastAltitude` REAL NOT NULL, " +
+                    "`lastSpeed` REAL NOT NULL, " +
+                    "`lastHorizontalAccuracy` REAL NOT NULL, " +
+                    "`lastTimestamp` INTEGER NOT NULL, " +
+                    "`lastSampledAtMs` INTEGER NOT NULL)",
+            )
+        }
+
         /** Returns the process-wide database singleton, building it on first access. */
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
@@ -140,7 +170,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "cairn.db",
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
     }
 }

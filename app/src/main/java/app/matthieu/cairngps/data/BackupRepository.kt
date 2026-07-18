@@ -2,14 +2,16 @@ package app.matthieu.cairngps.data
 
 import android.database.SQLException
 import androidx.room.withTransaction
+import app.matthieu.cairngps.data.backup.BackupJson
+import app.matthieu.cairngps.data.backup.CairnBackup
+import app.matthieu.cairngps.data.backup.toDto
+import app.matthieu.cairngps.data.backup.toEntity
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 
 /** Why an import was rejected — lets the UI layer pick the right localized message. */
 enum class BackupImportError {
@@ -47,11 +49,11 @@ class BackupRepository(
     suspend fun export(output: OutputStream) = withContext(Dispatchers.IO) {
         val backup = CairnBackup(
             exportedAt = System.currentTimeMillis(),
-            waypoints = waypointDao.getAll(),
-            sessions = sessionDao.getAll(),
-            trackPoints = trackPointDao.getAll(),
-            records = recordDao.getAll(),
-            achievements = achievementDao.getAll(),
+            waypoints = waypointDao.getAll().map { it.toDto() },
+            sessions = sessionDao.getAll().map { it.toDto() },
+            trackPoints = trackPointDao.getAll().map { it.toDto() },
+            records = recordDao.getAll().map { it.toDto() },
+            achievements = achievementDao.getAll().map { it.toDto() },
             settings = settingsRepository.current(),
         )
         output.writer().use { it.write(BackupJson.encodeToString(backup)) }
@@ -90,11 +92,11 @@ class BackupRepository(
                 sessionDao.deleteAll()
 
                 // Parents before children on the way back in, so foreign keys always resolve.
-                sessionDao.insertAll(backup.sessions)
-                waypointDao.insertAll(backup.waypoints)
-                trackPointDao.insertAll(backup.trackPoints)
-                recordDao.upsertAll(backup.records)
-                achievementDao.insertAll(backup.achievements)
+                sessionDao.insertAll(backup.sessions.map { it.toEntity() })
+                waypointDao.insertAll(backup.waypoints.map { it.toEntity() })
+                trackPointDao.insertAll(backup.trackPoints.map { it.toEntity() })
+                recordDao.upsertAll(backup.records.map { it.toEntity() })
+                achievementDao.insertAll(backup.achievements.map { it.toEntity() })
             }
         } catch (e: SQLException) {
             // Structurally valid but inconsistent backup (e.g. an orphaned trackPoint.sessionId)

@@ -2,7 +2,6 @@ package app.matthieu.cairngps.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.serialization.Serializable
 
 /**
  * A recorded track (session): the aggregated stats of a GPS recording between a start and an end
@@ -27,9 +26,13 @@ import kotlinx.serialization.Serializable
  * @property latitudeMin      Southernmost latitude reached.
  * @property longitudeMax     Easternmost longitude reached.
  * @property longitudeMin     Westernmost longitude reached.
+ * @property isActive         Whether this row is the in-progress recording rather than a finished
+ *                             session — see [RecordingRepository]'s class doc. Excluded from every
+ *                             normal read path ([SessionDao.getAll]/[SessionDao.observeAll]), so a
+ *                             recording in progress never leaks into records, achievements or the
+ *                             history list with its still-incomplete aggregates.
  */
 @Entity(tableName = "sessions")
-@Serializable
 data class Session(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -46,6 +49,7 @@ data class Session(
     val latitudeMin: Double,
     val longitudeMax: Double,
     val longitudeMin: Double,
+    val isActive: Boolean = false,
 ) {
     /** Recording duration, derived rather than stored. */
     val durationMillis: Long get() = endTimestamp - startTimestamp

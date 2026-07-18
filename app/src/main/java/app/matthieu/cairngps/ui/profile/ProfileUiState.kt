@@ -1,6 +1,6 @@
 package app.matthieu.cairngps.ui.profile
 
-import app.matthieu.cairngps.ui.gamification.AchievementDef
+import app.matthieu.cairngps.domain.gamification.AchievementDef
 import app.matthieu.cairngps.ui.gamification.LevelInfo
 import app.matthieu.cairngps.ui.gamification.Levels
 

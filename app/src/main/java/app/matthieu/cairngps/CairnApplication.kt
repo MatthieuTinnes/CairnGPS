@@ -35,7 +35,7 @@ class CairnApplication : Application() {
     val waypointRepository: WaypointRepository by lazy { WaypointRepository(database.waypointDao()) }
 
     val sessionRepository: SessionRepository by lazy {
-        SessionRepository(database.sessionDao(), database.trackPointDao())
+        SessionRepository(database.sessionDao(), database.trackPointDao(), database.recordingCheckpointDao())
     }
 
     val navigationTargetRepository: NavigationTargetRepository by lazy { NavigationTargetRepository() }

@@ -1,4 +1,4 @@
-package app.matthieu.cairngps.ui.gamification
+package app.matthieu.cairngps.domain.gamification
 
 import androidx.annotation.StringRes
 import app.matthieu.cairngps.R

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 /** Room data-access object for [Session] rows. */
@@ -22,21 +23,29 @@ interface SessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(sessions: List<Session>)
 
-    /** Returns every session currently stored, for exporting a backup. */
-    @Query("SELECT * FROM sessions")
+    /** Overwrites every column of an existing row, matched by [Session.id]. */
+    @Update
+    suspend fun update(session: Session)
+
+    /** Returns every finished session currently stored, for exporting a backup. Excludes the row (if any) still being recorded — see [Session.isActive]. */
+    @Query("SELECT * FROM sessions WHERE isActive = 0")
     suspend fun getAll(): List<Session>
 
     /** Deletes every session, used before restoring a backup. */
     @Query("DELETE FROM sessions")
     suspend fun deleteAll()
 
-    /** Observes every session, most recently started first. Re-emits on any change to the table. */
-    @Query("SELECT * FROM sessions ORDER BY startTimestamp DESC")
+    /** Observes every finished session, most recently started first. Excludes the row (if any) still being recorded — see [Session.isActive]. */
+    @Query("SELECT * FROM sessions WHERE isActive = 0 ORDER BY startTimestamp DESC")
     fun observeAll(): Flow<List<Session>>
 
     /** Returns a single session by id, or `null` if it no longer exists. */
     @Query("SELECT * FROM sessions WHERE id = :id")
     suspend fun getById(id: Long): Session?
+
+    /** The in-progress recording's session row, if the process was killed and restarted mid-recording. */
+    @Query("SELECT * FROM sessions WHERE isActive = 1 LIMIT 1")
+    suspend fun getActive(): Session?
 
     /** Deletes the session with the given id; a no-op if none matches. */
     @Query("DELETE FROM sessions WHERE id = :id")
