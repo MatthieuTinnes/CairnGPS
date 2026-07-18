@@ -28,7 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -64,7 +63,6 @@ import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.domain.format.AccuracyQuality
-import app.matthieu.cairngps.domain.format.DASH
 import app.matthieu.cairngps.domain.format.accuracyQuality
 import app.matthieu.cairngps.domain.format.copyCoordinates
 import app.matthieu.cairngps.domain.format.defaultWaypointName
@@ -116,14 +114,24 @@ import app.matthieu.cairngps.ui.theme.RecChipBorder
 import app.matthieu.cairngps.ui.theme.RecChipText
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.ValueMuted
+import java.text.DecimalFormatSymbols
 
-private const val DASH_COORD_DECIMAL = "--.------°"
 private const val DASH_COORD_DMS = "--°--'--.-\"-"
-private const val DASH_SPEED = "--,-"
 private const val DASH_ALTITUDE = "-- --"
 
+/**
+ * The decimal separator of the active locale, so dash placeholders that stand in for
+ * `"%.1f"`/`"%.6f°"`-formatted values (which follow the locale) match the digit they replace —
+ * a comma placeholder next to an English "12.3" reading looks broken.
+ */
+private fun localeDecimalSeparator(): Char = DecimalFormatSymbols.getInstance().decimalSeparator
+
+private fun dashSpeed(): String = "--${localeDecimalSeparator()}-"
+
+private fun dashCoordDecimal(): String = "--${localeDecimalSeparator()}------°"
+
 private fun coordinateDash(format: CoordinateFormat): String = when (format) {
-    CoordinateFormat.DECIMAL -> DASH_COORD_DECIMAL
+    CoordinateFormat.DECIMAL -> dashCoordDecimal()
     CoordinateFormat.DMS -> DASH_COORD_DMS
 }
 
@@ -573,13 +581,14 @@ private fun CoordinatesCard(
     format: CoordinateFormat,
     onCopy: () -> Unit,
 ) {
+    val westLabel = stringResource(R.string.hemisphere_west)
     val latitude = if (uiState.hasFix) {
-        formatCoordinate(uiState.fix?.latitude, isLatitude = true, format = format)
+        formatCoordinate(uiState.fix?.latitude, isLatitude = true, format = format, westLabel = westLabel)
     } else {
         coordinateDash(format)
     }
     val longitude = if (uiState.hasFix) {
-        formatCoordinate(uiState.fix?.longitude, isLatitude = false, format = format)
+        formatCoordinate(uiState.fix?.longitude, isLatitude = false, format = format, westLabel = westLabel)
     } else {
         coordinateDash(format)
     }
@@ -635,7 +644,7 @@ private fun SpeedCard(uiState: LocationUiState, unitSystem: UnitSystem) {
                 CardTitle(stringResource(R.string.label_speed))
                 Spacer(Modifier.height(4.dp))
                 BigValue(
-                    value = if (uiState.hasFix) formatSpeed(uiState.fix?.speed, unitSystem) else DASH_SPEED,
+                    value = if (uiState.hasFix) formatSpeed(uiState.fix?.speed, unitSystem) else dashSpeed(),
                     unit = speedUnitLabel(unitSystem),
                     valueColor = if (uiState.hasFix) Color.Unspecified else DashMuted,
                     unitColor = if (uiState.hasFix) MaterialTheme.colorScheme.tertiary else ValueMuted,
@@ -645,7 +654,7 @@ private fun SpeedCard(uiState: LocationUiState, unitSystem: UnitSystem) {
                 text = if (uiState.hasFix) {
                     "${formatSpeedSecondary(uiState.fix?.speed, unitSystem)} ${speedSecondaryUnitLabel(unitSystem)}"
                 } else {
-                    "$DASH_SPEED ${speedSecondaryUnitLabel(unitSystem)}"
+                    "${dashSpeed()} ${speedSecondaryUnitLabel(unitSystem)}"
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 fontFamily = MonoFontFamily,

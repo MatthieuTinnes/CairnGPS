@@ -333,6 +333,6 @@ class RecordingRepository(
 
 /** Default trace name based on [namePrefix] and the recording's start date/time. */
 private fun defaultSessionName(namePrefix: String, startTimestamp: Long): String {
-    val stamp = DefaultNameTimestampFormatter.format(Instant.ofEpochMilli(startTimestamp).atZone(ZoneId.systemDefault()))
+    val stamp = defaultNameTimestampFormatter().format(Instant.ofEpochMilli(startTimestamp).atZone(ZoneId.systemDefault()))
     return "$namePrefix $stamp"
 }

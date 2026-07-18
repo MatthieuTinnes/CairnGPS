@@ -8,6 +8,9 @@
     <string name="fix_obtained_with_satellites">Fix 3D · %1$d satellites</string>
     <string name="hint_clear_sky">Dégagez la vue du ciel pour accélérer l\'acquisition du fix.</string>
 
+    <!-- GPS coordinates -->
+    <string name="hemisphere_west">O</string>
+
     <!-- Permission -->
     <string name="permission_title">Accès à la position requis</string>
     <string name="permission_rationale">CairnGPS a besoin d\'accéder à votre position GPS précise pour afficher vos coordonnées, votre altitude, etc.\n\nAucune donnée n\'est envoyée en ligne : tout reste sur votre appareil.</string>

@@ -9,6 +9,7 @@ import androidx.core.content.getSystemService
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.UnitSystem
+import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -55,11 +56,23 @@ fun accuracyQuality(accuracyMeters: Float?): AccuracyQuality = when {
     else -> AccuracyQuality.POOR
 }
 
-/** Formats a coordinate, returning [DASH] when [value] is null. */
-fun formatCoordinate(value: Double?, isLatitude: Boolean, format: CoordinateFormat): String = when {
+/**
+ * Formats a coordinate, returning [DASH] when [value] is null.
+ *
+ * @param westLabel Localized label for the western hemisphere (only the DMS format shows it);
+ * N/E/S are identical across the app's supported locales, so only West needs one. Defaults to
+ * the international `"W"` for callers that haven't been updated to pass
+ * `stringResource(R.string.hemisphere_west)`.
+ */
+fun formatCoordinate(
+    value: Double?,
+    isLatitude: Boolean,
+    format: CoordinateFormat,
+    westLabel: String = "W",
+): String = when {
     value == null -> DASH
     format == CoordinateFormat.DECIMAL -> "%.6f°".format(value)
-    else -> formatDms(value, isLatitude)
+    else -> formatDms(value, isLatitude, westLabel)
 }
 
 /**
@@ -68,10 +81,10 @@ fun formatCoordinate(value: Double?, isLatitude: Boolean, format: CoordinateForm
  * Computes everything in integer tenths-of-an-arc-second so that rounding never produces
  * `60"` or `60'` carry artifacts.
  */
-private fun formatDms(value: Double, isLatitude: Boolean): String {
+private fun formatDms(value: Double, isLatitude: Boolean, westLabel: String): String {
     val hemisphere = when {
         isLatitude -> if (value >= 0) "N" else "S"
-        else -> if (value >= 0) "E" else "O" // O = Ouest (French)
+        else -> if (value >= 0) "E" else westLabel
     }
 
     val totalTenths = (value.absoluteValue * 3600.0 * 10.0).roundToLong()
@@ -109,9 +122,15 @@ fun formatAccuracy(accuracyMeters: Float?, unitSystem: UnitSystem): String = acc
     "%.1f".format(value)
 } ?: DASH
 
-/** Coordinates as plain decimal degrees for the clipboard, e.g. `47.123456, 6.123456`. */
+/**
+ * Coordinates as plain decimal degrees for the clipboard, e.g. `47.123456, 6.123456`.
+ *
+ * Always [Locale.US] regardless of app language: this is an exchange format meant to be pasted
+ * into Google Maps and similar tools, which expect a dot decimal separator — not the display
+ * format, which follows the user's locale.
+ */
 fun formatCoordinatesForClipboard(latitude: Double, longitude: Double): String =
-    "%.6f, %.6f".format(latitude, longitude)
+    "%.6f, %.6f".format(Locale.US, latitude, longitude)
 
 /**
  * Copies [latitude]/[longitude] to the system clipboard. Android 13+ shows its own "copied"

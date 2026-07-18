@@ -355,6 +355,7 @@ private fun WaypointDetailScreen(
                         lineHeight = 32.sp,
                         fontFamily = MonoFontFamily,
                     )
+                    val westLabel = stringResource(R.string.hemisphere_west)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -363,9 +364,9 @@ private fun WaypointDetailScreen(
                             .background(if (light) LightBorderSubtle else CompassDialBorder),
                     )
                     Text(
-                        text = formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DMS) +
+                        text = formatCoordinate(waypoint.latitude, isLatitude = true, format = CoordinateFormat.DMS, westLabel = westLabel) +
                             " · " +
-                            formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DMS),
+                            formatCoordinate(waypoint.longitude, isLatitude = false, format = CoordinateFormat.DMS, westLabel = westLabel),
                         fontSize = 14.sp,
                         lineHeight = 21.sp,
                         fontFamily = MonoFontFamily,
