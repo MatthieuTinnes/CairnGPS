@@ -275,6 +275,12 @@ class RecordingRepository(
         }
         if (!finalState.isRecording) return
 
+        // Aucun fix GPS n'a été accepté : persister la session écrirait des agrégats
+        // tout-à-zéro (sentinelles ±Infinity retombées à 0.0) qui établiraient de faux
+        // records (latitude/longitude extrêmes à 0°, altitude min à 0 m) et
+        // débloqueraient de faux succès. On l'abandonne.
+        if (lastAcceptedFix == null) return
+
         val session = Session(
             name = defaultSessionName(namePrefix, finalState.startTimestamp),
             startTimestamp = finalState.startTimestamp,

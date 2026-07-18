@@ -78,8 +78,8 @@ class SettingsViewModel(
     }
 
     /**
-     * Writes every piece of user data to [output], a stream the caller opened and will close.
-     * A no-op if this instance wasn't given a [backupRepository] (see the class doc).
+     * Writes every piece of user data to [output], a stream the caller opened and [backupRepository]
+     * will close. A no-op if this instance wasn't given a [backupRepository] (see the class doc).
      */
     fun exportBackup(output: OutputStream) {
         val backupRepository = backupRepository ?: return
@@ -97,10 +97,10 @@ class SettingsViewModel(
     }
 
     /**
-     * Restores every piece of user data from [input] — a stream the caller opened and will
-     * close — replacing everything currently stored. The caller is expected to have already
-     * confirmed this with the user. A no-op if this instance wasn't given a [backupRepository]
-     * (see the class doc).
+     * Restores every piece of user data from [input] — a stream the caller opened and
+     * [backupRepository] will close — replacing everything currently stored. The caller is
+     * expected to have already confirmed this with the user. A no-op if this instance wasn't
+     * given a [backupRepository] (see the class doc).
      */
     fun importBackup(input: InputStream) {
         val backupRepository = backupRepository ?: return

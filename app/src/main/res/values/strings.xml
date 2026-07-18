@@ -13,6 +13,7 @@
     <string name="permission_rationale">CairnGPS needs access to your precise GPS location to show your coordinates, altitude, and more.\n\nNo data is sent online: everything stays on your device.</string>
     <string name="permission_grant">Allow access</string>
     <string name="permission_denied_rationale">Permission was denied. CairnGPS can\'t work without location access. You can enable it from the app settings.</string>
+    <string name="permission_approximate_rationale">CairnGPS needs precise location to work. Approximate location isn\'t enough for GPS coordinates and satellite data. Please allow precise access.</string>
     <string name="permission_open_settings">Open settings</string>
 
     <!-- Main screen: data labels -->
