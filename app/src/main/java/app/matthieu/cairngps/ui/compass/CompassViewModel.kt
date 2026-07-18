@@ -14,6 +14,7 @@ import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.NorthReference
+import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
@@ -43,6 +44,7 @@ class CompassViewModel(
     private val settingsRepository: SettingsRepository,
     private val waypointRepository: WaypointRepository,
     private val navigationTargetRepository: NavigationTargetRepository,
+    private val recordingRepository: RecordingRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -148,10 +150,16 @@ class CompassViewModel(
      * Creates a waypoint at the current position (invoked from the target picker's "Créer un
      * nouveau repère ici" row) and immediately makes it the navigation target. A no-op when no
      * position is available yet.
+     *
+     * If a recording is currently active, the new waypoint is automatically attached to it, same
+     * as [app.matthieu.cairngps.ui.location.LocationViewModel.saveWaypoint] — see
+     * [RecordingRepository.reserveWaypointAttachment] for why the slot must be reserved before the
+     * insert.
      */
     fun createWaypointHere(name: String) {
         val location = currentLocation ?: return
         viewModelScope.launch {
+            val reserved = recordingRepository.reserveWaypointAttachment()
             val id = waypointRepository.save(
                 Waypoint(
                     name = name,
@@ -165,6 +173,7 @@ class CompassViewModel(
                     timestamp = System.currentTimeMillis(),
                 ),
             )
+            recordingRepository.completeWaypointAttachment(reserved, id)
             navigationTargetRepository.setTarget(id)
         }
     }
@@ -274,6 +283,7 @@ class CompassViewModel(
             settingsRepository: SettingsRepository,
             waypointRepository: WaypointRepository,
             navigationTargetRepository: NavigationTargetRepository,
+            recordingRepository: RecordingRepository,
         ): ViewModelProvider.Factory = factoryOf {
             CompassViewModel(
                 compassRepository,
@@ -281,6 +291,7 @@ class CompassViewModel(
                 settingsRepository,
                 waypointRepository,
                 navigationTargetRepository,
+                recordingRepository,
             )
         }
     }
