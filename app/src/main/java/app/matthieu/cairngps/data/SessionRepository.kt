@@ -20,6 +20,13 @@ class SessionRepository(
     /** Cold flow of every finished session, most recently started first; excludes an in-progress recording, if any. */
     fun sessions(): Flow<List<Session>> = dao.observeAll()
 
+    /**
+     * Cold flow of every finished session joined with its track in a single Room query, for the
+     * Traces tab's sparkline previews — see [SessionWithTrackPoints] (audit 4.1: avoids one
+     * [trackForSession] observer per session).
+     */
+    fun sessionsWithTracks(): Flow<List<SessionWithTrackPoints>> = dao.observeAllWithTracks()
+
     /** Persists [session] and returns its generated id. */
     suspend fun save(session: Session): Long = dao.insert(session)
 

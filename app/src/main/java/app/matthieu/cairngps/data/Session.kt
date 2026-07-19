@@ -1,7 +1,9 @@
 package app.matthieu.cairngps.data
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 
 /**
  * A recorded track (session): the aggregated stats of a GPS recording between a start and an end
@@ -54,3 +56,15 @@ data class Session(
     /** Recording duration, derived rather than stored. */
     val durationMillis: Long get() = endTimestamp - startTimestamp
 }
+
+/**
+ * A [Session] joined with its [TrackPoint]s in a single Room query (see [SessionDao.observeAllWithTracks]),
+ * avoiding one separate `trackForSession` observer per session (audit 4.1: N+1 Room observers —
+ * any track_points write used to re-emit every session's flow). [Relation] doesn't guarantee
+ * ordering, so callers needing chronological order must sort [track] themselves.
+ */
+data class SessionWithTrackPoints(
+    @Embedded val session: Session,
+    @Relation(parentColumn = "id", entityColumn = "sessionId")
+    val track: List<TrackPoint>,
+)

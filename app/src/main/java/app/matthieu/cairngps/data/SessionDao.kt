@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -38,6 +39,15 @@ interface SessionDao {
     /** Observes every finished session, most recently started first. Excludes the row (if any) still being recorded — see [Session.isActive]. */
     @Query("SELECT * FROM sessions WHERE isActive = 0 ORDER BY startTimestamp DESC")
     fun observeAll(): Flow<List<Session>>
+
+    /**
+     * Same as [observeAll] but joins each session with its track in one query (see
+     * [SessionWithTrackPoints]), instead of the caller combining one [TrackPointDao.observeBySession]
+     * Flow per session — avoids the N+1 observer pattern (audit 4.1).
+     */
+    @Transaction
+    @Query("SELECT * FROM sessions WHERE isActive = 0 ORDER BY startTimestamp DESC")
+    fun observeAllWithTracks(): Flow<List<SessionWithTrackPoints>>
 
     /** Returns a single session by id, or `null` if it no longer exists. */
     @Query("SELECT * FROM sessions WHERE id = :id")

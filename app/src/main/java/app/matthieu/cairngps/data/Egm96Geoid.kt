@@ -64,6 +64,11 @@ class Egm96Geoid private constructor(private val grid: ShortArray?) {
             val grid = try {
                 context.assets.open(ASSET_NAME).use { readGrid(it) }
             } catch (e: IOException) {
+                // Asset missing/unreadable.
+                Log.w(TAG, "Failed to load $ASSET_NAME, altitude will not be geoid-corrected", e)
+                null
+            } catch (e: IllegalArgumentException) {
+                // readGrid()'s require() rejects an asset of unexpected size (corrupted/regenerated).
                 Log.w(TAG, "Failed to load $ASSET_NAME, altitude will not be geoid-corrected", e)
                 null
             }
