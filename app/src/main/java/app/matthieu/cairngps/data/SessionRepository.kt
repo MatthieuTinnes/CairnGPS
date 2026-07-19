@@ -27,9 +27,6 @@ class SessionRepository(
      */
     fun sessionsWithTracks(): Flow<List<SessionWithTrackPoints>> = dao.observeAllWithTracks()
 
-    /** Persists [session] and returns its generated id. */
-    suspend fun save(session: Session): Long = dao.insert(session)
-
     /** Returns the session with [id], or `null` if it no longer exists. */
     suspend fun get(id: Long): Session? = dao.getById(id)
 

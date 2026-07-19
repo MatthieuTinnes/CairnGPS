@@ -20,7 +20,7 @@ import androidx.room.migration.Migration
         RecordingCheckpoint::class,
     ],
     version = 6,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
 
