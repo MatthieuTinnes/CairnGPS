@@ -94,6 +94,9 @@
     <string name="action_open_in_maps">Ouvrir dans une carte</string>
     <string name="no_maps_app">Aucune application de carte installée</string>
     <string name="action_delete">Supprimer</string>
+    <string name="action_export_gpx">Exporter en GPX</string>
+    <string name="gpx_export_success">Fichier GPX exporté</string>
+    <string name="gpx_export_error">Impossible d\'exporter le fichier GPX</string>
     <string name="waypoint_delete_dialog_title">Supprimer ce repère ?</string>
     <string name="waypoint_delete_dialog_message_fmt">« %1$s » sera définitivement supprimé. La session parente associée n\'est pas affectée. Cette action est irréversible.</string>
     <string name="waypoint_parent_session">Trace parente</string>

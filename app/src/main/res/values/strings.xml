@@ -94,6 +94,9 @@
     <string name="action_open_in_maps">Open in a map app</string>
     <string name="no_maps_app">No map app installed</string>
     <string name="action_delete">Delete</string>
+    <string name="action_export_gpx">Export as GPX</string>
+    <string name="gpx_export_success">GPX file exported</string>
+    <string name="gpx_export_error">Couldn\'t export the GPX file</string>
     <string name="waypoint_delete_dialog_title">Delete this waypoint?</string>
     <string name="waypoint_delete_dialog_message_fmt">\"%1$s\" will be permanently deleted. The parent track is not affected. This action is irreversible.</string>
     <string name="waypoint_parent_session">Parent track</string>
