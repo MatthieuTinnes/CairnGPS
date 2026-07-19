@@ -1,7 +1,6 @@
 package app.matthieu.cairngps.ui.waypoints
 
 import android.Manifest
-import android.location.Location
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -11,6 +10,7 @@ import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.distanceAndBearing
 import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,13 +67,11 @@ class WaypointDetailViewModel(
     fun refreshCurrentDistance() {
         val waypoint = _uiState.value.waypoint ?: return
         val location = locationRepository.lastKnownLocation() ?: return
-        val results = FloatArray(1)
-        Location.distanceBetween(
+        val distance = distanceAndBearing(
             location.latitude, location.longitude,
             waypoint.latitude, waypoint.longitude,
-            results,
-        )
-        _uiState.update { it.copy(currentDistanceMeters = results[0].toDouble()) }
+        ).distanceMeters
+        _uiState.update { it.copy(currentDistanceMeters = distance) }
     }
 
     /** Deletes the current waypoint and flips [WaypointDetailUiState.deleted] once done. */
