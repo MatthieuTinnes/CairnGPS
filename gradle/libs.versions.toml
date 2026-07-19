@@ -12,8 +12,6 @@ lifecycle = "2.11.0"
 navigationCompose = "2.9.8"
 datastore = "1.2.1"
 room = "2.8.4"
-# KSP releases track the Kotlin version; 2.3.10 is the newest published build. It runs against the
-# project's Kotlin 2.4.0 with ksp.version.check disabled (see gradle.properties).
 ksp = "2.3.10"
 kotlinxSerialization = "1.11.0"
 
