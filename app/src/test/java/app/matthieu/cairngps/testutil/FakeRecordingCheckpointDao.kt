@@ -8,7 +8,12 @@ class FakeRecordingCheckpointDao : RecordingCheckpointDao {
 
     private var checkpoint: RecordingCheckpoint? = null
 
+    /** Number of [upsert] calls made so far, to verify "at most once per sampling interval" contracts. */
+    var upsertCallCount: Int = 0
+        private set
+
     override suspend fun upsert(checkpoint: RecordingCheckpoint) {
+        upsertCallCount++
         this.checkpoint = checkpoint
     }
 

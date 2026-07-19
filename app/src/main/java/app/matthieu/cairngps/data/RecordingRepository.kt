@@ -6,6 +6,7 @@ import androidx.annotation.RequiresPermission
 import java.time.Instant
 import java.time.ZoneId
 import kotlin.math.abs
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,8 +62,9 @@ class RecordingRepository(
     private val locationRepository: LocationRepository,
     private val sessionRepository: SessionRepository,
     private val waypointRepository: WaypointRepository,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private var recordingJob: Job? = null
 
     private val _state = MutableStateFlow(RecordingState())
@@ -150,7 +152,10 @@ class RecordingRepository(
             // insert completes, the row must still be written so stop() can find and discard it —
             // otherwise it would be orphaned in the DB forever as a phantom isActive=true session.
             val id = withContext(NonCancellable) { sessionRepository.insertActive(initial) }
-            activeSession = initial.copy(id = id)
+            // insertActive() persists isActive=true; keep the in-memory copy in sync, since every
+            // persistCheckpoint() below re-derives the row it writes from this activeSession and
+            // would otherwise flip isActive back to false on the very first checkpoint.
+            activeSession = initial.copy(id = id, isActive = true)
             locationRepository.locationUpdates().collect { fix -> onFix(fix) }
         }
     }

@@ -158,6 +158,10 @@ abstract class AppDatabase : RoomDatabase() {
             )
         }
 
+        /** Exposed for migration tests, which need to build their own [Room.databaseBuilder]. */
+        internal val ALL_MIGRATIONS: Array<Migration> =
+            arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+
         /** Returns the process-wide database singleton, building it on first access. */
         fun getInstance(context: Context): AppDatabase =
             instance ?: synchronized(this) {
@@ -170,7 +174,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "cairn.db",
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(*ALL_MIGRATIONS)
                 .build()
     }
 }
