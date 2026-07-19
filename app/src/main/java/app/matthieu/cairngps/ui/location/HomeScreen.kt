@@ -263,6 +263,7 @@ private fun HomeScreen(
             Spacer(Modifier.height(8.dp))
             StatusLine(
                 hasFix = uiState.hasFix,
+                isFixLost = uiState.isFixLost,
                 satellitesUsedInFix = uiState.satellitesUsedInFix,
                 satellitesVisible = uiState.satellitesVisible,
             )
@@ -535,9 +536,14 @@ private fun SaveWaypointDialog(
 }
 
 @Composable
-private fun StatusLine(hasFix: Boolean, satellitesUsedInFix: Int?, satellitesVisible: Int?) {
+private fun StatusLine(
+    hasFix: Boolean,
+    isFixLost: Boolean,
+    satellitesUsedInFix: Int?,
+    satellitesVisible: Int?,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Indeterminate acquisition bar — only meaningful while there's no fix yet.
+        // Indeterminate bar — shown while acquiring, and again while reacquiring a lost fix.
         if (!hasFix) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
@@ -546,13 +552,18 @@ private fun StatusLine(hasFix: Boolean, satellitesUsedInFix: Int?, satellitesVis
                 modifier = Modifier
                     .size(10.dp)
                     .background(
-                        color = if (hasFix) QualityGood else DashText,
+                        color = when {
+                            hasFix -> QualityGood
+                            isFixLost -> QualityPoor
+                            else -> DashText
+                        },
                         shape = CircleShape,
                     ),
             )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = when {
+                    isFixLost -> stringResource(R.string.fix_lost)
                     hasFix && satellitesUsedInFix != null ->
                         stringResource(R.string.fix_obtained_with_satellites, satellitesUsedInFix)
                     hasFix -> stringResource(R.string.fix_obtained)

@@ -1,7 +1,10 @@
 package app.matthieu.cairngps.data
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
@@ -20,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
@@ -197,4 +201,28 @@ class LocationRepository(context: Context) {
         // if a slow collector falls behind.
         .conflate()
         .flowOn(Dispatchers.Default)
+
+    /**
+     * [Flow] of the [GPS_PROVIDER][LocationManager.GPS_PROVIDER] enabled state: emits the current
+     * state on collection, then again on every change (user toggling location on/off). Backed by a
+     * [BroadcastReceiver] on [LocationManager.PROVIDERS_CHANGED_ACTION], so it costs no battery
+     * and works without any active location request. Lets the UI react immediately when the GPS
+     * is disabled instead of waiting for a staleness timeout.
+     */
+    fun gpsProviderEnabled(): Flow<Boolean> = sharedGpsProviderEnabled
+
+    private val sharedGpsProviderEnabled: Flow<Boolean> = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                trySend(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+            }
+        }
+        appContext.registerReceiver(receiver, IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION))
+        trySend(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+        awaitClose { appContext.unregisterReceiver(receiver) }
+    }
+        // PROVIDERS_CHANGED fires for every provider, not just GPS; drop the non-changes.
+        .distinctUntilChanged()
+        .flowOn(Dispatchers.Default)
+        .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
 }

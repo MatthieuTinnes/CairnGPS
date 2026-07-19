@@ -13,7 +13,10 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -21,6 +24,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocationViewModelTest {
@@ -68,6 +72,7 @@ class LocationViewModelTest {
             every { locationUpdates() } returns flowOf(fixOf())
             every { satelliteUpdates() } returns
                 flowOf(listOf(satelliteOf(usedInFix = true), satelliteOf(usedInFix = false)))
+            every { gpsProviderEnabled() } returns emptyFlow()
         }
         val viewModel = viewModel(locationRepository = locationRepository)
 
@@ -75,17 +80,122 @@ class LocationViewModelTest {
             assertFalse(awaitItem().hasFix) // initial
 
             viewModel.startTracking()
+            runCurrent()
 
-            val withFix = awaitItem()
-            assertTrue(withFix.hasFix)
-            assertEquals(47.0, withFix.fix?.latitude)
-
-            val withSatellites = awaitItem()
-            assertEquals(1, withSatellites.satellitesUsedInFix)
-            assertEquals(2, withSatellites.satellitesVisible)
+            // Fix and satellite collection run in sibling coroutines; only the settled state
+            // matters, not the order of the two intermediate emissions.
+            val settled = expectMostRecentItem()
+            assertTrue(settled.hasFix)
+            assertEquals(47.0, settled.fix?.latitude)
+            assertEquals(1, settled.satellitesUsedInFix)
+            assertEquals(2, settled.satellitesVisible)
 
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    private fun trackingViewModel(
+        fixes: MutableSharedFlow<LocationData>,
+        providerEnabled: MutableSharedFlow<Boolean> = MutableSharedFlow(),
+        recordingRepository: RecordingRepository = mockk(),
+    ): LocationViewModel {
+        val locationRepository = mockk<LocationRepository> {
+            every { locationUpdates() } returns fixes
+            every { satelliteUpdates() } returns emptyFlow()
+            every { gpsProviderEnabled() } returns providerEnabled
+        }
+        return viewModel(locationRepository = locationRepository, recordingRepository = recordingRepository)
+    }
+
+    @Test
+    fun `fix becomes stale when no update arrives within the timeout`() = runTest {
+        val fixes = MutableSharedFlow<LocationData>()
+        val viewModel = trackingViewModel(fixes)
+
+        viewModel.startTracking()
+        runCurrent()
+        fixes.emit(fixOf())
+        runCurrent()
+        assertTrue(viewModel.uiState.value.hasFix)
+
+        advanceTimeBy(5_001.milliseconds)
+
+        assertFalse(viewModel.uiState.value.hasFix)
+        assertTrue(viewModel.uiState.value.isFixLost)
+    }
+
+    @Test
+    fun `fix stays fresh as long as updates keep arriving within the timeout`() = runTest {
+        val fixes = MutableSharedFlow<LocationData>()
+        val viewModel = trackingViewModel(fixes)
+
+        viewModel.startTracking()
+        runCurrent()
+        fixes.emit(fixOf())
+        runCurrent()
+        advanceTimeBy(3_000.milliseconds)
+        fixes.emit(fixOf())
+        runCurrent()
+        advanceTimeBy(3_000.milliseconds)
+
+        assertTrue(viewModel.uiState.value.hasFix)
+        assertFalse(viewModel.uiState.value.isFixLost)
+    }
+
+    @Test
+    fun `a new fix after a signal loss restores the fresh state`() = runTest {
+        val fixes = MutableSharedFlow<LocationData>()
+        val viewModel = trackingViewModel(fixes)
+
+        viewModel.startTracking()
+        runCurrent()
+        fixes.emit(fixOf())
+        runCurrent()
+        advanceTimeBy(5_001.milliseconds)
+        assertTrue(viewModel.uiState.value.isFixLost)
+
+        fixes.emit(fixOf(latitude = 45.0))
+        runCurrent()
+
+        assertTrue(viewModel.uiState.value.hasFix)
+        assertFalse(viewModel.uiState.value.isFixLost)
+        assertEquals(45.0, viewModel.uiState.value.fix?.latitude)
+    }
+
+    @Test
+    fun `disabling the GPS provider marks the fix stale without waiting for the timeout`() = runTest {
+        val fixes = MutableSharedFlow<LocationData>()
+        val providerEnabled = MutableSharedFlow<Boolean>()
+        val viewModel = trackingViewModel(fixes, providerEnabled = providerEnabled)
+
+        viewModel.startTracking()
+        runCurrent()
+        fixes.emit(fixOf())
+        runCurrent()
+        assertTrue(viewModel.uiState.value.hasFix)
+
+        providerEnabled.emit(false)
+        runCurrent()
+
+        assertFalse(viewModel.uiState.value.hasFix)
+        assertTrue(viewModel.uiState.value.isFixLost)
+    }
+
+    @Test
+    fun `saveWaypoint is a no-op when the fix has gone stale`() = runTest {
+        val fixes = MutableSharedFlow<LocationData>()
+        val viewModel = trackingViewModel(fixes)
+
+        viewModel.startTracking()
+        runCurrent()
+        fixes.emit(fixOf())
+        runCurrent()
+        advanceTimeBy(5_001.milliseconds)
+
+        viewModel.saveWaypoint("Sommet")
+        runCurrent()
+
+        assertTrue(waypointDao.getAll().isEmpty())
     }
 
     @Test
@@ -107,6 +217,7 @@ class LocationViewModelTest {
         val locationRepository = mockk<LocationRepository> {
             every { locationUpdates() } returns flowOf(fixOf(latitude = 48.85, longitude = 2.35))
             every { satelliteUpdates() } returns flowOf(listOf(satelliteOf(usedInFix = true)))
+            every { gpsProviderEnabled() } returns emptyFlow()
         }
         val viewModel = viewModel(locationRepository = locationRepository, recordingRepository = recordingRepository)
 

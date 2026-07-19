@@ -6,6 +6,7 @@
     <string name="waiting_for_fix_with_satellites">Searching for satellites… %1$d visible, %2$d used</string>
     <string name="fix_obtained">Fix acquired</string>
     <string name="fix_obtained_with_satellites">3D fix · %1$d satellites</string>
+    <string name="fix_lost">GPS signal lost — reacquiring…</string>
     <string name="hint_clear_sky">Clear the view of the sky to speed up fix acquisition.</string>
 
     <!-- Permission -->
