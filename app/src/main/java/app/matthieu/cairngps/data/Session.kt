@@ -59,8 +59,7 @@ data class Session(
 
 /**
  * A [Session] joined with its [TrackPoint]s in a single Room query (see [SessionDao.observeAllWithTracks]),
- * avoiding one separate `trackForSession` observer per session (audit 4.1: N+1 Room observers —
- * any track_points write used to re-emit every session's flow). [Relation] doesn't guarantee
+ * avoiding one separate `trackForSession` observer per session. [Relation] doesn't guarantee
  * ordering, so callers needing chronological order must sort [track] themselves.
  */
 data class SessionWithTrackPoints(

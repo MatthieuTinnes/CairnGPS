@@ -59,9 +59,8 @@ class RecordsRepository(private val dao: RecordDao) {
     /**
      * Registers every candidate in [candidates] in one pass: one [RecordDao.getAll] read and, if
      * anything improved, one [RecordDao.upsertAll] write — instead of one read + conditional write
-     * per candidate under the mutex (audit 4.2: [GamificationManager] resubmits every session's 9
-     * metrics on every `sessions()` emission, an O(N×9) DB round-trip pattern otherwise). Same
-     * "strictly better only" semantics as [submit], and still atomic under the same [mutex].
+     * per candidate under the mutex. Same "strictly better only" semantics as [submit], and still
+     * atomic under the same [mutex].
      */
     suspend fun submitAll(candidates: List<RecordCandidate>) {
         if (candidates.isEmpty()) return

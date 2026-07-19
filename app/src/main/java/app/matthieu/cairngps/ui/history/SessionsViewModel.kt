@@ -34,10 +34,7 @@ data class SessionsUiState(
 
 /**
  * Exposes the saved sessions — each paired with its track — as a [StateFlow] of [SessionsUiState]
- * for the Traces tab. The join is a single Room query ([SessionRepository.sessionsWithTracks]),
- * not one `trackForSession` observer per session (see audit 4.1: that used to re-emit every
- * session's flow on any track_points write). The Composable only ever sees this already-assembled
- * state.
+ * for the Traces tab. The join is a single Room query ([SessionRepository.sessionsWithTracks])
  */
 class SessionsViewModel(
     repository: SessionRepository,

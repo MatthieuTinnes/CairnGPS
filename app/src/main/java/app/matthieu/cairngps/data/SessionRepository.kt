@@ -22,8 +22,7 @@ class SessionRepository(
 
     /**
      * Cold flow of every finished session joined with its track in a single Room query, for the
-     * Traces tab's sparkline previews — see [SessionWithTrackPoints] (audit 4.1: avoids one
-     * [trackForSession] observer per session).
+     * Traces tab's sparkline previews — see [SessionWithTrackPoints].
      */
     fun sessionsWithTracks(): Flow<List<SessionWithTrackPoints>> = dao.observeAllWithTracks()
 

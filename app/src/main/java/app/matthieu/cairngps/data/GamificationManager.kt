@@ -67,8 +67,8 @@ class GamificationManager(
      * only ever keeps the best value anyway, so re-checking already-known bests is wasted work but
      * never wrong — simpler than tracking which sessions were already submitted.
      *
-     * All candidates across all sessions go through a single [RecordsRepository.submitAll] call
-     * (audit 4.2), rather than 9 individual [RecordsRepository.submit] calls per session — avoids
+     * All candidates across all sessions go through a single [RecordsRepository.submitAll] call,
+     * rather than 9 individual [RecordsRepository.submit] calls per session — avoids
      * an O(N×9) DB read/write pattern under the mutex on every `sessions()` emission.
      */
     private suspend fun submitSessionRecords(sessions: List<Session>) {

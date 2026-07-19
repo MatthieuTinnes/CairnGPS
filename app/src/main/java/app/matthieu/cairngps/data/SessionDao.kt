@@ -43,7 +43,7 @@ interface SessionDao {
     /**
      * Same as [observeAll] but joins each session with its track in one query (see
      * [SessionWithTrackPoints]), instead of the caller combining one [TrackPointDao.observeBySession]
-     * Flow per session — avoids the N+1 observer pattern (audit 4.1).
+     * Flow per session — avoids the N+1 observer pattern.
      */
     @Transaction
     @Query("SELECT * FROM sessions WHERE isActive = 0 ORDER BY startTimestamp DESC")

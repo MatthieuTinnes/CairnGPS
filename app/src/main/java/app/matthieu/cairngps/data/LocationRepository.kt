@@ -42,12 +42,10 @@ class LocationRepository(context: Context) {
 
     // App-scoped: this repository is a CairnApplication singleton, never torn down, so a
     // permanent scope is correct here. Backs both the shared GPS flows below and the background
-    // geoid load (audit 4.3/4.4).
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     // Converts raw ellipsoidal GPS altitude to mean sea level; see Egm96Geoid for why. Starts as
     // a no-op (separationMeters() == 0.0) and is replaced once the ~130 KB asset has been read off
-    // the main thread (audit 4.4) — a short-lived, harmless degradation to uncorrected altitude.
     @Volatile
     private var geoid: Egm96Geoid = Egm96Geoid.forTesting(null)
 
@@ -67,7 +65,7 @@ class LocationRepository(context: Context) {
         }
 
     /**
-     * [Flow] of GPS fixes, shared across every collector (audit 4.3): several call sites used to
+     * [Flow] of GPS fixes, shared across every collector : several call sites used to
      * each open their own [LocationManager.requestLocationUpdates] registration. A single
      * upstream registration now backs all of them via [shareIn], reference-counted by
      * [SharingStarted.WhileSubscribed] so the GPS chip powers down once nobody is collecting.
@@ -126,7 +124,7 @@ class LocationRepository(context: Context) {
 
     /**
      * [Flow] of GNSS satellite snapshots, one [List] per [GnssStatus] update (~1 Hz while the GPS
-     * engine is running), shared across every collector (audit 4.3) the same way as
+     * engine is running), shared across every collector the same way as
      * [locationUpdates]: one upstream registration (GNSS callback + its own keep-alive location
      * request) backs every collector via [shareIn]/[SharingStarted.WhileSubscribed], instead of
      * each collector opening its own. `replay = 0`: a fresh collector waits for the next snapshot
