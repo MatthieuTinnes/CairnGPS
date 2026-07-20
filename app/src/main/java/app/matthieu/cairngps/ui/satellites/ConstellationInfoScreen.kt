@@ -55,8 +55,8 @@ private data class ConstellationDoc(
     @StringRes val descriptionRes: Int,
 )
 
-// The five constellations covered by the design (screen 1f); IRNSS/SBAS/UNKNOWN aren't documented
-// here even though they can appear live in the sky plot/globe.
+// The six constellations covered by the design (screen 1f); SBAS/UNKNOWN aren't documented here
+// even though they can appear live in the sky plot/globe.
 private val CONSTELLATION_DOCS = listOf(
     ConstellationDoc(
         Constellation.GPS,
@@ -87,6 +87,12 @@ private val CONSTELLATION_DOCS = listOf(
         R.string.constellation_qzss_region,
         R.string.constellation_qzss_stats,
         R.string.constellation_qzss_desc,
+    ),
+    ConstellationDoc(
+        Constellation.IRNSS,
+        R.string.constellation_irnss_region,
+        R.string.constellation_irnss_stats,
+        R.string.constellation_irnss_desc,
     ),
 )
 
