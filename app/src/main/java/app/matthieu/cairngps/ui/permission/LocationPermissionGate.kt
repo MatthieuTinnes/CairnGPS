@@ -36,12 +36,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.Sym
 
+// FINE is what actually unlocks the app (GPS_PROVIDER + GnssStatus need it); COARSE alone
+// is not enough. Both are requested together so the "approximate only" case is explicit
+// instead of silently looking like a plain denial.
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
+private const val COARSE_LOCATION_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION
+private val LOCATION_PERMISSIONS = arrayOf(LOCATION_PERMISSION, COARSE_LOCATION_PERMISSION)
 
 /**
  * Gates [content] behind the runtime [Manifest.permission.ACCESS_FINE_LOCATION] permission.
@@ -60,12 +66,29 @@ fun LocationPermissionGate(
     var hasPermission by remember { mutableStateOf(context.hasLocationPermission()) }
     // True once we've asked at least once, so we can distinguish "not asked yet" from "denied".
     var hasRequestedOnce by remember { mutableStateOf(false) }
+    // The user picked "Approximate location" in the system dialog: COARSE was granted but
+    // FINE was not. The app needs FINE, so this gets its own explanation rather than reading
+    // as a plain denial.
+    var approximateOnly by remember { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
     ) { granted ->
-        hasPermission = granted
+        val fine = granted[LOCATION_PERMISSION] == true
+        val coarse = granted[COARSE_LOCATION_PERMISSION] == true
+        hasPermission = fine
+        approximateOnly = !fine && coarse
         hasRequestedOnce = true
+    }
+
+    // The process survives a trip to system settings, so hasPermission never refreshes on its
+    // own if the user grants there and comes back. Re-check on every resume.
+    LifecycleResumeEffect(Unit) {
+        if (!hasPermission) {
+            hasPermission = context.hasLocationPermission()
+            approximateOnly = !hasPermission && context.hasCoarseLocationPermission()
+        }
+        onPauseOrDispose { }
     }
 
     if (hasPermission) {
@@ -80,7 +103,8 @@ fun LocationPermissionGate(
     LocationPermissionRequest(
         modifier = modifier,
         permanentlyDenied = permanentlyDenied,
-        onRequest = { launcher.launch(LOCATION_PERMISSION) },
+        approximateOnly = approximateOnly,
+        onRequest = { launcher.launch(LOCATION_PERMISSIONS) },
         onOpenSettings = { context.openAppSettings() },
     )
 }
@@ -88,6 +112,7 @@ fun LocationPermissionGate(
 @Composable
 private fun LocationPermissionRequest(
     permanentlyDenied: Boolean,
+    approximateOnly: Boolean,
     onRequest: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -116,8 +141,11 @@ private fun LocationPermissionRequest(
         Spacer(Modifier.height(12.dp))
         Text(
             text = stringResource(
-                if (permanentlyDenied) R.string.permission_denied_rationale
-                else R.string.permission_rationale,
+                when {
+                    approximateOnly -> R.string.permission_approximate_rationale
+                    permanentlyDenied -> R.string.permission_denied_rationale
+                    else -> R.string.permission_rationale
+                },
             ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -147,6 +175,9 @@ private fun LocationPermissionRequest(
 
 private fun Context.hasLocationPermission(): Boolean =
     ContextCompat.checkSelfPermission(this, LOCATION_PERMISSION) == PackageManager.PERMISSION_GRANTED
+
+private fun Context.hasCoarseLocationPermission(): Boolean =
+    ContextCompat.checkSelfPermission(this, COARSE_LOCATION_PERMISSION) == PackageManager.PERMISSION_GRANTED
 
 private fun Context.shouldShowLocationRationale(): Boolean {
     val activity = findActivity() ?: return false

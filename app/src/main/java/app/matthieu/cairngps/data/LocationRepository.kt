@@ -1,7 +1,10 @@
 package app.matthieu.cairngps.data
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
@@ -12,12 +15,18 @@ import android.os.Handler
 import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.core.content.getSystemService
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 
 /**
  * Single source of truth for raw device location.
@@ -33,9 +42,20 @@ class LocationRepository(context: Context) {
         requireNotNull(context.applicationContext.getSystemService()) {
             "LocationManager service is unavailable on this device"
         }
+    private val appContext = context.applicationContext
 
-    // Converts raw ellipsoidal GPS altitude to mean sea level; see Egm96Geoid for why.
-    private val geoid = Egm96Geoid.fromAssets(context)
+    // App-scoped: this repository is a CairnApplication singleton, never torn down, so a
+    // permanent scope is correct here. Backs both the shared GPS flows below and the background
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    // Converts raw ellipsoidal GPS altitude to mean sea level; see Egm96Geoid for why. Starts as
+    // a no-op (separationMeters() == 0.0) and is replaced once the ~130 KB asset has been read off
+    @Volatile
+    private var geoid: Egm96Geoid = Egm96Geoid.forTesting(null)
+
+    init {
+        scope.launch(Dispatchers.IO) { geoid = Egm96Geoid.fromAssets(appContext) }
+    }
 
     /**
      * The most recent cached GPS fix the OS holds, or `null` if it has none. Cheap and does *not*
@@ -49,18 +69,33 @@ class LocationRepository(context: Context) {
         }
 
     /**
-     * Cold [Flow] of GPS fixes. A new registration is created for each collector and torn down
-     * automatically when collection stops.
-     *
-     * @param minTimeMs      Minimum interval between updates, in milliseconds.
-     * @param minDistanceM   Minimum movement between updates, in meters.
+     * [Flow] of GPS fixes, shared across every collector : several call sites used to
+     * each open their own [LocationManager.requestLocationUpdates] registration. A single
+     * upstream registration now backs all of them via [shareIn], reference-counted by
+     * [SharingStarted.WhileSubscribed] so the GPS chip powers down once nobody is collecting.
+     * `replay = 0` keeps the cold-flow semantics collectors already depend on: a fresh collector
+     * never receives a stale fix from before it subscribed (important for
+     * [RecordingRepository], which must not fold an old point into a new recording).
      *
      * The caller MUST hold [Manifest.permission.ACCESS_FINE_LOCATION] before collecting.
      */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-    fun locationUpdates(
-        minTimeMs: Long = 1_000L,
-        minDistanceM: Float = 0f,
+    fun locationUpdates(): Flow<LocationData> = sharedLocationUpdates
+
+    private val sharedLocationUpdates: Flow<LocationData> =
+        locationUpdatesCold(minTimeMs = 1_000L, minDistanceM = 0f)
+            .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
+
+    /**
+     * Cold [Flow] of GPS fixes backing [locationUpdates]. A new registration is created for each
+     * collector and torn down automatically when collection stops.
+     *
+     * @param minTimeMs      Minimum interval between updates, in milliseconds.
+     * @param minDistanceM   Minimum movement between updates, in meters.
+     */
+    private fun locationUpdatesCold(
+        minTimeMs: Long,
+        minDistanceM: Float,
     ): Flow<LocationData> = callbackFlow {
         val listener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
@@ -92,9 +127,12 @@ class LocationRepository(context: Context) {
         .flowOn(Dispatchers.Default)
 
     /**
-     * Cold [Flow] of GNSS satellite snapshots, one [List] per [GnssStatus] update (~1 Hz while
-     * the GPS engine is running). Registration is created per collector and torn down when
-     * collection stops, so unregistering follows the collector's lifecycle (typically ON_STOP).
+     * [Flow] of GNSS satellite snapshots, one [List] per [GnssStatus] update (~1 Hz while the GPS
+     * engine is running), shared across every collector the same way as
+     * [locationUpdates]: one upstream registration (GNSS callback + its own keep-alive location
+     * request) backs every collector via [shareIn]/[SharingStarted.WhileSubscribed], instead of
+     * each collector opening its own. `replay = 0`: a fresh collector waits for the next snapshot
+     * rather than receiving a stale one.
      *
      * The GNSS engine only produces [GnssStatus] updates while at least one location request is
      * active — a status callback alone never powers the chip. This flow therefore also holds its
@@ -107,7 +145,14 @@ class LocationRepository(context: Context) {
      * The caller MUST hold [Manifest.permission.ACCESS_FINE_LOCATION] before collecting.
      */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-    fun satelliteUpdates(): Flow<List<SatelliteInfo>> = callbackFlow {
+    fun satelliteUpdates(): Flow<List<SatelliteInfo>> = sharedSatelliteUpdates
+
+    private val sharedSatelliteUpdates: Flow<List<SatelliteInfo>> =
+        satelliteUpdatesCold()
+            .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
+
+    /** Cold [Flow] of GNSS satellite snapshots backing [satelliteUpdates]; see its doc for details. */
+    private fun satelliteUpdatesCold(): Flow<List<SatelliteInfo>> = callbackFlow {
         val callback = object : GnssStatus.Callback() {
             override fun onSatelliteStatusChanged(status: GnssStatus) {
                 trySend(status.toSatelliteInfoList())
@@ -156,4 +201,28 @@ class LocationRepository(context: Context) {
         // if a slow collector falls behind.
         .conflate()
         .flowOn(Dispatchers.Default)
+
+    /**
+     * [Flow] of the [GPS_PROVIDER][LocationManager.GPS_PROVIDER] enabled state: emits the current
+     * state on collection, then again on every change (user toggling location on/off). Backed by a
+     * [BroadcastReceiver] on [LocationManager.PROVIDERS_CHANGED_ACTION], so it costs no battery
+     * and works without any active location request. Lets the UI react immediately when the GPS
+     * is disabled instead of waiting for a staleness timeout.
+     */
+    fun gpsProviderEnabled(): Flow<Boolean> = sharedGpsProviderEnabled
+
+    private val sharedGpsProviderEnabled: Flow<Boolean> = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                trySend(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+            }
+        }
+        appContext.registerReceiver(receiver, IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION))
+        trySend(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+        awaitClose { appContext.unregisterReceiver(receiver) }
+    }
+        // PROVIDERS_CHANGED fires for every provider, not just GPS; drop the non-changes.
+        .distinctUntilChanged()
+        .flowOn(Dispatchers.Default)
+        .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
 }

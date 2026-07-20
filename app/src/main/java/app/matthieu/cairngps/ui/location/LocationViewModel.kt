@@ -5,17 +5,29 @@ import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.common.factoryOf
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
+
+/**
+ * A fix older than this is considered stale: at the 1 Hz GPS update rate this means ~5 missed
+ * epochs, long enough to ride out a short obstruction (bridge, dense canopy) without flickering,
+ * short enough that the UI doesn't keep advertising a position that is drifting away on foot.
+ */
+private const val FIX_STALE_TIMEOUT_MS = 5_000L
 
 /**
  * Owns the GPS subscription and exposes it to the UI as a [StateFlow] of [LocationUiState].
@@ -41,13 +53,33 @@ class LocationViewModel(
      * only powered while the screen is visible. The satellite stream is collected alongside the
      * fixes so a saved waypoint can record how many satellites were used at capture time.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun startTracking() {
         if (trackingJob?.isActive == true) return
         trackingJob = viewModelScope.launch {
             launch {
-                locationRepository.locationUpdates().collect { fix ->
-                    _uiState.update { it.copy(fix = fix) }
+                locationRepository.locationUpdates()
+                    // The GPS flow simply goes silent when the signal is lost; re-emit null after
+                    // a quiet period so the fix can be flagged stale. transformLatest cancels the
+                    // pending delay whenever a fresh fix arrives.
+                    .transformLatest { fix ->
+                        emit(fix as LocationData?)
+                        delay(FIX_STALE_TIMEOUT_MS.milliseconds)
+                        emit(null)
+                    }
+                    .collect { fix ->
+                        _uiState.update {
+                            if (fix != null) it.copy(fix = fix, isFixStale = false)
+                            else it.copy(isFixStale = true)
+                        }
+                    }
+            }
+            launch {
+                locationRepository.gpsProviderEnabled().collect { enabled ->
+                    // Disabled provider → stale immediately, without waiting for the timeout.
+                    // Re-enabled: nothing to do, the next fix clears the flag.
+                    if (!enabled) _uiState.update { it.copy(isFixStale = true) }
                 }
             }
             launch {
@@ -80,6 +112,7 @@ class LocationViewModel(
      */
     fun saveWaypoint(name: String) {
         val state = _uiState.value
+        if (!state.hasFix) return
         val fix = state.fix ?: return
         viewModelScope.launch {
             val reserved = recordingRepository.reserveWaypointAttachment()

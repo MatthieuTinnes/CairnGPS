@@ -1,15 +1,18 @@
-package app.matthieu.cairngps.data
+package app.matthieu.cairngps.data.backup
 
+import app.matthieu.cairngps.data.AppSettings
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * The full contents of a user data backup: every Room table plus the DataStore [AppSettings],
- * serialized to a single JSON file the user can save/share/restore (see [BackupRepository]).
+ * The full contents of a user data backup: every Room table (as its dedicated [WaypointDto] /
+ * [SessionDto] / [TrackPointDto] / [RecordDto] / [AchievementStateDto], never the Room entities
+ * themselves — see the doc on those DTOs) plus the DataStore [AppSettings], serialized to a single
+ * JSON file the user can save/share/restore (see [app.matthieu.cairngps.data.BackupRepository]).
  *
  * @property version      Format version, bumped whenever a field is added/removed/renamed in a
- *                         way that breaks older readers. [BackupRepository.import] rejects a file
- *                         from a newer major version it doesn't understand.
+ *                         way that breaks older readers. [app.matthieu.cairngps.data.BackupRepository.import]
+ *                         rejects a file from a newer major version it doesn't understand.
  * @property exportedAt   When this backup was produced, in milliseconds since the epoch — shown to
  *                         the user before they confirm a restore.
  */
@@ -17,11 +20,11 @@ import kotlinx.serialization.json.Json
 data class CairnBackup(
     val version: Int = CURRENT_VERSION,
     val exportedAt: Long,
-    val waypoints: List<Waypoint>,
-    val sessions: List<Session>,
-    val trackPoints: List<TrackPoint>,
-    val records: List<RecordEntry>,
-    val achievements: List<AchievementState>,
+    val waypoints: List<WaypointDto>,
+    val sessions: List<SessionDto>,
+    val trackPoints: List<TrackPointDto>,
+    val records: List<RecordDto>,
+    val achievements: List<AchievementStateDto>,
     val settings: AppSettings,
 ) {
     companion object {

@@ -7,12 +7,8 @@ import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.ui.common.factoryOf
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -38,28 +34,19 @@ data class SessionsUiState(
 
 /**
  * Exposes the saved sessions — each paired with its track — as a [StateFlow] of [SessionsUiState]
- * for the Traces tab. Tracks are combined here rather than in the Composable, which only ever sees
- * this already-assembled state (see audit 4.1: a Composable used to collect `trackForSession`
- * directly from [SessionRepository]).
+ * for the Traces tab. The join is a single Room query ([SessionRepository.sessionsWithTracks])
  */
 class SessionsViewModel(
     repository: SessionRepository,
 ) : ViewModel() {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState: StateFlow<SessionsUiState> = repository.sessions()
-        .flatMapLatest { sessions ->
-            if (sessions.isEmpty()) {
-                flowOf(emptyList())
-            } else {
-                combine(
-                    sessions.map { session ->
-                        repository.trackForSession(session.id).map { track -> SessionWithTrack(session, track) }
-                    },
-                ) { it.toList() }
-            }
+    val uiState: StateFlow<SessionsUiState> = repository.sessionsWithTracks()
+        .map { rows ->
+            // @Relation doesn't guarantee ordering, so sort each track chronologically ourselves.
+            SessionsUiState(
+                rows.map { row -> SessionWithTrack(row.session, row.track.sortedBy { it.timestamp }) },
+            )
         }
-        .map { SessionsUiState(it) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

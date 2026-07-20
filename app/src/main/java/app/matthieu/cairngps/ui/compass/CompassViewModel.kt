@@ -3,7 +3,6 @@ package app.matthieu.cairngps.ui.compass
 import android.Manifest
 import android.hardware.GeomagneticField
 import android.hardware.SensorManager
-import android.location.Location
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -14,10 +13,12 @@ import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.NorthReference
+import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.distanceAndBearing
 import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +44,7 @@ class CompassViewModel(
     private val settingsRepository: SettingsRepository,
     private val waypointRepository: WaypointRepository,
     private val navigationTargetRepository: NavigationTargetRepository,
+    private val recordingRepository: RecordingRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -148,10 +150,16 @@ class CompassViewModel(
      * Creates a waypoint at the current position (invoked from the target picker's "Créer un
      * nouveau repère ici" row) and immediately makes it the navigation target. A no-op when no
      * position is available yet.
+     *
+     * If a recording is currently active, the new waypoint is automatically attached to it, same
+     * as [app.matthieu.cairngps.ui.location.LocationViewModel.saveWaypoint] — see
+     * [RecordingRepository.reserveWaypointAttachment] for why the slot must be reserved before the
+     * insert.
      */
     fun createWaypointHere(name: String) {
         val location = currentLocation ?: return
         viewModelScope.launch {
+            val reserved = recordingRepository.reserveWaypointAttachment()
             val id = waypointRepository.save(
                 Waypoint(
                     name = name,
@@ -165,6 +173,7 @@ class CompassViewModel(
                     timestamp = System.currentTimeMillis(),
                 ),
             )
+            recordingRepository.completeWaypointAttachment(reserved, id)
             navigationTargetRepository.setTarget(id)
         }
     }
@@ -185,17 +194,15 @@ class CompassViewModel(
         var targetDistance: Double? = null
         var targetBearing: Float? = null
         if (target != null && location != null) {
-            val results = FloatArray(2)
-            Location.distanceBetween(
+            val toTarget = distanceAndBearing(
                 location.latitude, location.longitude,
                 target.latitude, target.longitude,
-                results,
             )
-            targetDistance = results[0].toDouble()
-            // distanceBetween's bearing is always relative to true north; convert it into the same
+            targetDistance = toTarget.distanceMeters
+            // The computed bearing is always relative to true north; convert it into the same
             // reference as headingDegrees below (magnetic unless useTrueNorth), or the needle would
             // be off by the declination whenever the compass is in magnetic mode.
-            targetBearing = normalize(results[1] - if (useTrueNorth) 0f else (declination ?: 0f))
+            targetBearing = normalize(toTarget.bearingTrueDegrees - if (useTrueNorth) 0f else (declination ?: 0f))
         }
 
         // Base state carries the facts that are known regardless of whether a heading has been
@@ -274,6 +281,7 @@ class CompassViewModel(
             settingsRepository: SettingsRepository,
             waypointRepository: WaypointRepository,
             navigationTargetRepository: NavigationTargetRepository,
+            recordingRepository: RecordingRepository,
         ): ViewModelProvider.Factory = factoryOf {
             CompassViewModel(
                 compassRepository,
@@ -281,6 +289,7 @@ class CompassViewModel(
                 settingsRepository,
                 waypointRepository,
                 navigationTargetRepository,
+                recordingRepository,
             )
         }
     }

@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.gamification.Achievements
 import app.matthieu.cairngps.ui.common.factoryOf
-import app.matthieu.cairngps.ui.gamification.Achievements
 import app.matthieu.cairngps.ui.gamification.Levels
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

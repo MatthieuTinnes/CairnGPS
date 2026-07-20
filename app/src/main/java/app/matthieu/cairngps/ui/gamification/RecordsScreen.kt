@@ -134,6 +134,7 @@ private val RecordType.glyph: Char
 
 @Composable
 private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateFormat, unitSystem: UnitSystem) {
+    val westLabel = stringResource(R.string.hemisphere_west)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -166,12 +167,12 @@ private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateForm
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = formatRecordValue(item, coordinateFormat, unitSystem),
+                    text = formatRecordValue(item, coordinateFormat, unitSystem, westLabel),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = MonoFontFamily,
                 )
-                secondaryCoordinate(item, coordinateFormat)?.let { secondary ->
+                secondaryCoordinate(item, coordinateFormat, westLabel)?.let { secondary ->
                     Text(
                         text = secondary,
                         fontSize = 12.sp,
@@ -185,7 +186,12 @@ private fun RecordCard(item: RecordDisplayItem, coordinateFormat: CoordinateForm
 }
 
 /** The record's headline value, formatted in its natural unit — [DASH] when not set yet. */
-private fun formatRecordValue(item: RecordDisplayItem, coordinateFormat: CoordinateFormat, unitSystem: UnitSystem): String {
+private fun formatRecordValue(
+    item: RecordDisplayItem,
+    coordinateFormat: CoordinateFormat,
+    unitSystem: UnitSystem,
+    westLabel: String,
+): String {
     val entry = item.entry ?: return DASH
     return when (item.type) {
         RecordType.MAX_SPEED -> "${formatSpeed(entry.value.toFloat(), unitSystem)} ${speedUnitLabel(unitSystem)}"
@@ -193,9 +199,9 @@ private fun formatRecordValue(item: RecordDisplayItem, coordinateFormat: Coordin
         RecordType.MAX_ELEVATION_GAIN -> "${formatElevation(entry.value, unitSystem)} ${shortUnitLabel(unitSystem)}"
         RecordType.MAX_DISTANCE -> "${formatDistance(entry.value, unitSystem)} ${distanceUnitLabel(unitSystem)}"
         RecordType.NORTHERNMOST, RecordType.SOUTHERNMOST ->
-            formatCoordinate(entry.value, isLatitude = true, format = coordinateFormat)
+            formatCoordinate(entry.value, isLatitude = true, format = coordinateFormat, westLabel = westLabel)
         RecordType.EASTERNMOST, RecordType.WESTERNMOST ->
-            formatCoordinate(entry.value, isLatitude = false, format = coordinateFormat)
+            formatCoordinate(entry.value, isLatitude = false, format = coordinateFormat, westLabel = westLabel)
         // Tracked for the satellites achievement, not shown on this screen — see RecordsViewModel.
         RecordType.MAX_SATELLITES -> entry.value.toInt().toString()
     }
@@ -207,13 +213,13 @@ private fun formatRecordValue(item: RecordDisplayItem, coordinateFormat: Coordin
  * [app.matthieu.cairngps.data.GamificationManager]), so this is `null` for a session-sourced
  * record.
  */
-private fun secondaryCoordinate(item: RecordDisplayItem, coordinateFormat: CoordinateFormat): String? {
+private fun secondaryCoordinate(item: RecordDisplayItem, coordinateFormat: CoordinateFormat, westLabel: String): String? {
     val entry = item.entry ?: return null
     return when (item.type) {
         RecordType.NORTHERNMOST, RecordType.SOUTHERNMOST ->
-            entry.longitude?.let { formatCoordinate(it, isLatitude = false, format = coordinateFormat) }
+            entry.longitude?.let { formatCoordinate(it, isLatitude = false, format = coordinateFormat, westLabel = westLabel) }
         RecordType.EASTERNMOST, RecordType.WESTERNMOST ->
-            entry.latitude?.let { formatCoordinate(it, isLatitude = true, format = coordinateFormat) }
+            entry.latitude?.let { formatCoordinate(it, isLatitude = true, format = coordinateFormat, westLabel = westLabel) }
         else -> null
     }
 }

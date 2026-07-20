@@ -63,6 +63,7 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
+import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.Waypoint
@@ -113,6 +114,7 @@ fun CompassRoute(
     settingsRepository: SettingsRepository,
     waypointRepository: WaypointRepository,
     navigationTargetRepository: NavigationTargetRepository,
+    recordingRepository: RecordingRepository,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: CompassViewModel = viewModel(
@@ -122,6 +124,7 @@ fun CompassRoute(
             settingsRepository,
             waypointRepository,
             navigationTargetRepository,
+            recordingRepository,
         ),
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

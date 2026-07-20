@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Single source of truth for unlocked achievements, wrapping the Room [AchievementDao]. The
  * achievement catalog itself (id, title, description, condition) is not persisted here — see
- * `ui.gamification.Achievements` — this repository only remembers which catalog ids are unlocked.
+ * `domain.gamification.Achievements` — this repository only remembers which catalog ids are unlocked.
  *
  * ViewModels talk to this repository and never touch the DAO or [AppDatabase] directly, keeping
  * persistence details out of the UI layer.

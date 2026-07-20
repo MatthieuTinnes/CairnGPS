@@ -171,6 +171,7 @@ fun MainScaffold(app: CairnApplication) {
                         settingsRepository = app.settingsRepository,
                         waypointRepository = app.waypointRepository,
                         navigationTargetRepository = app.navigationTargetRepository,
+                        recordingRepository = app.recordingRepository,
                     )
                 }
                 composable(Routes.SATELLITES) {

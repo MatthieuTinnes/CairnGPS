@@ -11,6 +11,7 @@ import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.gamification.Achievements
 import app.matthieu.cairngps.ui.common.factoryOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

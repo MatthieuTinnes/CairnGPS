@@ -1,5 +1,7 @@
 package app.matthieu.cairngps.ui.history
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +24,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -34,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -71,6 +76,18 @@ import app.matthieu.cairngps.ui.theme.WaypointIconBg
 import app.matthieu.cairngps.ui.waypoints.DeleteConfirmDialog
 import app.matthieu.cairngps.ui.waypoints.RenameDialog
 import app.matthieu.cairngps.ui.waypoints.WaypointIcons
+import java.io.OutputStream
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.flow.SharedFlow
+
+// Default export file name, e.g. "Morning hike-2026-07-19.gpx" — sortable, filesystem-safe date.
+private val GpxFileNameDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+// Strips characters most filesystems reject from a user-entered session name, so it's always a
+// valid file name component regardless of what the user typed.
+private fun sanitizeFileName(name: String): String =
+    name.replace(Regex("""[/\\:*?"<>|]"""), "_").trim().ifEmpty { "session" }
 
 /**
  * Route: loads the session identified by [sessionId] and renders its full detail, including the
@@ -93,6 +110,7 @@ fun SessionDetailRoute(
         viewModel(factory = SettingsViewModel.factory(settingsRepository))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+    val isExporting by viewModel.isExporting.collectAsStateWithLifecycle()
 
     // Once the delete completes, leave the detail screen (side-effect, not done during composition).
     LaunchedEffect(uiState.deleted) {
@@ -104,10 +122,13 @@ fun SessionDetailRoute(
         waypoints = uiState.waypoints,
         track = uiState.track,
         unitSystem = settings.unitSystem,
+        isExporting = isExporting,
+        exportEvents = viewModel.exportEvents,
         onBack = onBack,
         onOpenWaypoint = onOpenWaypoint,
         onDelete = viewModel::delete,
         onRename = viewModel::rename,
+        onExport = viewModel::exportGpx,
         modifier = modifier,
     )
 }
@@ -119,14 +140,37 @@ private fun SessionDetailScreen(
     waypoints: List<Waypoint>,
     track: List<TrackPoint>,
     unitSystem: UnitSystem,
+    isExporting: Boolean,
+    exportEvents: SharedFlow<GpxExportEvent>,
     onBack: () -> Unit,
     onOpenWaypoint: (Long) -> Unit,
     onDelete: () -> Unit,
     onRename: (String) -> Unit,
+    onExport: (OutputStream) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/gpx+xml"),
+    ) { uri ->
+        uri?.let { context.contentResolver.openOutputStream(it)?.let(onExport) }
+    }
+
+    val exportSuccessMessage = stringResource(R.string.gpx_export_success)
+    val exportErrorMessage = stringResource(R.string.gpx_export_error)
+    LaunchedEffect(exportEvents) {
+        exportEvents.collect { event ->
+            val message = when (event) {
+                GpxExportEvent.Success -> exportSuccessMessage
+                GpxExportEvent.Error -> exportErrorMessage
+            }
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     if (showDeleteDialog) {
         DeleteConfirmDialog(
@@ -182,6 +226,17 @@ private fun SessionDetailScreen(
                 },
                 actions = {
                     if (session != null) {
+                        val exportLabel = stringResource(R.string.action_export_gpx)
+                        IconButton(
+                            onClick = {
+                                val fileName = "${sanitizeFileName(session.name)}-" +
+                                    "${LocalDate.now().format(GpxFileNameDateFormatter)}.gpx"
+                                exportLauncher.launch(fileName)
+                            },
+                            enabled = !isExporting,
+                        ) {
+                            Sym(icon = Glyph.FileDownload, contentDescription = exportLabel)
+                        }
                         val deleteLabel = stringResource(R.string.action_delete)
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Sym(icon = Glyph.Delete, contentDescription = deleteLabel, tint = SoftError)
@@ -194,6 +249,7 @@ private fun SessionDetailScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         // session stays null only for the brief load; nothing to render until it resolves.
         if (session == null) return@Scaffold

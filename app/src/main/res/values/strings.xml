@@ -6,6 +6,7 @@
     <string name="waiting_for_fix_with_satellites">Searching for satellites… %1$d visible, %2$d used</string>
     <string name="fix_obtained">Fix acquired</string>
     <string name="fix_obtained_with_satellites">3D fix · %1$d satellites</string>
+    <string name="fix_lost">GPS signal lost — reacquiring…</string>
     <string name="hint_clear_sky">Clear the view of the sky to speed up fix acquisition.</string>
 
     <!-- Permission -->
@@ -13,7 +14,11 @@
     <string name="permission_rationale">CairnGPS needs access to your precise GPS location to show your coordinates, altitude, and more.\n\nNo data is sent online: everything stays on your device.</string>
     <string name="permission_grant">Allow access</string>
     <string name="permission_denied_rationale">Permission was denied. CairnGPS can\'t work without location access. You can enable it from the app settings.</string>
+    <string name="permission_approximate_rationale">CairnGPS needs precise location to work. Approximate location isn\'t enough for GPS coordinates and satellite data. Please allow precise access.</string>
     <string name="permission_open_settings">Open settings</string>
+
+    <!-- GPS coordinates -->
+    <string name="hemisphere_west">W</string>
 
     <!-- Main screen: data labels -->
     <string name="label_coordinates">Coordinates</string>
@@ -89,6 +94,9 @@
     <string name="action_open_in_maps">Open in a map app</string>
     <string name="no_maps_app">No map app installed</string>
     <string name="action_delete">Delete</string>
+    <string name="action_export_gpx">Export as GPX</string>
+    <string name="gpx_export_success">GPX file exported</string>
+    <string name="gpx_export_error">Couldn\'t export the GPX file</string>
     <string name="waypoint_delete_dialog_title">Delete this waypoint?</string>
     <string name="waypoint_delete_dialog_message_fmt">\"%1$s\" will be permanently deleted. The parent track is not affected. This action is irreversible.</string>
     <string name="waypoint_parent_session">Parent track</string>

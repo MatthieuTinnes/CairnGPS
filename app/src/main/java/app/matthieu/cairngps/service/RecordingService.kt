@@ -72,9 +72,9 @@ class RecordingService : Service() {
         when (intent?.action) {
             ACTION_START -> handleStart()
             ACTION_STOP -> handleStop()
-            // Sticky restart after the process was killed: resume the notification only if a
-            // recording is still tracked as active, otherwise there is nothing to show.
-            null -> if (recordingRepository.isRecording) handleStart() else stopSelf()
+            // Sticky restart after the process was killed: resume the in-progress recording that
+            // RecordingRepository durably checkpointed, if there was one — see its class doc.
+            null -> handleResume()
         }
         return START_STICKY
     }
@@ -85,10 +85,31 @@ class RecordingService : Service() {
             stopSelf()
             return
         }
-        recordingRepository.start()
+        recordingRepository.start(getString(R.string.session_default_name_prefix))
+        showForegroundNotification()
+    }
+
+    private fun handleResume() {
+        if (!hasLocationPermission()) {
+            // Should not happen: a recording can only have started from behind the permission gate.
+            stopSelf()
+            return
+        }
+        scope.launch {
+            if (recordingRepository.resumeIfActive()) {
+                showForegroundNotification()
+            } else {
+                stopSelf()
+            }
+        }
+    }
+
+    /** Shared by a fresh start and a resume-after-process-death: shows the notification and starts its ticker. */
+    private fun showForegroundNotification() {
         createNotificationChannel()
+        val state = recordingRepository.state.value
         if (!isForeground) {
-            startForeground(NOTIFICATION_ID, buildNotification(recordingRepository.state.value, elapsedMs = 0L))
+            startForeground(NOTIFICATION_ID, buildNotification(state, elapsedSince(state.startTimestamp)))
             isForeground = true
         }
         if (tickerJob == null) {
@@ -98,9 +119,8 @@ class RecordingService : Service() {
                 // clearing state) still tears the notification down instead of freezing on a
                 // stale "0s" readout.
                 while (recordingRepository.state.value.isRecording) {
-                    val state = recordingRepository.state.value
-                    val elapsed = (System.currentTimeMillis() - state.startTimestamp).coerceAtLeast(0)
-                    notificationManager.notify(NOTIFICATION_ID, buildNotification(state, elapsed))
+                    val current = recordingRepository.state.value
+                    notificationManager.notify(NOTIFICATION_ID, buildNotification(current, elapsedSince(current.startTimestamp)))
                     delay(1_000L)
                 }
                 tickerJob = null
@@ -113,9 +133,12 @@ class RecordingService : Service() {
         }
     }
 
+    private fun elapsedSince(startTimestamp: Long): Long =
+        (System.currentTimeMillis() - startTimestamp).coerceAtLeast(0)
+
     private fun handleStop() {
         scope.launch {
-            recordingRepository.stop(getString(R.string.session_default_name_prefix))
+            recordingRepository.stop()
             tickerJob?.cancel()
             tickerJob = null
             stopForeground(STOP_FOREGROUND_REMOVE)

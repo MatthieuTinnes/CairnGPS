@@ -6,13 +6,18 @@
     <string name="waiting_for_fix_with_satellites">Recherche de satellites… %1$d visibles, %2$d utilisé</string>
     <string name="fix_obtained">Fix obtenu</string>
     <string name="fix_obtained_with_satellites">Fix 3D · %1$d satellites</string>
+    <string name="fix_lost">Signal GPS perdu — recherche…</string>
     <string name="hint_clear_sky">Dégagez la vue du ciel pour accélérer l\'acquisition du fix.</string>
+
+    <!-- GPS coordinates -->
+    <string name="hemisphere_west">O</string>
 
     <!-- Permission -->
     <string name="permission_title">Accès à la position requis</string>
     <string name="permission_rationale">CairnGPS a besoin d\'accéder à votre position GPS précise pour afficher vos coordonnées, votre altitude, etc.\n\nAucune donnée n\'est envoyée en ligne : tout reste sur votre appareil.</string>
     <string name="permission_grant">Autoriser l\'accès</string>
     <string name="permission_denied_rationale">La permission a été refusée. CairnGPS ne peut pas fonctionner sans accès à la position. Vous pouvez l\'activer depuis les réglages de l\'application.</string>
+    <string name="permission_approximate_rationale">CairnGPS a besoin de la position précise. La position approximative ne suffit pas pour les coordonnées GPS et les données satellites. Merci d\'autoriser l\'accès précis.</string>
     <string name="permission_open_settings">Ouvrir les réglages</string>
 
     <!-- Main screen: data labels -->
@@ -89,6 +94,9 @@
     <string name="action_open_in_maps">Ouvrir dans une carte</string>
     <string name="no_maps_app">Aucune application de carte installée</string>
     <string name="action_delete">Supprimer</string>
+    <string name="action_export_gpx">Exporter en GPX</string>
+    <string name="gpx_export_success">Fichier GPX exporté</string>
+    <string name="gpx_export_error">Impossible d\'exporter le fichier GPX</string>
     <string name="waypoint_delete_dialog_title">Supprimer ce repère ?</string>
     <string name="waypoint_delete_dialog_message_fmt">« %1$s » sera définitivement supprimé. La session parente associée n\'est pas affectée. Cette action est irréversible.</string>
     <string name="waypoint_parent_session">Trace parente</string>

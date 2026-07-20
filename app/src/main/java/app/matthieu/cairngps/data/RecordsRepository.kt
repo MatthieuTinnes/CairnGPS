@@ -55,4 +55,59 @@ class RecordsRepository(private val dao: RecordDao) {
         }
         improves
     }
+
+    /**
+     * Registers every candidate in [candidates] in one pass: one [RecordDao.getAll] read and, if
+     * anything improved, one [RecordDao.upsertAll] write — instead of one read + conditional write
+     * per candidate under the mutex. Same "strictly better only" semantics as [submit], and still
+     * atomic under the same [mutex].
+     */
+    suspend fun submitAll(candidates: List<RecordCandidate>) {
+        if (candidates.isEmpty()) return
+        mutex.withLock {
+            val current = dao.getAll().associateBy { it.type }
+            val best = LinkedHashMap<RecordType, RecordCandidate>()
+            for (candidate in candidates) {
+                val existing = current[candidate.type.name]
+                val improvesStored = existing == null ||
+                    if (candidate.type.higherIsBetter) {
+                        candidate.value > existing.value
+                    } else {
+                        candidate.value < existing.value
+                    }
+                if (!improvesStored) continue
+
+                val bestSoFar = best[candidate.type]
+                val improvesBatch = bestSoFar == null ||
+                    if (candidate.type.higherIsBetter) {
+                        candidate.value > bestSoFar.value
+                    } else {
+                        candidate.value < bestSoFar.value
+                    }
+                if (improvesBatch) best[candidate.type] = candidate
+            }
+            if (best.isNotEmpty()) {
+                dao.upsertAll(best.values.map { it.toRecordEntry() })
+            }
+        }
+    }
+}
+
+/** One candidate value considered by [RecordsRepository.submitAll]; mirrors [RecordsRepository.submit]'s parameters. */
+data class RecordCandidate(
+    val type: RecordType,
+    val value: Double,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val achievedAt: Long = System.currentTimeMillis(),
+    val sessionId: Long? = null,
+) {
+    fun toRecordEntry() = RecordEntry(
+        type = type.name,
+        value = value,
+        latitude = latitude,
+        longitude = longitude,
+        achievedAt = achievedAt,
+        sessionId = sessionId,
+    )
 }

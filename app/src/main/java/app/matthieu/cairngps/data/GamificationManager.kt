@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
-import app.matthieu.cairngps.ui.gamification.Achievements
-import app.matthieu.cairngps.ui.gamification.AchievementDef
-import app.matthieu.cairngps.ui.gamification.GamificationMetrics
+import app.matthieu.cairngps.domain.gamification.Achievements
+import app.matthieu.cairngps.domain.gamification.AchievementDef
+import app.matthieu.cairngps.domain.gamification.GamificationMetrics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -66,50 +66,57 @@ class GamificationManager(
      * rows can be renamed/deleted independently of this collector, and [RecordsRepository.submit]
      * only ever keeps the best value anyway, so re-checking already-known bests is wasted work but
      * never wrong — simpler than tracking which sessions were already submitted.
+     *
+     * All candidates across all sessions go through a single [RecordsRepository.submitAll] call,
+     * rather than 9 individual [RecordsRepository.submit] calls per session — avoids
+     * an O(N×9) DB read/write pattern under the mutex on every `sessions()` emission.
      */
     private suspend fun submitSessionRecords(sessions: List<Session>) {
-        for (session in sessions) {
-            recordsRepository.submit(
-                RecordType.MAX_SPEED, session.maxSpeed.toDouble(),
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            recordsRepository.submit(
-                RecordType.MAX_ALTITUDE, session.maxAltitude,
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            recordsRepository.submit(
-                RecordType.MIN_ALTITUDE, session.minAltitude,
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            recordsRepository.submit(
-                RecordType.MAX_ELEVATION_GAIN, session.elevationGain,
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            recordsRepository.submit(
-                RecordType.MAX_DISTANCE, session.distanceMeters,
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            // Session only stores independent bounding-box extremes (e.g. latitudeMax isn't
-            // paired with the longitude reached at that same instant) unlike a single live fix,
-            // which has both coordinates together — see submitLiveFix below. So only the axis
-            // that is actually the record's value is set here; the other coordinate is left null.
-            recordsRepository.submit(
-                RecordType.NORTHERNMOST, session.latitudeMax, latitude = session.latitudeMax,
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            recordsRepository.submit(
-                RecordType.SOUTHERNMOST, session.latitudeMin, latitude = session.latitudeMin,
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            recordsRepository.submit(
-                RecordType.EASTERNMOST, session.longitudeMax, longitude = session.longitudeMax,
-                achievedAt = session.endTimestamp, sessionId = session.id,
-            )
-            recordsRepository.submit(
-                RecordType.WESTERNMOST, session.longitudeMin, longitude = session.longitudeMin,
-                achievedAt = session.endTimestamp, sessionId = session.id,
+        val candidates = sessions.flatMap { session ->
+            listOf(
+                RecordCandidate(
+                    RecordType.MAX_SPEED, session.maxSpeed.toDouble(),
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                RecordCandidate(
+                    RecordType.MAX_ALTITUDE, session.maxAltitude,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                RecordCandidate(
+                    RecordType.MIN_ALTITUDE, session.minAltitude,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                RecordCandidate(
+                    RecordType.MAX_ELEVATION_GAIN, session.elevationGain,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                RecordCandidate(
+                    RecordType.MAX_DISTANCE, session.distanceMeters,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                // Session only stores independent bounding-box extremes (e.g. latitudeMax isn't
+                // paired with the longitude reached at that same instant) unlike a single live
+                // fix, which has both coordinates together — see submitLiveFix below. So only the
+                // axis that is actually the record's value is set here; the other is left null.
+                RecordCandidate(
+                    RecordType.NORTHERNMOST, session.latitudeMax, latitude = session.latitudeMax,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                RecordCandidate(
+                    RecordType.SOUTHERNMOST, session.latitudeMin, latitude = session.latitudeMin,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                RecordCandidate(
+                    RecordType.EASTERNMOST, session.longitudeMax, longitude = session.longitudeMax,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
+                RecordCandidate(
+                    RecordType.WESTERNMOST, session.longitudeMin, longitude = session.longitudeMin,
+                    achievedAt = session.endTimestamp, sessionId = session.id,
+                ),
             )
         }
+        recordsRepository.submitAll(candidates)
     }
 
     /**

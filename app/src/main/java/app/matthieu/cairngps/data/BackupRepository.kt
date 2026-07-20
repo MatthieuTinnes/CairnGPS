@@ -1,14 +1,17 @@
 package app.matthieu.cairngps.data
 
+import android.database.SQLException
 import androidx.room.withTransaction
+import app.matthieu.cairngps.data.backup.BackupJson
+import app.matthieu.cairngps.data.backup.CairnBackup
+import app.matthieu.cairngps.data.backup.toDto
+import app.matthieu.cairngps.data.backup.toEntity
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 
 /** Why an import was rejected — lets the UI layer pick the right localized message. */
 enum class BackupImportError {
@@ -29,8 +32,8 @@ class InvalidBackupException(val reason: BackupImportError, cause: Throwable? = 
  *
  * Streams are plain `java.io` types rather than `Uri`/`ContentResolver`, so this class stays free
  * of Android UI concerns; the caller (a Composable, via [android.content.ContentResolver]) opens
- * the stream chosen through the system file picker and hands it in. This class writes/reads but
- * never closes the stream — the caller owns that lifecycle.
+ * the stream chosen through the system file picker and hands it in. This class closes the stream
+ * once it's done writing/reading it.
  */
 class BackupRepository(
     private val database: AppDatabase,
@@ -46,18 +49,14 @@ class BackupRepository(
     suspend fun export(output: OutputStream) = withContext(Dispatchers.IO) {
         val backup = CairnBackup(
             exportedAt = System.currentTimeMillis(),
-            waypoints = waypointDao.getAll(),
-            sessions = sessionDao.getAll(),
-            trackPoints = trackPointDao.getAll(),
-            records = recordDao.getAll(),
-            achievements = achievementDao.getAll(),
+            waypoints = waypointDao.getAll().map { it.toDto() },
+            sessions = sessionDao.getAll().map { it.toDto() },
+            trackPoints = trackPointDao.getAll().map { it.toDto() },
+            records = recordDao.getAll().map { it.toDto() },
+            achievements = achievementDao.getAll().map { it.toDto() },
             settings = settingsRepository.current(),
         )
-        // flush(), not close(): the caller owns the stream's lifecycle (see class doc).
-        output.writer().apply {
-            write(BackupJson.encodeToString(backup))
-            flush()
-        }
+        output.writer().use { it.write(BackupJson.encodeToString(backup)) }
     }
 
     /**
@@ -71,7 +70,7 @@ class BackupRepository(
      */
     suspend fun import(input: InputStream) = withContext(Dispatchers.IO) {
         val backup = try {
-            BackupJson.decodeFromString<CairnBackup>(input.reader().readText())
+            input.reader().use { BackupJson.decodeFromString<CairnBackup>(it.readText()) }
         } catch (e: SerializationException) {
             throw InvalidBackupException(BackupImportError.UNREADABLE, e)
         } catch (e: IllegalArgumentException) {
@@ -83,20 +82,27 @@ class BackupRepository(
             throw InvalidBackupException(BackupImportError.FUTURE_VERSION)
         }
 
-        database.withTransaction {
-            // Children before parents: track points and waypoints reference sessions.
-            trackPointDao.deleteAll()
-            waypointDao.deleteAll()
-            recordDao.deleteAll()
-            achievementDao.deleteAll()
-            sessionDao.deleteAll()
+        try {
+            database.withTransaction {
+                // Children before parents: track points and waypoints reference sessions.
+                trackPointDao.deleteAll()
+                waypointDao.deleteAll()
+                recordDao.deleteAll()
+                achievementDao.deleteAll()
+                sessionDao.deleteAll()
 
-            // Parents before children on the way back in, so foreign keys always resolve.
-            sessionDao.insertAll(backup.sessions)
-            waypointDao.insertAll(backup.waypoints)
-            trackPointDao.insertAll(backup.trackPoints)
-            recordDao.upsertAll(backup.records)
-            achievementDao.insertAll(backup.achievements)
+                // Parents before children on the way back in, so foreign keys always resolve.
+                sessionDao.insertAll(backup.sessions.map { it.toEntity() })
+                waypointDao.insertAll(backup.waypoints.map { it.toEntity() })
+                trackPointDao.insertAll(backup.trackPoints.map { it.toEntity() })
+                recordDao.upsertAll(backup.records.map { it.toEntity() })
+                achievementDao.insertAll(backup.achievements.map { it.toEntity() })
+            }
+        } catch (e: SQLException) {
+            // Structurally valid but inconsistent backup (e.g. an orphaned trackPoint.sessionId)
+            // violates a foreign key constraint; the transaction has already rolled back, so
+            // surface it as an unreadable file rather than letting it crash the app.
+            throw InvalidBackupException(BackupImportError.UNREADABLE, e)
         }
         settingsRepository.replaceAll(backup.settings)
     }

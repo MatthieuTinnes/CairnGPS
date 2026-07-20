@@ -54,6 +54,8 @@ import app.matthieu.cairngps.domain.format.formatElevation
 import app.matthieu.cairngps.domain.format.formatSpeed
 import app.matthieu.cairngps.domain.format.shortUnitLabel
 import app.matthieu.cairngps.domain.format.speedUnitLabel
+import app.matthieu.cairngps.domain.gamification.AchievementDef
+import app.matthieu.cairngps.domain.gamification.AchievementFamily
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGreen

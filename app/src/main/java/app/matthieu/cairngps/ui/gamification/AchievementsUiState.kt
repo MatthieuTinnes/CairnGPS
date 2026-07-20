@@ -1,5 +1,9 @@
 package app.matthieu.cairngps.ui.gamification
 
+import app.matthieu.cairngps.domain.gamification.Achievements
+import app.matthieu.cairngps.domain.gamification.AchievementDef
+import app.matthieu.cairngps.domain.gamification.FamilyProgress
+
 /** One catalog entry paired with its unlock date, or `null` while still locked. */
 data class AchievementItem(
     val def: AchievementDef,
