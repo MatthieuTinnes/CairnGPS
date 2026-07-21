@@ -109,6 +109,9 @@ private val AchievementFamily.glyph: Char
         AchievementFamily.SESSIONS -> Glyph.Map
         AchievementFamily.GEO -> Glyph.Public
         AchievementFamily.TIME -> Glyph.WbTwilight
+        AchievementFamily.REPERES -> Glyph.PinDrop
+        AchievementFamily.BOUSSOLE -> Glyph.Navigation
+        AchievementFamily.MAITRISE -> Glyph.Settings
     }
 
 private val AchievementFamily.titleRes: Int
@@ -120,6 +123,9 @@ private val AchievementFamily.titleRes: Int
         AchievementFamily.SESSIONS -> R.string.achievement_family_sessions
         AchievementFamily.GEO -> R.string.achievement_family_geo
         AchievementFamily.TIME -> R.string.achievement_family_time
+        AchievementFamily.REPERES -> R.string.achievement_family_reperes
+        AchievementFamily.BOUSSOLE -> R.string.achievement_family_boussole
+        AchievementFamily.MAITRISE -> R.string.achievement_family_maitrise
     }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -211,7 +217,7 @@ private fun NextAchievementCard(next: NextAchievementUi, unitSystem: UnitSystem)
                 Text(
                     text = stringResource(
                         R.string.achievements_next_label_fmt,
-                        stringResource(R.string.achievement_xp_fmt, next.def.xp),
+                        stringResource(R.string.achievement_xp_fmt, next.def.xp.points),
                     ),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
@@ -289,7 +295,7 @@ private fun AchievementBadge(item: AchievementItem, unitSystem: UnitSystem) {
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = stringResource(R.string.achievement_xp_fmt, item.def.xp),
+                text = stringResource(R.string.achievement_xp_fmt, item.def.xp.points),
                 style = MaterialTheme.typography.labelSmall,
                 fontFamily = MonoFontFamily,
                 fontWeight = FontWeight.Bold,
@@ -306,8 +312,13 @@ private fun formatFamilyValue(family: AchievementFamily, value: Double, unitSyst
     AchievementFamily.SATELLITES -> "%.0f".format(value)
     AchievementFamily.DISTANCE -> "${formatDistance(value, unitSystem)} ${distanceUnitLabel(unitSystem)}"
     AchievementFamily.SESSIONS -> "%.0f".format(value)
-    AchievementFamily.GEO -> "" // GEO has no progress bar (see Achievements.progressToNext)
-    AchievementFamily.TIME -> "" // TIME has no progress bar (see Achievements.progressToNext)
+    AchievementFamily.REPERES -> "%.0f".format(value)
+    // These families have no progress bar (see Achievements.progressToNext): every achievement in
+    // them is a one-shot condition, not a scalar threshold.
+    AchievementFamily.GEO -> ""
+    AchievementFamily.TIME -> ""
+    AchievementFamily.BOUSSOLE -> ""
+    AchievementFamily.MAITRISE -> ""
 }
 
 /**

@@ -56,6 +56,26 @@ class AchievementsTest {
 
     private fun defOf(id: String) = Achievements.ALL.first { it.id == id }
 
+    private fun timestampAt(date: LocalDate, hour: Int = 12, minute: Int = 0): Long =
+        ZonedDateTime.of(date, LocalTime.of(hour, minute), ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+    private fun sessionOnDay(date: LocalDate) = Session(
+        name = "s",
+        startTimestamp = timestampAt(date),
+        endTimestamp = timestampAt(date),
+        distanceMeters = 0.0,
+        averageSpeed = 0f,
+        maxSpeed = 0f,
+        elevationGain = 0.0,
+        elevationLoss = 0.0,
+        minAltitude = 0.0,
+        maxAltitude = 0.0,
+        latitudeMax = 0.0,
+        latitudeMin = 0.0,
+        longitudeMax = 0.0,
+        longitudeMin = 0.0,
+    )
+
     // --- metricsFrom ---------------------------------------------------------------------------
 
     @Test
@@ -111,6 +131,43 @@ class AchievementsTest {
         assertFalse(justAfter.hasDawnWaypoint)
     }
 
+    @Test
+    fun `metricsFrom computes the longest run of consecutive calendar days`() {
+        val sessions = listOf(
+            sessionOnDay(LocalDate.of(2024, 6, 1)),
+            sessionOnDay(LocalDate.of(2024, 6, 2)),
+            sessionOnDay(LocalDate.of(2024, 6, 3)),
+            sessionOnDay(LocalDate.of(2024, 6, 10)), // breaks the streak
+        )
+        val metrics = Achievements.metricsFrom(emptyList(), sessions, emptyList())
+        assertEquals(3, metrics.longestDayStreak)
+    }
+
+    @Test
+    fun `metricsFrom counts distinct calendar months across sessions`() {
+        val sessions = listOf(
+            sessionOnDay(LocalDate.of(2024, 1, 5)),
+            sessionOnDay(LocalDate.of(2024, 1, 20)), // same month as above
+            sessionOnDay(LocalDate.of(2024, 6, 1)),
+        )
+        val metrics = Achievements.metricsFrom(emptyList(), sessions, emptyList())
+        assertEquals(2, metrics.distinctMonthsCount)
+    }
+
+    @Test
+    fun `metricsFrom flags a session whose start and end local dates differ`() {
+        val session = Session(
+            name = "s",
+            startTimestamp = timestampAt(LocalDate.of(2024, 6, 1), hour = 23, minute = 30),
+            endTimestamp = timestampAt(LocalDate.of(2024, 6, 2), hour = 0, minute = 30),
+            distanceMeters = 0.0, averageSpeed = 0f, maxSpeed = 0f,
+            elevationGain = 0.0, elevationLoss = 0.0, minAltitude = 0.0, maxAltitude = 0.0,
+            latitudeMax = 0.0, latitudeMin = 0.0, longitudeMax = 0.0, longitudeMin = 0.0,
+        )
+        val metrics = Achievements.metricsFrom(emptyList(), listOf(session), emptyList())
+        assertTrue(metrics.hasMidnightSession)
+    }
+
     // --- isUnlocked ------------------------------------------------------------------------------
 
     @Test
@@ -155,13 +212,62 @@ class AchievementsTest {
         assertFalse(Achievements.isUnlocked(def, GamificationMetrics()))
     }
 
-    // --- progressToNext ----------------------------------------------------------------------------
+    @Test
+    fun `isUnlocked waypoints_icones requires every reference icon to have been used`() {
+        val def = defOf("waypoints_icones")
+        val everyIcon = setOf(
+            "flag", "terrain", "forest", "water_drop", "park", "hiking", "cottage", "cabin",
+            "restaurant", "photo_camera", "local_parking", "warning", "star", "pin_drop", "sailing", "waves",
+        )
+        assertTrue(Achievements.isUnlocked(def, GamificationMetrics(distinctWaypointIcons = everyIcon)))
+        assertFalse(Achievements.isUnlocked(def, GamificationMetrics(distinctWaypointIcons = everyIcon - "flag")))
+    }
 
     @Test
-    fun `progressToNext is null for GEO and TIME families`() {
-        assertNull(Achievements.progressToNext(AchievementFamily.GEO, GamificationMetrics()))
-        assertNull(Achievements.progressToNext(AchievementFamily.TIME, GamificationMetrics()))
+    fun `isUnlocked reads persisted ETAT-EVENEMENT flags`() {
+        assertTrue(Achievements.isUnlocked(defOf("app_export"), GamificationMetrics(flags = setOf("app_export"))))
+        assertFalse(Achievements.isUnlocked(defOf("app_export"), GamificationMetrics()))
+
+        assertTrue(
+            Achievements.isUnlocked(
+                defOf("app_themes"),
+                GamificationMetrics(flags = setOf("theme_light", "theme_dark")),
+            ),
+        )
+        assertFalse(Achievements.isUnlocked(defOf("app_themes"), GamificationMetrics(flags = setOf("theme_light"))))
     }
+
+    @Test
+    fun `deferred stub achievements never unlock regardless of how extreme the metrics are`() {
+        val stubIds = setOf(
+            "speed_still", "waypoints_arrivee", "compass_nord", "compass_rose", "geo_antipodes", "app_globe",
+        )
+        val extremeMetrics = GamificationMetrics(
+            maxAltitude = 100_000.0,
+            maxSpeedMs = 100_000f,
+            maxSatellites = 1000,
+            cumulativeDistanceMeters = 1e9,
+            sessionCount = 100_000,
+            waypointCount = 100_000,
+            longestDayStreak = 10_000,
+            distinctMonthsCount = 12,
+            flags = setOf(
+                "theme_light", "theme_dark", "format_decimal", "format_dms",
+                "app_export", "app_backup", "cmp_decl", "geo_confluence",
+            ),
+        )
+        for (id in stubIds) {
+            assertFalse(id, Achievements.isUnlocked(defOf(id), extremeMetrics))
+        }
+    }
+
+    @Test
+    fun `catalog has 72 unique achievements`() {
+        assertEquals(72, Achievements.ALL.size)
+        assertEquals(72, Achievements.ALL.map { it.id }.toSet().size)
+    }
+
+    // --- progressToNext ----------------------------------------------------------------------------
 
     @Test
     fun `progressToNext computes the fraction between the surrounding paliers`() {
@@ -191,12 +297,32 @@ class AchievementsTest {
     fun `progressToNext past the last palier has no next threshold and full fraction`() {
         val progress = Achievements.progressToNext(
             AchievementFamily.ALTITUDE,
-            GamificationMetrics(maxAltitude = 6000.0),
+            GamificationMetrics(maxAltitude = 9000.0),
         )
         requireNotNull(progress)
-        assertEquals(5825.0, progress.currentThreshold, 0.0)
+        assertEquals(8849.0, progress.currentThreshold, 0.0)
         assertNull(progress.nextThreshold)
         assertEquals(1f, progress.fraction, 0f)
+    }
+
+    @Test
+    fun `progressToNext ignores one-shot achievements mixed into a scalar family`() {
+        // altitude_neg/dplus_* are oneShotCheck-based ALTITUDE entries; they must never appear as
+        // paliers alongside the threshold-based ones (altitude_1000, altitude_puy_de_dome...).
+        val progress = Achievements.progressToNext(
+            AchievementFamily.ALTITUDE,
+            GamificationMetrics(maxAltitude = 500.0),
+        )
+        requireNotNull(progress)
+        assertEquals(1000.0, progress.nextThreshold)
+    }
+
+    @Test
+    fun `progressToNext is null for a family made entirely of one-shot achievements`() {
+        assertNull(Achievements.progressToNext(AchievementFamily.GEO, GamificationMetrics()))
+        assertNull(Achievements.progressToNext(AchievementFamily.TIME, GamificationMetrics()))
+        assertNull(Achievements.progressToNext(AchievementFamily.BOUSSOLE, GamificationMetrics()))
+        assertNull(Achievements.progressToNext(AchievementFamily.MAITRISE, GamificationMetrics()))
     }
 
     @Test
@@ -219,7 +345,8 @@ class AchievementsTest {
 
     @Test
     fun `xpFor sums the xp of known unlocked ids`() {
-        assertEquals(35, Achievements.xpFor(setOf("altitude_1000", "speed_30")))
+        // altitude_1000 is FACILE (20), speed_30 is DECOUVERTE (10).
+        assertEquals(30, Achievements.xpFor(setOf("altitude_1000", "speed_30")))
     }
 
     @Test
@@ -249,11 +376,12 @@ class AchievementsTest {
     @Test
     fun `nextAchievement is null once every scalar family is fully unlocked`() {
         val metrics = GamificationMetrics(
-            maxAltitude = 5825.0,
+            maxAltitude = 8849.0,
             maxSpeedMs = (800.0 / 3.6).toFloat(),
-            maxSatellites = 20,
-            cumulativeDistanceMeters = 100_000.0,
-            sessionCount = 50,
+            maxSatellites = 30,
+            cumulativeDistanceMeters = 40_075_000.0,
+            sessionCount = 100,
+            waypointCount = 50,
         )
         assertNull(Achievements.nextAchievement(metrics))
     }

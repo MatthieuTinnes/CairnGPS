@@ -26,6 +26,11 @@ data class CairnBackup(
     val records: List<RecordDto>,
     val achievements: List<AchievementStateDto>,
     val settings: AppSettings,
+    // Defaulted to empty so a backup exported before the gamification_flags table existed still
+    // imports cleanly (ignoreUnknownKeys handles the reverse: a newer backup opened by this
+    // version, since the field is simply absent from CairnBackup.version's understood shape only
+    // when it grows a *breaking* change, which this isn't).
+    val flags: List<GamificationFlagDto> = emptyList(),
 ) {
     companion object {
         const val CURRENT_VERSION = 1

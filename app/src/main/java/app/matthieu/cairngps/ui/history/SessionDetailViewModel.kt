@@ -3,6 +3,7 @@ package app.matthieu.cairngps.ui.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import app.matthieu.cairngps.data.GamificationFlagsRepository
 import app.matthieu.cairngps.data.GpxExporter
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
@@ -48,6 +49,7 @@ data class SessionDetailUiState(
 class SessionDetailViewModel(
     private val sessionRepository: SessionRepository,
     waypointRepository: WaypointRepository,
+    private val gamificationFlagsRepository: GamificationFlagsRepository,
     private val sessionId: Long,
 ) : ViewModel() {
 
@@ -110,6 +112,7 @@ class SessionDetailViewModel(
             _isExporting.value = true
             val event = try {
                 gpxExporter.export(session, state.track, state.waypoints, output)
+                gamificationFlagsRepository.set("app_export")
                 GpxExportEvent.Success
             } catch (e: IOException) {
                 GpxExportEvent.Error
@@ -124,9 +127,10 @@ class SessionDetailViewModel(
         fun factory(
             sessionRepository: SessionRepository,
             waypointRepository: WaypointRepository,
+            gamificationFlagsRepository: GamificationFlagsRepository,
             sessionId: Long,
         ): ViewModelProvider.Factory = factoryOf {
-            SessionDetailViewModel(sessionRepository, waypointRepository, sessionId)
+            SessionDetailViewModel(sessionRepository, waypointRepository, gamificationFlagsRepository, sessionId)
         }
     }
 }

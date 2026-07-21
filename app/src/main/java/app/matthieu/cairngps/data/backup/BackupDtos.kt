@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.data.backup
 
 import app.matthieu.cairngps.data.AchievementState
+import app.matthieu.cairngps.data.GamificationFlag
 import app.matthieu.cairngps.data.RecordEntry
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.TrackPoint
@@ -187,3 +188,13 @@ data class AchievementStateDto(
 fun AchievementState.toDto() = AchievementStateDto(id = id, unlockedAt = unlockedAt)
 
 fun AchievementStateDto.toEntity() = AchievementState(id = id, unlockedAt = unlockedAt)
+
+@Serializable
+data class GamificationFlagDto(
+    val key: String,
+    val setAt: Long,
+)
+
+fun GamificationFlag.toDto() = GamificationFlagDto(key = key, setAt = setAt)
+
+fun GamificationFlagDto.toEntity() = GamificationFlag(key = key, setAt = setAt)

@@ -129,7 +129,14 @@ private val RecordType.glyph: Char
         RecordType.NORTHERNMOST, RecordType.SOUTHERNMOST,
         RecordType.EASTERNMOST, RecordType.WESTERNMOST,
         -> Glyph.Public
-        RecordType.MAX_SATELLITES -> Glyph.SatelliteAlt
+        // Tracked for achievements only (see RecordsViewModel.DISPLAY_ORDER), never rendered by
+        // this screen — the branch only exists to keep this `when` exhaustive.
+        RecordType.MAX_SATELLITES,
+        RecordType.MAX_CONSTELLATIONS,
+        RecordType.MAX_SATELLITE_ELEVATION,
+        RecordType.MIN_HORIZONTAL_ACCURACY,
+        RecordType.MIN_ABS_LATITUDE,
+        -> Glyph.SatelliteAlt
     }
 
 @Composable
@@ -202,8 +209,13 @@ private fun formatRecordValue(
             formatCoordinate(entry.value, isLatitude = true, format = coordinateFormat, westLabel = westLabel)
         RecordType.EASTERNMOST, RecordType.WESTERNMOST ->
             formatCoordinate(entry.value, isLatitude = false, format = coordinateFormat, westLabel = westLabel)
-        // Tracked for the satellites achievement, not shown on this screen — see RecordsViewModel.
-        RecordType.MAX_SATELLITES -> entry.value.toInt().toString()
+        // Tracked for achievements only, not shown on this screen — see RecordsViewModel.DISPLAY_ORDER.
+        RecordType.MAX_SATELLITES,
+        RecordType.MAX_CONSTELLATIONS,
+        RecordType.MAX_SATELLITE_ELEVATION,
+        RecordType.MIN_HORIZONTAL_ACCURACY,
+        RecordType.MIN_ABS_LATITUDE,
+        -> entry.value.toString()
     }
 }
 

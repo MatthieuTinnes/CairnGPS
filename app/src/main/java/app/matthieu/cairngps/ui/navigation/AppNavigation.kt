@@ -242,6 +242,7 @@ fun MainScaffold(app: CairnApplication) {
                         sessionRepository = app.sessionRepository,
                         waypointRepository = app.waypointRepository,
                         settingsRepository = app.settingsRepository,
+                        gamificationFlagsRepository = app.gamificationFlagsRepository,
                         onBack = { navController.popBackStack() },
                         onOpenWaypoint = { waypointId -> navController.navigate(Routes.waypointDetail(waypointId)) },
                     )
@@ -272,6 +273,7 @@ fun MainScaffold(app: CairnApplication) {
                     SettingsRoute(
                         repository = app.settingsRepository,
                         backupRepository = app.backupRepository,
+                        gamificationFlagsRepository = app.gamificationFlagsRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }

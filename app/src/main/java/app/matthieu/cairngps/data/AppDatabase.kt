@@ -18,8 +18,9 @@ import androidx.room.migration.Migration
         AchievementState::class,
         TrackPoint::class,
         RecordingCheckpoint::class,
+        GamificationFlag::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -35,6 +36,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun trackPointDao(): TrackPointDao
 
     abstract fun recordingCheckpointDao(): RecordingCheckpointDao
+
+    abstract fun gamificationFlagDao(): GamificationFlagDao
 
     companion object {
         @Volatile
@@ -158,9 +161,23 @@ abstract class AppDatabase : RoomDatabase() {
             )
         }
 
+        /**
+         * Adds the `gamification_flags` table backing the 72-succès catalog's `ETAT`/`EVENEMENT`
+         * conditions (both hemispheres visited, both themes used, a trace exported...) — see
+         * [GamificationFlag]. No existing table changes: these flags are new, independent state.
+         */
+        private val MIGRATION_6_7 = Migration(6, 7) { db ->
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `gamification_flags` (" +
+                    "`key` TEXT NOT NULL, " +
+                    "`setAt` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`key`))",
+            )
+        }
+
         /** Exposed for migration tests, which need to build their own [Room.databaseBuilder]. */
         internal val ALL_MIGRATIONS: Array<Migration> =
-            arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 
         /** Returns the process-wide database singleton, building it on first access. */
         fun getInstance(context: Context): AppDatabase =

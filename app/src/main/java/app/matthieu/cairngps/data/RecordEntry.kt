@@ -19,6 +19,10 @@ enum class RecordType(val higherIsBetter: Boolean) {
     MAX_ELEVATION_GAIN(higherIsBetter = true),
     MAX_DISTANCE(higherIsBetter = true),
     MAX_SATELLITES(higherIsBetter = true),
+    MAX_CONSTELLATIONS(higherIsBetter = true),
+    MAX_SATELLITE_ELEVATION(higherIsBetter = true),
+    MIN_HORIZONTAL_ACCURACY(higherIsBetter = false),
+    MIN_ABS_LATITUDE(higherIsBetter = false),
 }
 
 /**

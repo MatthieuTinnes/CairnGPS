@@ -42,6 +42,7 @@ class BackupRepository(
     private val trackPointDao: TrackPointDao,
     private val recordDao: RecordDao,
     private val achievementDao: AchievementDao,
+    private val gamificationFlagDao: GamificationFlagDao,
     private val settingsRepository: SettingsRepository,
 ) {
 
@@ -55,6 +56,7 @@ class BackupRepository(
             records = recordDao.getAll().map { it.toDto() },
             achievements = achievementDao.getAll().map { it.toDto() },
             settings = settingsRepository.current(),
+            flags = gamificationFlagDao.getAll().map { it.toDto() },
         )
         output.writer().use { it.write(BackupJson.encodeToString(backup)) }
     }
@@ -89,6 +91,7 @@ class BackupRepository(
                 waypointDao.deleteAll()
                 recordDao.deleteAll()
                 achievementDao.deleteAll()
+                gamificationFlagDao.deleteAll()
                 sessionDao.deleteAll()
 
                 // Parents before children on the way back in, so foreign keys always resolve.
@@ -97,6 +100,7 @@ class BackupRepository(
                 trackPointDao.insertAll(backup.trackPoints.map { it.toEntity() })
                 recordDao.upsertAll(backup.records.map { it.toEntity() })
                 achievementDao.insertAll(backup.achievements.map { it.toEntity() })
+                gamificationFlagDao.insertAll(backup.flags.map { it.toEntity() })
             }
         } catch (e: SQLException) {
             // Structurally valid but inconsistent backup (e.g. an orphaned trackPoint.sessionId)

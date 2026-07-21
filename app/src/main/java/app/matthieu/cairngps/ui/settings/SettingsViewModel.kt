@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.GamificationFlagsRepository
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
@@ -21,8 +22,14 @@ import kotlinx.coroutines.launch
  *
  * Backup export/import is handled by the separate [BackupViewModel] (only the Settings screen
  * needs it), so this class stays a lightweight settings reader for every other screen.
+ * [gamificationFlagsRepository] is `null` everywhere except the Settings screen for the same
+ * reason: only that screen ever calls [setThemeMode]/[setCoordinateFormat], so it's the only one
+ * that needs to flag `APP_THEMES`/`APP_FORMATS` (see `succes.md` §4.10) when they're used.
  */
-class SettingsViewModel(private val repository: SettingsRepository) : ViewModel() {
+class SettingsViewModel(
+    private val repository: SettingsRepository,
+    private val gamificationFlagsRepository: GamificationFlagsRepository? = null,
+) : ViewModel() {
 
     val settings: StateFlow<AppSettings> = repository.settings.stateIn(
         scope = viewModelScope,
@@ -31,11 +38,28 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
     )
 
     fun setCoordinateFormat(format: CoordinateFormat) {
-        viewModelScope.launch { repository.setCoordinateFormat(format) }
+        viewModelScope.launch {
+            repository.setCoordinateFormat(format)
+            val flag = when (format) {
+                CoordinateFormat.DECIMAL -> "format_decimal"
+                CoordinateFormat.DMS -> "format_dms"
+            }
+            gamificationFlagsRepository?.set(flag)
+        }
     }
 
     fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch { repository.setThemeMode(mode) }
+        viewModelScope.launch {
+            repository.setThemeMode(mode)
+            // SYSTEM doesn't tell us which theme is actually rendered, so it sets neither flag —
+            // only an explicit LIGHT/DARK choice counts towards APP_THEMES.
+            val flag = when (mode) {
+                ThemeMode.LIGHT -> "theme_light"
+                ThemeMode.DARK -> "theme_dark"
+                ThemeMode.SYSTEM -> null
+            }
+            flag?.let { gamificationFlagsRepository?.set(it) }
+        }
     }
 
     fun setNorthReference(reference: NorthReference) {
@@ -47,7 +71,10 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
     }
 
     companion object {
-        fun factory(repository: SettingsRepository): ViewModelProvider.Factory =
-            factoryOf { SettingsViewModel(repository) }
+        fun factory(
+            repository: SettingsRepository,
+            gamificationFlagsRepository: GamificationFlagsRepository? = null,
+        ): ViewModelProvider.Factory =
+            factoryOf { SettingsViewModel(repository, gamificationFlagsRepository) }
     }
 }

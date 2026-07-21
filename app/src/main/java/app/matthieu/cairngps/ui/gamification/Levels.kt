@@ -40,14 +40,14 @@ object Levels {
     private val BANDS = listOf(
         Band(0, R.string.level_title_1),
         Band(50, R.string.level_title_2),
-        Band(120, R.string.level_title_3),
-        Band(220, R.string.level_title_4),
-        Band(350, R.string.level_title_5),
-        Band(520, R.string.level_title_6),
-        Band(730, R.string.level_title_7),
-        Band(1000, R.string.level_title_8),
-        Band(1350, R.string.level_title_9),
-        Band(1800, R.string.level_title_10),
+        Band(130, R.string.level_title_3),
+        Band(250, R.string.level_title_4),
+        Band(410, R.string.level_title_5),
+        Band(610, R.string.level_title_6),
+        Band(850, R.string.level_title_7),
+        Band(1130, R.string.level_title_8),
+        Band(1450, R.string.level_title_9),
+        Band(1850, R.string.level_title_10),
     )
 
     /** Derives the [LevelInfo] for a lifetime total of [totalXp]. */

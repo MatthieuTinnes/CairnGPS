@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import app.matthieu.cairngps.data.BackupImportError
 import app.matthieu.cairngps.data.BackupRepository
+import app.matthieu.cairngps.data.GamificationFlagsRepository
 import app.matthieu.cairngps.data.InvalidBackupException
 import app.matthieu.cairngps.ui.common.factoryOf
 import java.io.IOException
@@ -32,7 +33,10 @@ sealed interface BackupEvent {
  * instantiates just to read [AppSettings][app.matthieu.cairngps.data.AppSettings]) so those seven
  * other screens no longer carry a backup dependency they never use.
  */
-class BackupViewModel(private val backupRepository: BackupRepository) : ViewModel() {
+class BackupViewModel(
+    private val backupRepository: BackupRepository,
+    private val gamificationFlagsRepository: GamificationFlagsRepository,
+) : ViewModel() {
 
     private val _isBackupWorking = MutableStateFlow(false)
 
@@ -48,6 +52,7 @@ class BackupViewModel(private val backupRepository: BackupRepository) : ViewMode
             _isBackupWorking.value = true
             val event = try {
                 backupRepository.export(output)
+                gamificationFlagsRepository.set("app_backup")
                 BackupEvent.ExportSuccess
             } catch (e: IOException) {
                 BackupEvent.ExportError
@@ -77,7 +82,10 @@ class BackupViewModel(private val backupRepository: BackupRepository) : ViewMode
     }
 
     companion object {
-        fun factory(backupRepository: BackupRepository): ViewModelProvider.Factory =
-            factoryOf { BackupViewModel(backupRepository) }
+        fun factory(
+            backupRepository: BackupRepository,
+            gamificationFlagsRepository: GamificationFlagsRepository,
+        ): ViewModelProvider.Factory =
+            factoryOf { BackupViewModel(backupRepository, gamificationFlagsRepository) }
     }
 }

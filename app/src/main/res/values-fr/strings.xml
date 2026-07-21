@@ -253,6 +253,9 @@
     <string name="achievement_family_sessions">Nombre de sessions</string>
     <string name="achievement_family_geo">Franchissements géographiques</string>
     <string name="achievement_family_time">Heures notables</string>
+    <string name="achievement_family_reperes">Repères posés</string>
+    <string name="achievement_family_boussole">Boussole</string>
+    <string name="achievement_family_maitrise">Maîtrise de l\'application</string>
 
     <!-- Succès : altitude franchie, y compris quelques sommets célèbres -->
     <string name="achievement_altitude_1000_title">Premier sommet</string>
@@ -263,18 +266,36 @@
     <string name="achievement_altitude_2000_desc">Atteindre %1$s %2$s d\'altitude.</string>
     <string name="achievement_altitude_3000_title">Grand alpiniste</string>
     <string name="achievement_altitude_3000_desc">Atteindre %1$s %2$s d\'altitude.</string>
+    <string name="achievement_altitude_neg_title">Sous le niveau</string>
+    <string name="achievement_altitude_neg_desc">Être repéré à une altitude négative.</string>
     <string name="achievement_altitude_fuji_title">Mont Fuji</string>
     <string name="achievement_altitude_fuji_desc">Atteindre %1$s %2$s, l\'altitude du mont Fuji.</string>
     <string name="achievement_altitude_mont_blanc_title">Mont Blanc</string>
     <string name="achievement_altitude_mont_blanc_desc">Atteindre %1$s %2$s, l\'altitude du mont Blanc.</string>
     <string name="achievement_altitude_kilimanjaro_title">Kilimandjaro</string>
     <string name="achievement_altitude_kilimanjaro_desc">Atteindre %1$s %2$s, l\'altitude du Kilimandjaro.</string>
+    <string name="achievement_altitude_denali_title">Denali</string>
+    <string name="achievement_altitude_denali_desc">Atteindre %1$s %2$s, l\'altitude du Denali.</string>
+    <string name="achievement_altitude_everest_title">Toit du monde</string>
+    <string name="achievement_altitude_everest_desc">Atteindre %1$s %2$s, l\'altitude de l\'Everest.</string>
+
+    <!-- Succès : dénivelé positif (D+) -->
+    <string name="achievement_dplus_500_title">Grimpeur</string>
+    <string name="achievement_dplus_500_desc">Cumuler 500 m de dénivelé positif sur une session.</string>
+    <string name="achievement_dplus_1000_title">Mille mètres</string>
+    <string name="achievement_dplus_1000_desc">Cumuler 1000 m de dénivelé positif sur une session.</string>
+    <string name="achievement_dplus_everest_title">Everesting</string>
+    <string name="achievement_dplus_everest_desc">Cumuler 8849 m de D+, toutes sessions confondues.</string>
 
     <!-- Succès : vitesse atteinte, y compris quelques transports rapides -->
     <string name="achievement_speed_30_title">En roue libre</string>
     <string name="achievement_speed_30_desc">Atteindre %1$s %2$s.</string>
+    <string name="achievement_speed_still_title">Contemplation</string>
+    <string name="achievement_speed_still_desc">Rester quasi immobile 10 minutes, enregistrement actif.</string>
     <string name="achievement_speed_50_title">Bon rythme</string>
     <string name="achievement_speed_50_desc">Atteindre %1$s %2$s.</string>
+    <string name="achievement_speed_cruise_title">Rythme de croisière</string>
+    <string name="achievement_speed_cruise_desc">Tenir 5 km/h de moyenne pendant une heure.</string>
     <string name="achievement_speed_100_title">Pied au plancher</string>
     <string name="achievement_speed_100_desc">Atteindre %1$s %2$s.</string>
     <string name="achievement_speed_300_title">Grande vitesse</string>
@@ -287,22 +308,50 @@
     <string name="achievement_satellites_8_desc">Fixer 8 satellites simultanément.</string>
     <string name="achievement_satellites_12_title">Ciel dégagé</string>
     <string name="achievement_satellites_12_desc">Fixer 12 satellites simultanément.</string>
+    <string name="achievement_sat_zenith_title">Au zénith</string>
+    <string name="achievement_sat_zenith_desc">Voir un satellite passer à la verticale.</string>
     <string name="achievement_satellites_20_title">Précision maximale</string>
     <string name="achievement_satellites_20_desc">Fixer 20 satellites simultanément.</string>
+    <string name="achievement_sat_const_4_title">Tour des constellations</string>
+    <string name="achievement_sat_const_4_desc">Recevoir GPS, GLONASS, Galileo et BeiDou en même temps.</string>
+    <string name="achievement_acc_3m_title">Au mètre près</string>
+    <string name="achievement_acc_3m_desc">Obtenir une précision horizontale de 3 m ou mieux.</string>
+    <string name="achievement_satellites_30_title">Pluie de satellites</string>
+    <string name="achievement_satellites_30_desc">Fixer 30 satellites simultanément.</string>
+    <string name="achievement_sat_const_6_title">Collectionneur d\'orbites</string>
+    <string name="achievement_sat_const_6_desc">Recevoir six constellations simultanément.</string>
 
     <!-- Succès : heures notables -->
     <string name="achievement_time_night_owl_title">Oiseau de nuit</string>
     <string name="achievement_time_night_owl_desc">Enregistrer un repère après 22h.</string>
     <string name="achievement_time_early_bird_title">Lève-tôt</string>
     <string name="achievement_time_early_bird_desc">Enregistrer un repère avant 6h.</string>
+    <string name="achievement_time_minuit_title">Passage de minuit</string>
+    <string name="achievement_time_minuit_desc">Être en enregistrement au changement de jour.</string>
+    <string name="achievement_time_new_year_title">Bonnes résolutions</string>
+    <string name="achievement_time_new_year_desc">Enregistrer une session le 1er janvier.</string>
+    <string name="achievement_time_solstice_title">Solstice</string>
+    <string name="achievement_time_solstice_desc">Enregistrer une session le 21 juin.</string>
+    <string name="achievement_time_leap_day_title">Jour bissextile</string>
+    <string name="achievement_time_leap_day_desc">Enregistrer une session un 29 février.</string>
 
     <!-- Succès : distance cumulée -->
     <string name="achievement_distance_10_title">Premiers pas</string>
     <string name="achievement_distance_10_desc">Parcourir %1$s %2$s au total.</string>
+    <string name="achievement_distance_marathon_title">Marathonien</string>
+    <string name="achievement_distance_marathon_desc">Parcourir l\'équivalent d\'un marathon.</string>
     <string name="achievement_distance_50_title">Grand marcheur</string>
     <string name="achievement_distance_50_desc">Parcourir %1$s %2$s au total.</string>
+    <string name="achievement_distance_session_20_title">Longue traite</string>
+    <string name="achievement_distance_session_20_desc">Parcourir 20 km en une seule sortie.</string>
     <string name="achievement_distance_100_title">Centurion</string>
     <string name="achievement_distance_100_desc">Parcourir %1$s %2$s au total.</string>
+    <string name="achievement_distance_500_title">Grand voyageur</string>
+    <string name="achievement_distance_500_desc">Parcourir %1$s %2$s au total.</string>
+    <string name="achievement_distance_1000_title">Millénaire</string>
+    <string name="achievement_distance_1000_desc">Parcourir %1$s %2$s au total.</string>
+    <string name="achievement_distance_equateur_title">Tour de la Terre</string>
+    <string name="achievement_distance_equateur_desc">Parcourir la circonférence de l\'équateur.</string>
 
     <!-- Succès : nombre de sessions -->
     <string name="achievement_sessions_1_title">Première sortie</string>
@@ -311,6 +360,16 @@
     <string name="achievement_sessions_10_desc">Enregistrer 10 sessions.</string>
     <string name="achievement_sessions_50_title">Vétéran</string>
     <string name="achievement_sessions_50_desc">Enregistrer 50 sessions.</string>
+    <string name="achievement_sessions_streak_7_title">Série en cours</string>
+    <string name="achievement_sessions_streak_7_desc">Enregistrer une session 7 jours d\'affilée.</string>
+    <string name="achievement_sessions_3h_title">Endurance</string>
+    <string name="achievement_sessions_3h_desc">Enregistrer une session de plus de 3 heures.</string>
+    <string name="achievement_sessions_100_title">Centenaire du terrain</string>
+    <string name="achievement_sessions_100_desc">Enregistrer 100 sessions.</string>
+    <string name="achievement_sessions_streak_30_title">Assidu</string>
+    <string name="achievement_sessions_streak_30_desc">Enregistrer une session 30 jours d\'affilée.</string>
+    <string name="achievement_sessions_12_mois_title">Toutes saisons</string>
+    <string name="achievement_sessions_12_mois_desc">Enregistrer au moins une session dans chacun des 12 mois.</string>
 
     <!-- Succès : franchissements géographiques -->
     <string name="achievement_geo_45th_parallel_title">Vers le nord</string>
@@ -319,6 +378,50 @@
     <string name="achievement_geo_equator_desc">Avoir été repéré au nord et au sud de l\'équateur.</string>
     <string name="achievement_geo_greenwich_title">D\'un méridien à l\'autre</string>
     <string name="achievement_geo_greenwich_desc">Avoir été repéré à l\'est et à l\'ouest du méridien de Greenwich.</string>
+    <string name="achievement_geo_confluence_title">Confluence</string>
+    <string name="achievement_geo_confluence_desc">Être à moins de 100 m d\'un croisement de lat/lon entières.</string>
+    <string name="achievement_geo_tropiques_title">Sous les tropiques</string>
+    <string name="achievement_geo_tropiques_desc">Être repéré dans la zone intertropicale.</string>
+    <string name="achievement_geo_arctique_title">Cercle polaire</string>
+    <string name="achievement_geo_arctique_desc">Franchir le cercle arctique.</string>
+    <string name="achievement_geo_45s_title">Quarantièmes rugissants</string>
+    <string name="achievement_geo_45s_desc">Descendre sous le 45e parallèle sud.</string>
+    <string name="achievement_geo_ligne_zero_title">Ligne zéro</string>
+    <string name="achievement_geo_ligne_zero_desc">Se tenir à moins de 1 km de l\'équateur.</string>
+    <string name="achievement_geo_antipodes_title">Aux antipodes</string>
+    <string name="achievement_geo_antipodes_desc">Avoir été repéré en deux points diamétralement opposés du globe.</string>
+
+    <!-- Succès : repères posés -->
+    <string name="achievement_waypoints_1_title">Premier cairn</string>
+    <string name="achievement_waypoints_1_desc">Poser un premier repère.</string>
+    <string name="achievement_waypoints_session_10_title">Session annotée</string>
+    <string name="achievement_waypoints_session_10_desc">Poser 10 repères pendant une même session.</string>
+    <string name="achievement_waypoints_arrivee_title">À bon port</string>
+    <string name="achievement_waypoints_arrivee_desc">Rejoindre un repère cible à moins de 10 m via la boussole.</string>
+    <string name="achievement_waypoints_50_title">Bâtisseur de cairns</string>
+    <string name="achievement_waypoints_50_desc">Poser 50 repères.</string>
+    <string name="achievement_waypoints_icones_title">Cartographe complet</string>
+    <string name="achievement_waypoints_icones_desc">Utiliser chaque icône de repère disponible au moins une fois.</string>
+
+    <!-- Succès : boussole -->
+    <string name="achievement_compass_nord_title">Cap au nord</string>
+    <string name="achievement_compass_nord_desc">Maintenir un cap à moins de 2° du nord pendant 30 s.</string>
+    <string name="achievement_compass_rose_title">Rose des vents</string>
+    <string name="achievement_compass_rose_desc">Parcourir au moins 1 km dans chacune des quatre directions cardinales.</string>
+    <string name="achievement_compass_decl_title">Nord magnétique trompeur</string>
+    <string name="achievement_compass_decl_desc">Être dans une zone où la déclinaison dépasse 10°.</string>
+
+    <!-- Succès : maîtrise de l'application -->
+    <string name="achievement_app_export_title">Archiviste</string>
+    <string name="achievement_app_export_desc">Exporter une trace en GPX.</string>
+    <string name="achievement_app_backup_title">Ceinture et bretelles</string>
+    <string name="achievement_app_backup_desc">Effectuer une sauvegarde de la base.</string>
+    <string name="achievement_app_themes_title">Jour et nuit</string>
+    <string name="achievement_app_themes_desc">Utiliser les deux thèmes.</string>
+    <string name="achievement_app_formats_title">Deux écritures</string>
+    <string name="achievement_app_formats_desc">Consulter sa position dans les deux formats de coordonnées.</string>
+    <string name="achievement_app_globe_title">Vue d\'ensemble</string>
+    <string name="achievement_app_globe_desc">Faire tourner le globe 3D d\'un tour complet.</string>
 
     <!-- Écran Records -->
     <string name="records_title">Records</string>

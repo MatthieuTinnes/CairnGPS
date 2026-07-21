@@ -15,13 +15,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Exercises the real 1→6 migration chain against a hand-seeded legacy v1 database, since
- * `app/schemas` only exports the current (v6) schema — versions 1–5 were never committed, so
+ * Exercises the real 1→7 migration chain against a hand-seeded legacy v1 database, since
+ * `app/schemas` only exports the current (v7) schema — versions 1–6 were never committed, so
  * `androidx.room:room-testing`'s `MigrationTestHelper` (which needs a starting-version schema
  * file) can't be used here. Room's own "legacy SQLite → Room" path stands in for it instead: open
  * a hand-written v1 file through [Room.databaseBuilder] with every migration registered, and let
- * Room run the chain then validate the result against the compiled v6 entities itself — a wrong
- * migration throws on open, which is the test. A future 6→7 migration, once `6.json` exists as a
+ * Room run the chain then validate the result against the compiled v7 entities itself — a wrong
+ * migration throws on open, which is the test. A future 7→8 migration, once `7.json` exists as a
  * *previous* schema, would be a good candidate for `MigrationTestHelper` instead.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -168,5 +168,20 @@ class AppDatabaseMigrationTest {
         database.waypointDao().attachToSession(listOf(seededId), sessionId)
 
         assertEquals(sessionId, database.waypointDao().getById(seededId)?.sessionId)
+    }
+
+    @Test
+    fun `migrated database accepts reads and writes on the 6-7 gamification_flags table`() = runBlocking {
+        seedV1(emptyList())
+        val database = openMigrated()
+
+        database.gamificationFlagDao().insert(GamificationFlag(key = "app_export", setAt = 0L))
+        assertEquals(1, database.gamificationFlagDao().getAll().size)
+        // Setting the same flag again is a no-op (mirrors AchievementDao.insert's semantics).
+        assertEquals(-1L, database.gamificationFlagDao().insert(GamificationFlag(key = "app_export", setAt = 1L)))
+        assertEquals(1, database.gamificationFlagDao().getAll().size)
+
+        database.gamificationFlagDao().deleteAll()
+        assertEquals(0, database.gamificationFlagDao().getAll().size)
     }
 }

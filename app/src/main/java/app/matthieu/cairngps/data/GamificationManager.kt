@@ -3,10 +3,14 @@ package app.matthieu.cairngps.data
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.hardware.GeomagneticField
+import android.location.Location
 import androidx.core.content.ContextCompat
 import app.matthieu.cairngps.domain.gamification.Achievements
 import app.matthieu.cairngps.domain.gamification.AchievementDef
 import app.matthieu.cairngps.domain.gamification.GamificationMetrics
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,6 +40,7 @@ class GamificationManager(
     waypointRepository: WaypointRepository,
     private val recordsRepository: RecordsRepository,
     private val achievementsRepository: AchievementsRepository,
+    private val gamificationFlagsRepository: GamificationFlagsRepository,
 ) {
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -54,8 +59,9 @@ class GamificationManager(
                 recordsRepository.records(),
                 sessionRepository.sessions(),
                 waypointRepository.waypoints(),
-            ) { records, sessions, waypoints ->
-                Achievements.metricsFrom(records, sessions, waypoints)
+                gamificationFlagsRepository.flags(),
+            ) { records, sessions, waypoints, flags ->
+                Achievements.metricsFrom(records, sessions, waypoints, flags)
             }.collect { metrics -> evaluateAndUnlock(metrics) }
         }
     }
@@ -151,8 +157,13 @@ class GamificationManager(
             }
             launch {
                 locationRepository.satelliteUpdates().collect { satellites ->
-                    val usedInFix = satellites.count { it.usedInFix }
-                    recordsRepository.submit(RecordType.MAX_SATELLITES, usedInFix.toDouble())
+                    val used = satellites.filter { it.usedInFix }
+                    recordsRepository.submit(RecordType.MAX_SATELLITES, used.size.toDouble())
+                    val constellationCount = used.map { it.constellation }.distinct().size
+                    recordsRepository.submit(RecordType.MAX_CONSTELLATIONS, constellationCount.toDouble())
+                    used.maxOfOrNull { it.elevationDegrees }?.let { maxElevation ->
+                        recordsRepository.submit(RecordType.MAX_SATELLITE_ELEVATION, maxElevation.toDouble())
+                    }
                 }
             }
         }
@@ -168,12 +179,34 @@ class GamificationManager(
         recordsRepository.submit(RecordType.MAX_SPEED, fix.speed.toDouble())
         recordsRepository.submit(RecordType.MAX_ALTITUDE, fix.altitude)
         recordsRepository.submit(RecordType.MIN_ALTITUDE, fix.altitude)
+        recordsRepository.submit(RecordType.MIN_HORIZONTAL_ACCURACY, fix.horizontalAccuracy.toDouble())
+        recordsRepository.submit(RecordType.MIN_ABS_LATITUDE, abs(fix.latitude))
         // A live fix has both coordinates at once, so each geographic record can be paired with
         // the exact point it was set at (unlike the session-derived bounding box above).
         recordsRepository.submit(RecordType.NORTHERNMOST, fix.latitude, latitude = fix.latitude, longitude = fix.longitude)
         recordsRepository.submit(RecordType.SOUTHERNMOST, fix.latitude, latitude = fix.latitude, longitude = fix.longitude)
         recordsRepository.submit(RecordType.EASTERNMOST, fix.longitude, latitude = fix.latitude, longitude = fix.longitude)
         recordsRepository.submit(RecordType.WESTERNMOST, fix.longitude, latitude = fix.latitude, longitude = fix.longitude)
+
+        // GEO_CONFLUENCE: within 100 m of an integer lat/lon crossing.
+        val nearestLat = fix.latitude.roundToInt().toDouble()
+        val nearestLon = fix.longitude.roundToInt().toDouble()
+        val confluenceDistance = FloatArray(1)
+        Location.distanceBetween(fix.latitude, fix.longitude, nearestLat, nearestLon, confluenceDistance)
+        if (confluenceDistance[0] <= 100f) {
+            gamificationFlagsRepository.set("geo_confluence")
+        }
+
+        // CMP_DECL: magnetic declination beyond 10° at the current position.
+        val declination = GeomagneticField(
+            fix.latitude.toFloat(),
+            fix.longitude.toFloat(),
+            fix.altitude.toFloat(),
+            fix.timestamp,
+        ).declination
+        if (abs(declination) >= 10f) {
+            gamificationFlagsRepository.set("cmp_decl")
+        }
     }
 
     private fun hasLocationPermission(): Boolean =

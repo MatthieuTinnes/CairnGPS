@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
+import app.matthieu.cairngps.data.GamificationFlagsRepository
 import app.matthieu.cairngps.data.Session
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.SettingsRepository
@@ -99,12 +100,15 @@ fun SessionDetailRoute(
     sessionRepository: SessionRepository,
     waypointRepository: WaypointRepository,
     settingsRepository: SettingsRepository,
+    gamificationFlagsRepository: GamificationFlagsRepository,
     onBack: () -> Unit,
     onOpenWaypoint: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: SessionDetailViewModel = viewModel(
-        factory = SessionDetailViewModel.factory(sessionRepository, waypointRepository, sessionId),
+        factory = SessionDetailViewModel.factory(
+            sessionRepository, waypointRepository, gamificationFlagsRepository, sessionId,
+        ),
     )
     val settingsViewModel: SettingsViewModel =
         viewModel(factory = SettingsViewModel.factory(settingsRepository))

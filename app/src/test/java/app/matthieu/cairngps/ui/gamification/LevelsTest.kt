@@ -32,22 +32,22 @@ class LevelsTest {
         val info = Levels.forXp(50)
         assertEquals(2, info.level)
         assertEquals(0, info.xpIntoLevel)
-        assertEquals(70, info.xpForNextLevel)
+        assertEquals(80, info.xpForNextLevel)
         assertEquals(0f, info.fraction, 0f)
     }
 
     @Test
     fun `forXp just under the max band is level 9`() {
-        val info = Levels.forXp(1799)
+        val info = Levels.forXp(1849)
         assertEquals(9, info.level)
-        assertEquals(449, info.xpIntoLevel)
+        assertEquals(399, info.xpIntoLevel)
         assertEquals(1, info.xpRemaining)
         assertFalse(info.isMaxLevel)
     }
 
     @Test
     fun `forXp at the max band boundary is level 10 and max`() {
-        val info = Levels.forXp(1800)
+        val info = Levels.forXp(1850)
         assertEquals(10, info.level)
         assertEquals(0, info.xpIntoLevel)
         assertNull(info.xpForNextLevel)
@@ -67,10 +67,10 @@ class LevelsTest {
 
     @Test
     fun `forXp mid-band computes a fractional progress`() {
-        val info = Levels.forXp(85)
+        val info = Levels.forXp(90)
         assertEquals(2, info.level)
-        assertEquals(35, info.xpIntoLevel)
-        assertEquals(70, info.xpForNextLevel)
+        assertEquals(40, info.xpIntoLevel)
+        assertEquals(80, info.xpForNextLevel)
         assertEquals(0.5f, info.fraction, 1e-6f)
     }
 }

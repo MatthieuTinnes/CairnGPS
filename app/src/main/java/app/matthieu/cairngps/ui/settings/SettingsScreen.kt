@@ -48,6 +48,7 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.BackupImportError
 import app.matthieu.cairngps.data.BackupRepository
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.GamificationFlagsRepository
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
@@ -79,11 +80,14 @@ private fun languageIndexOf(locales: LocaleListCompat): Int = when {
 fun SettingsRoute(
     repository: SettingsRepository,
     backupRepository: BackupRepository,
+    gamificationFlagsRepository: GamificationFlagsRepository,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(repository))
-    val backupViewModel: BackupViewModel = viewModel(factory = BackupViewModel.factory(backupRepository))
+    val viewModel: SettingsViewModel =
+        viewModel(factory = SettingsViewModel.factory(repository, gamificationFlagsRepository))
+    val backupViewModel: BackupViewModel =
+        viewModel(factory = BackupViewModel.factory(backupRepository, gamificationFlagsRepository))
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val isBackupWorking by backupViewModel.isBackupWorking.collectAsStateWithLifecycle()
 
