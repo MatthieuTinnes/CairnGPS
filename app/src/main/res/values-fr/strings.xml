@@ -201,6 +201,10 @@
     <string name="constellation_qzss_stats">4 satellites · orbite quasi-zénithale · L1, L2, L5, L6</string>
     <string name="constellation_qzss_desc">Régional : passe près du zénith au-dessus du Japon, fiabilise le fix entre les immeubles et les vallées.</string>
 
+    <string name="constellation_irnss_region">Inde</string>
+    <string name="constellation_irnss_stats">7 satellites · GEO + GSO 35 786 km · L5, bande S</string>
+    <string name="constellation_irnss_desc">Système régional (NavIC) couvrant l\'Inde et environ 1 500 km autour. Orbites géosynchrones : couverture constante au zénith.</string>
+
     <!-- Compass screen -->
     <string name="compass_title">Boussole</string>
     <string name="compass_north_magnetic">Nord magnétique</string>
