@@ -258,6 +258,10 @@ private fun SessionDetailScreen(
         // session stays null only for the brief load; nothing to render until it resolves.
         if (session == null) return@Scaffold
 
+        // Track point under the altitude profile's cursor, shared with the route trace so both
+        // charts point at the same moment of the outing. Cleared when the track itself changes.
+        var selectedTrackIndex by remember(track) { mutableStateOf<Int?>(null) }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -281,6 +285,7 @@ private fun SessionDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(14.dp),
+                        selectedIndex = selectedTrackIndex,
                     )
                 }
             }
@@ -341,7 +346,13 @@ private fun SessionDetailScreen(
                             color = LabelMuted,
                             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
                         )
-                        AltitudeProfile(track = track, unitSystem = unitSystem, modifier = Modifier.fillMaxWidth())
+                        AltitudeProfile(
+                            track = track,
+                            unitSystem = unitSystem,
+                            selectedIndex = selectedTrackIndex,
+                            onSelectedIndexChange = { selectedTrackIndex = it },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                 }
             }

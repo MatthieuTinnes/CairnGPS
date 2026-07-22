@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,6 +33,9 @@ import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
  * The session's route shape (screen 1j), with a filled start marker and a hollow end marker, plus
  * their departure/arrival times below. `track` must be non-empty; callers should skip this card
  * otherwise (sessions recorded before the track-points feature existed have none).
+ *
+ * [selectedIndex] echoes the altitude profile's cursor: the matching track point is highlighted
+ * here so the altitude being read can be located on the route.
  */
 @Composable
 fun SessionRouteTrace(
@@ -39,12 +43,14 @@ fun SessionRouteTrace(
     startTimestamp: Long,
     endTimestamp: Long,
     modifier: Modifier = Modifier,
+    selectedIndex: Int? = null,
 ) {
     if (track.size < 2) return
 
     val light = LocalIsLightTheme.current
     val traceColor = if (light) CairnGreenDark else CairnGreen
     val arrivalColor = if (light) LightAchievementLabelGold else AchievementLabelGold
+    val surfaceColor = MaterialTheme.colorScheme.surface
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Canvas(
@@ -72,6 +78,12 @@ fun SessionRouteTrace(
                 center = project(track.last()),
                 style = Stroke(width = 3.dp.toPx()),
             )
+
+            selectedIndex?.let { track.getOrNull(it) }?.let { point ->
+                val center = project(point)
+                drawCircle(color = surfaceColor, radius = 7.dp.toPx(), center = center)
+                drawCircle(color = arrivalColor, radius = 4.5.dp.toPx(), center = center)
+            }
         }
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
