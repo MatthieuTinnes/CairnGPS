@@ -163,6 +163,7 @@
     <string name="session_rename_dialog_title">Renommer la trace</string>
     <string name="session_name_label">Nom de la trace</string>
     <string name="label_altitude_profile">Profil d\'altitude</string>
+    <string name="label_speed_profile">Profil de vitesse</string>
 
     <!-- Satellites screen -->
     <string name="satellites_title">Satellites</string>

@@ -258,8 +258,8 @@ private fun SessionDetailScreen(
         // session stays null only for the brief load; nothing to render until it resolves.
         if (session == null) return@Scaffold
 
-        // Track point under the altitude profile's cursor, shared with the route trace so both
-        // charts point at the same moment of the outing. Cleared when the track itself changes.
+        // Track point under the altitude/speed profiles' cursor, shared with the route trace so
+        // all three charts point at the same moment of the outing. Cleared when the track changes.
         var selectedTrackIndex by remember(track) { mutableStateOf<Int?>(null) }
 
         Column(
@@ -280,6 +280,7 @@ private fun SessionDetailScreen(
                 ) {
                     SessionRouteTrace(
                         track = track,
+                        unitSystem = unitSystem,
                         startTimestamp = session.startTimestamp,
                         endTimestamp = session.endTimestamp,
                         modifier = Modifier
@@ -347,6 +348,30 @@ private fun SessionDetailScreen(
                             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
                         )
                         AltitudeProfile(
+                            track = track,
+                            unitSystem = unitSystem,
+                            selectedIndex = selectedTrackIndex,
+                            onSelectedIndexChange = { selectedTrackIndex = it },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                ) {
+                    Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp)) {
+                        Text(
+                            text = stringResource(R.string.label_speed_profile).uppercase(),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 1.2.sp,
+                            color = LabelMuted,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+                        )
+                        SpeedProfile(
                             track = track,
                             unitSystem = unitSystem,
                             selectedIndex = selectedTrackIndex,
