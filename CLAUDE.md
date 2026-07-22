@@ -61,7 +61,6 @@ Ne pas lancer l'appli après les modif, uniquement vérifier que le build gradle
 Deux mécanismes complémentaires, chacun pour un usage précis :
 
 - **Room** : LA base de données de l'app pour toutes les **données métier persistées**
-  (repères aujourd'hui ; sessions, records, succès plus tard réutiliseront cette même base).
     - Base unique `AppDatabase` (singleton, construite via `AppDatabase.getInstance`), exposée
       par `CairnApplication`. Nom de fichier : `cairn.db`.
     - Une entité par table (`@Entity`), un DAO par entité (méthodes `suspend` pour les écritures,
