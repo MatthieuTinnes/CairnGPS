@@ -87,6 +87,7 @@ fun ProfileRoute(
     onOpenHistory: () -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenRecords: () -> Unit,
+    onOpenLevels: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: ProfileViewModel = viewModel(
@@ -104,6 +105,7 @@ fun ProfileRoute(
         onOpenHistory = onOpenHistory,
         onOpenAchievements = onOpenAchievements,
         onOpenRecords = onOpenRecords,
+        onOpenLevels = onOpenLevels,
         modifier = modifier,
     )
 }
@@ -117,6 +119,7 @@ private fun ProfileScreen(
     onOpenHistory: () -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenRecords: () -> Unit,
+    onOpenLevels: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -161,7 +164,7 @@ private fun ProfileScreen(
             }
 
             item(key = "level") {
-                LevelCard(uiState.level)
+                LevelCard(uiState.level, onClick = onOpenLevels)
             }
 
             item(key = "stats") {
@@ -293,10 +296,14 @@ private fun ProfileScreen(
     }
 }
 
-/** The gold Level card (screen 1g): level number, title, XP total, progress bar to next level. */
+/**
+ * The gold Level card (screen 1g): level number, title, XP total, progress bar to next level.
+ * Tapping it opens the full level scale (see [app.matthieu.cairngps.ui.gamification.LevelsRoute]).
+ */
 @Composable
-private fun LevelCard(level: LevelInfo) {
+private fun LevelCard(level: LevelInfo, onClick: () -> Unit) {
     Card(
+        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
@@ -361,6 +368,7 @@ private fun LevelCard(level: LevelInfo) {
                     modifier = Modifier.padding(top = 5.dp),
                 )
             }
+            Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = LabelMuted)
         }
     }
 }

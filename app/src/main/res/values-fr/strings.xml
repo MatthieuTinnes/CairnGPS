@@ -463,4 +463,8 @@
     <string name="profile_level_xp_fmt">%1$d XP</string>
     <string name="profile_level_remaining_fmt">reste %1$d XP</string>
     <string name="profile_level_max">Niveau maximum atteint</string>
+
+    <!-- Écran des niveaux (accessible depuis le bloc niveau de l'onglet Profil) -->
+    <string name="levels_title">Niveaux</string>
+    <string name="levels_current_badge">Actuel</string>
 </resources>

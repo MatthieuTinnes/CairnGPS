@@ -27,6 +27,7 @@ import app.matthieu.cairngps.CairnApplication
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.ui.compass.CompassRoute
 import app.matthieu.cairngps.ui.gamification.AchievementsRoute
+import app.matthieu.cairngps.ui.gamification.LevelsRoute
 import app.matthieu.cairngps.ui.gamification.RecordsRoute
 import app.matthieu.cairngps.ui.gamification.UnlockBanner
 import app.matthieu.cairngps.ui.history.HistoryRoute
@@ -55,6 +56,7 @@ private object Routes {
     const val HISTORY = "history"
     const val ACHIEVEMENTS = "achievements"
     const val RECORDS = "records"
+    const val LEVELS = "levels"
     const val CONSTELLATION_INFO = "constellation_info"
     const val SATELLITE_GLOBE = "satellite_globe"
     const val SETTINGS = "settings"
@@ -197,6 +199,7 @@ fun MainScaffold(app: CairnApplication) {
                         onOpenHistory = { navController.navigate(Routes.HISTORY) },
                         onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
                         onOpenRecords = { navController.navigate(Routes.RECORDS) },
+                        onOpenLevels = { navController.navigate(Routes.LEVELS) },
                     )
                 }
                 composable(Routes.HISTORY) {
@@ -261,6 +264,12 @@ fun MainScaffold(app: CairnApplication) {
                     RecordsRoute(
                         recordsRepository = app.recordsRepository,
                         settingsRepository = app.settingsRepository,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(Routes.LEVELS) {
+                    LevelsRoute(
+                        achievementsRepository = app.achievementsRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }

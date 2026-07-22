@@ -30,6 +30,19 @@ data class LevelInfo(
 )
 
 /**
+ * One entry of the level scale, for screens that display it in full (see [Levels.scale]).
+ *
+ * @property level    1-based level number.
+ * @property titleRes Level title.
+ * @property minXp    Lifetime XP at which this level starts.
+ */
+data class LevelScaleEntry(
+    val level: Int,
+    @StringRes val titleRes: Int,
+    val minXp: Int,
+)
+
+/**
  * The level scale: an ordered list of XP bands, each starting at [Band.minXp]. [forXp] picks the
  * highest band the total XP has reached.
  */
@@ -49,6 +62,11 @@ object Levels {
         Band(1450, R.string.level_title_9),
         Band(1850, R.string.level_title_10),
     )
+
+    /** The full level scale, e.g. for a screen listing every level (see [LevelScaleEntry]). */
+    val scale: List<LevelScaleEntry> = BANDS.mapIndexed { index, band ->
+        LevelScaleEntry(level = index + 1, titleRes = band.titleRes, minXp = band.minXp)
+    }
 
     /** Derives the [LevelInfo] for a lifetime total of [totalXp]. */
     fun forXp(totalXp: Int): LevelInfo {

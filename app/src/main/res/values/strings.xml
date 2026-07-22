@@ -463,4 +463,8 @@
     <string name="profile_level_xp_fmt">%1$d XP</string>
     <string name="profile_level_remaining_fmt">%1$d XP remaining</string>
     <string name="profile_level_max">Maximum level reached</string>
+
+    <!-- Levels screen (reached from the Profil hub's level card) -->
+    <string name="levels_title">Levels</string>
+    <string name="levels_current_badge">Current</string>
 </resources>
