@@ -295,8 +295,6 @@
     <!-- Succès : vitesse atteinte, y compris quelques transports rapides -->
     <string name="achievement_speed_30_title">En roue libre</string>
     <string name="achievement_speed_30_desc">Atteindre %1$s %2$s.</string>
-    <string name="achievement_speed_still_title">Contemplation</string>
-    <string name="achievement_speed_still_desc">Rester quasi immobile 10 minutes, enregistrement actif.</string>
     <string name="achievement_speed_50_title">Bon rythme</string>
     <string name="achievement_speed_50_desc">Atteindre %1$s %2$s.</string>
     <string name="achievement_speed_cruise_title">Rythme de croisière</string>
@@ -393,26 +391,18 @@
     <string name="achievement_geo_45s_desc">Descendre sous le 45e parallèle sud.</string>
     <string name="achievement_geo_ligne_zero_title">Ligne zéro</string>
     <string name="achievement_geo_ligne_zero_desc">Se tenir à moins de 1 km de l\'équateur.</string>
-    <string name="achievement_geo_antipodes_title">Aux antipodes</string>
-    <string name="achievement_geo_antipodes_desc">Avoir été repéré en deux points diamétralement opposés du globe.</string>
 
     <!-- Succès : repères posés -->
     <string name="achievement_waypoints_1_title">Premier cairn</string>
     <string name="achievement_waypoints_1_desc">Poser un premier repère.</string>
     <string name="achievement_waypoints_session_10_title">Session annotée</string>
     <string name="achievement_waypoints_session_10_desc">Poser 10 repères pendant une même session.</string>
-    <string name="achievement_waypoints_arrivee_title">À bon port</string>
-    <string name="achievement_waypoints_arrivee_desc">Rejoindre un repère cible à moins de 10 m via la boussole.</string>
     <string name="achievement_waypoints_50_title">Bâtisseur de cairns</string>
     <string name="achievement_waypoints_50_desc">Poser 50 repères.</string>
     <string name="achievement_waypoints_icones_title">Cartographe complet</string>
     <string name="achievement_waypoints_icones_desc">Utiliser chaque icône de repère disponible au moins une fois.</string>
 
     <!-- Succès : boussole -->
-    <string name="achievement_compass_nord_title">Cap au nord</string>
-    <string name="achievement_compass_nord_desc">Maintenir un cap à moins de 2° du nord pendant 30 s.</string>
-    <string name="achievement_compass_rose_title">Rose des vents</string>
-    <string name="achievement_compass_rose_desc">Parcourir au moins 1 km dans chacune des quatre directions cardinales.</string>
     <string name="achievement_compass_decl_title">Nord magnétique trompeur</string>
     <string name="achievement_compass_decl_desc">Être dans une zone où la déclinaison dépasse 10°.</string>
 
@@ -425,8 +415,6 @@
     <string name="achievement_app_themes_desc">Utiliser les deux thèmes.</string>
     <string name="achievement_app_formats_title">Deux écritures</string>
     <string name="achievement_app_formats_desc">Consulter sa position dans les deux formats de coordonnées.</string>
-    <string name="achievement_app_globe_title">Vue d\'ensemble</string>
-    <string name="achievement_app_globe_desc">Faire tourner le globe 3D d\'un tour complet.</string>
 
     <!-- Écran Records -->
     <string name="records_title">Records</string>

@@ -162,7 +162,7 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
-         * Adds the `gamification_flags` table backing the 72-succès catalog's `ETAT`/`EVENEMENT`
+         * Adds the `gamification_flags` table backing the succès catalog's `ETAT`/`EVENEMENT`
          * conditions (both hemispheres visited, both themes used, a trace exported...) — see
          * [GamificationFlag]. No existing table changes: these flags are new, independent state.
          */

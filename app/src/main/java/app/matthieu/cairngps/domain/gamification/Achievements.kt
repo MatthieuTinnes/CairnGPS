@@ -147,13 +147,6 @@ data class FamilyProgress(
  * The catalog of unlockable achievements — see `succes.md` for the full spec this mirrors.
  * Deliberately plain data (no Room annotations): only the *unlocked* state is persisted
  * (`AchievementState`), so adding a new palier here never requires a database migration.
- *
- * Six achievements are declared but never unlock yet (`oneShotCheck = { false }`, each tagged
- * `// STUB`): they need a dedicated subsystem (a persisted 1° visited-cells grid, a tracked globe
- * rotation, a held-heading timer, cardinal-direction distance tracking, a compass-guided arrival
- * check, or a stationary-time timer) that hasn't been built yet. They stay visible and locked
- * rather than absent, so the catalog size (and any future UI listing "every succès") matches the
- * spec's 72 without a half-finished mechanic silently unlocking early.
  */
 object Achievements {
 
@@ -245,17 +238,11 @@ object Achievements {
             oneShotCheck = { m -> m.cumulativeElevationGain >= 8849.0 },
         ),
 
-        // --- Vitesse (7) --------------------------------------------------------------------------
+        // --- Vitesse (6) --------------------------------------------------------------------------
         AchievementDef(
             "speed_30", AchievementFamily.SPEED, AchievementType.INSTANT,
             R.string.achievement_speed_30_title, R.string.achievement_speed_30_desc,
             threshold = kmhToMs(30.0), xp = SuccesXp.DECOUVERTE,
-        ),
-        AchievementDef(
-            "speed_still", AchievementFamily.SPEED, AchievementType.SESSION,
-            R.string.achievement_speed_still_title, R.string.achievement_speed_still_desc,
-            xp = SuccesXp.DECOUVERTE,
-            oneShotCheck = { false }, // STUB: needs a tracked stationary-time-in-session timer
         ),
         AchievementDef(
             "speed_50", AchievementFamily.SPEED, AchievementType.INSTANT,
@@ -419,7 +406,7 @@ object Achievements {
             oneShotCheck = { m -> m.distinctMonthsCount >= 12 },
         ),
 
-        // --- Repères (5) --------------------------------------------------------------------------
+        // --- Repères (4) --------------------------------------------------------------------------
         AchievementDef(
             "waypoints_1", AchievementFamily.REPERES, AchievementType.EVENEMENT,
             R.string.achievement_waypoints_1_title, R.string.achievement_waypoints_1_desc,
@@ -430,12 +417,6 @@ object Achievements {
             R.string.achievement_waypoints_session_10_title, R.string.achievement_waypoints_session_10_desc,
             xp = SuccesXp.FACILE,
             oneShotCheck = { m -> m.maxWaypointsInSession >= 10 },
-        ),
-        AchievementDef(
-            "waypoints_arrivee", AchievementFamily.REPERES, AchievementType.INSTANT,
-            R.string.achievement_waypoints_arrivee_title, R.string.achievement_waypoints_arrivee_desc,
-            xp = SuccesXp.FACILE,
-            oneShotCheck = { false }, // STUB: needs a live compass-guided arrival check
         ),
         AchievementDef(
             "waypoints_50", AchievementFamily.REPERES, AchievementType.EVENEMENT,
@@ -449,19 +430,7 @@ object Achievements {
             oneShotCheck = { m -> m.distinctWaypointIcons.containsAll(REFERENCE_WAYPOINT_ICONS) },
         ),
 
-        // --- Boussole (3) -------------------------------------------------------------------------
-        AchievementDef(
-            "compass_nord", AchievementFamily.BOUSSOLE, AchievementType.INSTANT,
-            R.string.achievement_compass_nord_title, R.string.achievement_compass_nord_desc,
-            xp = SuccesXp.DECOUVERTE,
-            oneShotCheck = { false }, // STUB: needs a held-heading timer
-        ),
-        AchievementDef(
-            "compass_rose", AchievementFamily.BOUSSOLE, AchievementType.CUMULATIF,
-            R.string.achievement_compass_rose_title, R.string.achievement_compass_rose_desc,
-            xp = SuccesXp.MOYEN,
-            oneShotCheck = { false }, // STUB: needs per-cardinal-direction distance tracking
-        ),
+        // --- Boussole (1) -------------------------------------------------------------------------
         AchievementDef(
             "compass_decl", AchievementFamily.BOUSSOLE, AchievementType.INSTANT,
             R.string.achievement_compass_decl_title, R.string.achievement_compass_decl_desc,
@@ -469,7 +438,7 @@ object Achievements {
             oneShotCheck = { m -> "cmp_decl" in m.flags },
         ),
 
-        // --- Géographie (9) -----------------------------------------------------------------------
+        // --- Géographie (8) -----------------------------------------------------------------------
         // Based on the lifetime lat/lng bounding box (NORTHERNMOST/SOUTHERNMOST/EASTERNMOST/
         // WESTERNMOST records), not a single fix, so "crossed" here means "has been on both sides of
         // that line at some point".
@@ -527,12 +496,6 @@ object Achievements {
             xp = SuccesXp.EXCEPTIONNEL,
             oneShotCheck = { m -> (m.minAbsLatitude ?: Double.POSITIVE_INFINITY) <= 0.009 },
         ),
-        AchievementDef(
-            "geo_antipodes", AchievementFamily.GEO, AchievementType.ETAT,
-            R.string.achievement_geo_antipodes_title, R.string.achievement_geo_antipodes_desc,
-            xp = SuccesXp.EXCEPTIONNEL,
-            oneShotCheck = { false }, // STUB: needs a persisted 1° visited-cells grid
-        ),
 
         // --- Temps (6) ----------------------------------------------------------------------------
         // Saving a waypoint at a notable local hour.
@@ -573,7 +536,7 @@ object Achievements {
             oneShotCheck = { m -> m.hasLeapDaySession },
         ),
 
-        // --- Maîtrise (5) -------------------------------------------------------------------------
+        // --- Maîtrise (4) -------------------------------------------------------------------------
         AchievementDef(
             "app_export", AchievementFamily.MAITRISE, AchievementType.EVENEMENT,
             R.string.achievement_app_export_title, R.string.achievement_app_export_desc,
@@ -597,12 +560,6 @@ object Achievements {
             R.string.achievement_app_formats_title, R.string.achievement_app_formats_desc,
             xp = SuccesXp.DECOUVERTE,
             oneShotCheck = { m -> "format_decimal" in m.flags && "format_dms" in m.flags },
-        ),
-        AchievementDef(
-            "app_globe", AchievementFamily.MAITRISE, AchievementType.EVENEMENT,
-            R.string.achievement_app_globe_title, R.string.achievement_app_globe_desc,
-            xp = SuccesXp.DECOUVERTE,
-            oneShotCheck = { false }, // STUB: needs a tracked cumulative globe-rotation angle
         ),
     )
 

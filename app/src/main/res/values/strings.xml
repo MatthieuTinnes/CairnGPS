@@ -295,8 +295,6 @@
     <!-- Achievements: speed reached, including a few fast modes of transport -->
     <string name="achievement_speed_30_title">Freewheeling</string>
     <string name="achievement_speed_30_desc">Reach %1$s %2$s.</string>
-    <string name="achievement_speed_still_title">Contemplation</string>
-    <string name="achievement_speed_still_desc">Stay nearly motionless for 10 minutes during an active recording.</string>
     <string name="achievement_speed_50_title">Good pace</string>
     <string name="achievement_speed_50_desc">Reach %1$s %2$s.</string>
     <string name="achievement_speed_cruise_title">Cruising speed</string>
@@ -393,26 +391,18 @@
     <string name="achievement_geo_45s_desc">Go below the 45th parallel south.</string>
     <string name="achievement_geo_ligne_zero_title">Zero line</string>
     <string name="achievement_geo_ligne_zero_desc">Stand within 1 km of the equator.</string>
-    <string name="achievement_geo_antipodes_title">At the antipodes</string>
-    <string name="achievement_geo_antipodes_desc">Have been located at two diametrically opposite points on the globe.</string>
 
     <!-- Achievements: waypoints placed -->
     <string name="achievement_waypoints_1_title">First cairn</string>
     <string name="achievement_waypoints_1_desc">Place a first waypoint.</string>
     <string name="achievement_waypoints_session_10_title">Annotated session</string>
     <string name="achievement_waypoints_session_10_desc">Place 10 waypoints during a single session.</string>
-    <string name="achievement_waypoints_arrivee_title">Safe arrival</string>
-    <string name="achievement_waypoints_arrivee_desc">Reach a target waypoint within 10 m using the compass.</string>
     <string name="achievement_waypoints_50_title">Cairn builder</string>
     <string name="achievement_waypoints_50_desc">Place 50 waypoints.</string>
     <string name="achievement_waypoints_icones_title">Complete cartographer</string>
     <string name="achievement_waypoints_icones_desc">Use every available waypoint icon at least once.</string>
 
     <!-- Achievements: compass -->
-    <string name="achievement_compass_nord_title">Heading north</string>
-    <string name="achievement_compass_nord_desc">Hold a heading within 2° of north for 30 s.</string>
-    <string name="achievement_compass_rose_title">Compass rose</string>
-    <string name="achievement_compass_rose_desc">Cover at least 1 km in each of the four cardinal directions.</string>
     <string name="achievement_compass_decl_title">Misleading magnetic north</string>
     <string name="achievement_compass_decl_desc">Be in an area where the declination exceeds 10°.</string>
 
@@ -425,8 +415,6 @@
     <string name="achievement_app_themes_desc">Use both themes.</string>
     <string name="achievement_app_formats_title">Two notations</string>
     <string name="achievement_app_formats_desc">View your position in both coordinate formats.</string>
-    <string name="achievement_app_globe_title">Bird\'s-eye view</string>
-    <string name="achievement_app_globe_desc">Rotate the 3D globe a full turn.</string>
 
     <!-- Records screen -->
     <string name="records_title">Records</string>

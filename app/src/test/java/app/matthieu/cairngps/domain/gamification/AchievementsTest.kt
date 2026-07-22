@@ -238,33 +238,9 @@ class AchievementsTest {
     }
 
     @Test
-    fun `deferred stub achievements never unlock regardless of how extreme the metrics are`() {
-        val stubIds = setOf(
-            "speed_still", "waypoints_arrivee", "compass_nord", "compass_rose", "geo_antipodes", "app_globe",
-        )
-        val extremeMetrics = GamificationMetrics(
-            maxAltitude = 100_000.0,
-            maxSpeedMs = 100_000f,
-            maxSatellites = 1000,
-            cumulativeDistanceMeters = 1e9,
-            sessionCount = 100_000,
-            waypointCount = 100_000,
-            longestDayStreak = 10_000,
-            distinctMonthsCount = 12,
-            flags = setOf(
-                "theme_light", "theme_dark", "format_decimal", "format_dms",
-                "app_export", "app_backup", "cmp_decl", "geo_confluence",
-            ),
-        )
-        for (id in stubIds) {
-            assertFalse(id, Achievements.isUnlocked(defOf(id), extremeMetrics))
-        }
-    }
-
-    @Test
-    fun `catalog has 72 unique achievements`() {
-        assertEquals(72, Achievements.ALL.size)
-        assertEquals(72, Achievements.ALL.map { it.id }.toSet().size)
+    fun `catalog has 66 unique achievements`() {
+        assertEquals(66, Achievements.ALL.size)
+        assertEquals(66, Achievements.ALL.map { it.id }.toSet().size)
     }
 
     // --- progressToNext ----------------------------------------------------------------------------
