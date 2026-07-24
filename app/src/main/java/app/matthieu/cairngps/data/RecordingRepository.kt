@@ -399,9 +399,14 @@ class RecordingRepository(
     /**
      * Stops accumulating, persists the final [Session] and attaches any waypoints saved during
      * the recording to it. A no-op if no recording was in progress.
+     *
+     * @return l'id de la session enregistrée, ou `null` si rien n'a été persisté (aucune
+     *         acquisition en cours, ou trace abandonnée faute de fix GPS accepté). Le service
+     *         appelant s'en sert pour ne déclencher l'invitation à noter l'app qu'après une
+     *         session réellement sauvegardée.
      */
-    suspend fun stop() {
-        val job = recordingJob ?: return
+    suspend fun stop(): Long? {
+        val job = recordingJob ?: return null
         recordingJob = null
         job.cancelAndJoin()
 
@@ -431,7 +436,7 @@ class RecordingRepository(
             waypointIds = captured.second
             break
         }
-        if (!finalState.isRecording) return
+        if (!finalState.isRecording) return null
 
         val session = activeSession
         activeSession = null
@@ -444,7 +449,7 @@ class RecordingRepository(
         if (lastAcceptedFix == null || session == null) {
             session?.let { sessionRepository.discardActive(it.id) }
             sessionRepository.clearCheckpoint()
-            return
+            return null
         }
 
         val finalSession = session.copy(
@@ -464,6 +469,7 @@ class RecordingRepository(
         sessionRepository.finalizeActive(finalSession, decimatedTrack())
         sessionRepository.clearCheckpoint()
         waypointRepository.attachToSession(waypointIds, finalSession.id)
+        return finalSession.id
     }
 
     /**

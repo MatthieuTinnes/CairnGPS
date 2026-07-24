@@ -81,6 +81,10 @@ dependencies {
     // Per-app language switching (AppCompatDelegate.setApplicationLocales)
     implementation(libs.androidx.appcompat)
 
+    // In-App Review (invitation à noter l'app après une session enregistrée)
+    implementation(libs.play.review)
+    implementation(libs.play.review.ktx)
+
     // Compose
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))

@@ -14,6 +14,7 @@ import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.RecordsRepository
+import app.matthieu.cairngps.data.ReviewRepository
 import app.matthieu.cairngps.data.SessionRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.WaypointRepository
@@ -51,6 +52,10 @@ class CairnApplication : Application() {
         AchievementsRepository(database.achievementDao())
     }
 
+    val reviewRepository: ReviewRepository by lazy {
+        ReviewRepository(this, sessionRepository, achievementsRepository)
+    }
+
     val gamificationFlagsRepository: GamificationFlagsRepository by lazy {
         GamificationFlagsRepository(database.gamificationFlagDao())
     }
@@ -77,6 +82,7 @@ class CairnApplication : Application() {
             recordsRepository,
             achievementsRepository,
             gamificationFlagsRepository,
+            reviewRepository,
         )
     }
 

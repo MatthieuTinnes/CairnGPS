@@ -187,7 +187,8 @@ class RecordingRepositoryTest {
 
         pushFix(h, fix(47.0, 6.0, accuracy = 30f, timestamp = t0)) // rejected: too inaccurate
 
-        h.repository.stop()
+        // null: nothing was persisted, so RecordingService must not arm the review prompt.
+        assertNull(h.repository.stop())
         advanceUntilIdle()
 
         assertTrue(h.sessionDao.getAll().isEmpty())
@@ -204,10 +205,11 @@ class RecordingRepositoryTest {
         pushFix(h, fix(47.001, 6.001, altitude = 510.0, timestamp = t0 + 5_000))
         pushFix(h, fix(46.999, 5.999, altitude = 495.0, timestamp = t0 + 10_000))
 
-        h.repository.stop()
+        val savedId = h.repository.stop()
         advanceUntilIdle()
 
         val session = h.sessionDao.getAll().single()
+        assertEquals(session.id, savedId)
         assertFalse(session.isActive)
         assertEquals(10.0, session.elevationGain, 0.0)
         assertEquals(15.0, session.elevationLoss, 0.0)

@@ -18,6 +18,7 @@ import app.matthieu.cairngps.MainActivity
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.RecordingState
+import app.matthieu.cairngps.data.ReviewRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.domain.format.distanceUnitLabel
@@ -53,6 +54,9 @@ class RecordingService : Service() {
     }
     private val settingsRepository: SettingsRepository by lazy {
         (application as CairnApplication).settingsRepository
+    }
+    private val reviewRepository: ReviewRepository by lazy {
+        (application as CairnApplication).reviewRepository
     }
 
     // Kept in sync from settingsRepository so buildNotification (called synchronously from the
@@ -138,7 +142,12 @@ class RecordingService : Service() {
 
     private fun handleStop() {
         scope.launch {
-            recordingRepository.stop()
+            // L'invitation à noter l'app n'est armée que si une trace a réellement été
+            // sauvegardée : une acquisition sans le moindre fix GPS est abandonnée, et ne
+            // constitue pas le "bon moment" que recherche l'In-App Review API.
+            if (recordingRepository.stop() != null) {
+                reviewRepository.onSessionCompleted()
+            }
             tickerJob?.cancel()
             tickerJob = null
             stopForeground(STOP_FOREGROUND_REMOVE)

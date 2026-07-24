@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# play:review-ktx référence une annotation (source-only) de play-services-basement, que l'app ne
+# tire pas par ailleurs. R8 ne fait que la signaler : rien à conserver à l'exécution.
+-dontwarn com.google.android.gms.common.annotation.NoNullnessRewrite

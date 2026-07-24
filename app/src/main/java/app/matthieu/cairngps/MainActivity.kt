@@ -14,6 +14,7 @@ import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.ThemeMode
 import app.matthieu.cairngps.ui.navigation.MainScaffold
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
+import app.matthieu.cairngps.ui.review.InAppReviewEffect
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
 
 // AppCompatActivity (rather than plain ComponentActivity) is required for per-app language
@@ -38,6 +39,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             CairnGpsTheme(darkTheme = darkTheme) {
+                // Hors du Surface : ne dessine rien, Play rend son propre écran par-dessus.
+                InAppReviewEffect(app.reviewRepository)
                 Surface(modifier = Modifier.fillMaxSize()) {
                     LocationPermissionGate {
                         MainScaffold(app)
