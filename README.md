@@ -1,5 +1,7 @@
 # CairnGPS
 
+![Logo CairnGPS](app/src/main/ic_launcher-playstore.png)
+
 Application Android affichant des informations GPS/GNSS en temps réel, avec une
 couche de gamification (succès, records, niveaux) pour la rendre ludique.
 
