@@ -28,11 +28,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -70,7 +72,6 @@ import app.matthieu.cairngps.ui.theme.LightStatusText
 import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OnAmberButton
-import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
 
 /**
@@ -152,7 +153,11 @@ private fun ProfileScreen(
                             .background(CairnGreenDark, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Sym(icon = Glyph.Explore, contentDescription = null, filled = true, tint = OnGreenButton)
+                        Image(
+                            painter = painterResource(R.mipmap.ic_launcher_foreground),
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp),
+                        )
                     }
                     Spacer(Modifier.width(14.dp))
                     Text(
