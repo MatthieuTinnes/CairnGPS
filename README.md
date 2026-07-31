@@ -86,3 +86,15 @@ app/src/main/java/app/matthieu/cairngps/
 
 The Room database (`AppDatabase`, file `cairn.db`) and the repositories are
 instantiated once and exposed by `CairnApplication`.
+
+## Credits
+
+Third-party data and assets used by the app:
+
+- **[Natural Earth](https://www.naturalearthdata.com/)** — 1:110m cultural
+  vector data (world landmasses), public domain.
+- **[EGM96 geoid grid](https://earth-info.nga.mil/)** (NGA) — used for
+  altitude correction, public domain.
+- **[Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono)** and
+  **[Material Symbols](https://fonts.google.com/icons)** (Google) —
+  licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
