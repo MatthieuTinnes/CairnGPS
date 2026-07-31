@@ -20,8 +20,6 @@ class FakeAchievementDao : AchievementDao {
 
     override suspend fun getAll(): List<AchievementState> = table.value.values.toList()
 
-    override suspend fun count(): Int = table.value.size
-
     override suspend fun insertAll(states: List<AchievementState>) {
         table.value = table.value + states.associateBy { it.id }
     }

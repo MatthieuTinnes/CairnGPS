@@ -87,6 +87,15 @@ app/src/main/java/app/matthieu/cairngps/
 The Room database (`AppDatabase`, file `cairn.db`) and the repositories are
 instantiated once and exposed by `CairnApplication`.
 
+## License
+
+CairnGPS is free software, licensed under the
+[GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
+
+The app contains no Google Play Services, no Firebase and no third-party
+tracking: it relies solely on the Android platform APIs and on AndroidX
+(Apache-2.0).
+
 ## Credits
 
 Third-party data and assets used by the app:

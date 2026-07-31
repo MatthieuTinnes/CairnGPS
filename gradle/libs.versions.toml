@@ -14,7 +14,6 @@ datastore = "1.2.1"
 room = "2.8.4"
 ksp = "2.3.10"
 kotlinxSerialization = "1.11.0"
-playReview = "2.0.2"
 coroutinesTest = "1.11.0"
 mockk = "1.14.11"
 turbine = "1.2.1"
@@ -55,10 +54,6 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
-
-# Play In-App Review
-play-review = { group = "com.google.android.play", name = "review", version.ref = "playReview" }
-play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "playReview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

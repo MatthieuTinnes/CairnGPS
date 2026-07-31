@@ -1,0 +1,35 @@
+CairnGPS transforme votre téléphone en véritable récepteur GNSS.
+
+Observez en temps réel les satellites qui vous localisent des différentes constellations sur un globe 3D, un diagramme du ciel et une liste détaillée. Enregistrez vos randonnées, posez des repères, débloquez des succès.
+
+L'application lit le GPS brut de l'appareil via le LocationManager d'Android, sans passer par les services Google Play. Elle ne contient aucune bibliothèque Google, ne demande aucun compte et aucune connexion : tout fonctionne hors ligne, et vos positions, traces et repères restent sur votre téléphone.
+
+POSITION EN TEMPS RÉEL
+Coordonnées en degrés décimaux ou DMS, altitude corrigée du géoïde par le modèle EGM96, vitesse en km/h et m/s, précision horizontale et verticale avec indicateur de couleur. Vous savez toujours quelle confiance accorder à votre fix.
+
+VUE SATELLITE COMPLÈTE
+Tous les satellites visibles, constellation par constellation. Un diagramme azimut/élévation. Et un globe 3D qui montre la géométrie réelle de la constellation au-dessus de vous : vous voyez enfin d'où viennent vos signaux GNSS.
+
+BOUSSOLE
+Cadran de cap référencé au nord magnétique ou au nord géographique, au choix. Navigation point à point avec flèche, distance et azimut vers le repère de votre choix.
+
+ENREGISTREMENT DE TRACES
+Démarrez une session et remettez le téléphone dans la poche. Distance parcourue, vitesse moyenne et maximale, dénivelé positif et négatif, altitude minimale et maximale.
+
+REPÈRES
+Marquez ce qui compte (point d'eau, bivouac, départ de sentier, etc.) avec des icônes personnalisables. Chaque repère reste rattaché à la session où il a été posé.
+
+CARNET DE ROUTE
+Parcourez toutes vos sessions passées avec profil altimétrique, tracé du parcours et statistiques complètes. Export GPX pour ouvrir vos traces n'importe où.
+
+SUCCÈS ET NIVEAUX
+Plus de 25 succès répartis en familles : altitude, du premier sommet au Kilimandjaro. Vitesse. Satellites simultanés. Distance cumulée. Nombre de sorties. Et quelques succès spéciaux : franchir le 45e parallèle nord, être suivi des deux côtés de l'équateur, poser un repère avant 6 h du matin. Chaque succès rapporte de l'XP et vous fait monter de niveau, et vos records personnels se reportent d'une sortie à l'autre.
+
+CONÇU POUR L'EXTÉRIEUR
+Lisible en plein soleil, thèmes clair et sombre, consommation de batterie maîtrisée, unités métriques ou impériales, sauvegarde et restauration de vos données.
+
+À NOTER
+CairnGPS est un outil GNSS et un carnet de route, pas une application de cartographie : elle n'affiche pas de fond de carte et ne calcule pas d'itinéraire. Elle complète votre application de cartes plutôt qu'elle ne la remplace.
+
+AUTORISATIONS
+La localisation précise est nécessaire, y compris en arrière-plan pendant l'enregistrement d'une session, pour continuer à suivre votre parcours écran éteint. L'enregistrement ne démarre jamais tout seul : il ne commence que sur une action explicite, et une notification persistante le signale en permanence.

@@ -32,10 +32,6 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE isActive = 0")
     suspend fun getAll(): List<Session>
 
-    /** Number of finished sessions stored; excludes the row (if any) still being recorded. */
-    @Query("SELECT COUNT(*) FROM sessions WHERE isActive = 0")
-    suspend fun countFinished(): Int
-
     /** Deletes every session, used before restoring a backup. */
     @Query("DELETE FROM sessions")
     suspend fun deleteAll()

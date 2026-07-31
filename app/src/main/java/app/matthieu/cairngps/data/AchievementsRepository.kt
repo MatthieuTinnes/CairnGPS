@@ -15,9 +15,6 @@ class AchievementsRepository(private val dao: AchievementDao) {
     /** Cold flow of every unlocked achievement; re-emits whenever the table changes. */
     fun unlocked(): Flow<List<AchievementState>> = dao.observeAll()
 
-    /** Number of achievements unlocked so far. */
-    suspend fun unlockedCount(): Int = dao.count()
-
     /**
      * Marks achievement [id] as unlocked at [at]. Returns `true` if this call is what unlocked it
      * (a fresh unlock — the signal [GamificationManager] uses to fire the unlock banner); `false`

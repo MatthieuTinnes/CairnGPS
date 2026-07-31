@@ -29,9 +29,6 @@ class SessionRepository(
     /** Returns the session with [id], or `null` if it no longer exists. */
     suspend fun get(id: Long): Session? = dao.getById(id)
 
-    /** Number of finished sessions stored; excludes an in-progress recording, if any. */
-    suspend fun finishedCount(): Int = dao.countFinished()
-
     /** Removes the session with [id]. Waypoints attached to it keep existing (sessionId → null). */
     suspend fun delete(id: Long) = dao.deleteById(id)
 

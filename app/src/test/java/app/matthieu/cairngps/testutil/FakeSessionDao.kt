@@ -32,8 +32,6 @@ class FakeSessionDao(private val trackPointDao: FakeTrackPointDao = FakeTrackPoi
 
     override suspend fun getAll(): List<Session> = sessions.value.filterNot { it.isActive }
 
-    override suspend fun countFinished(): Int = sessions.value.count { !it.isActive }
-
     override suspend fun deleteAll() {
         sessions.value = emptyList()
     }

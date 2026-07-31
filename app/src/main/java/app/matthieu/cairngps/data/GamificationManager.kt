@@ -41,7 +41,6 @@ class GamificationManager(
     private val recordsRepository: RecordsRepository,
     private val achievementsRepository: AchievementsRepository,
     private val gamificationFlagsRepository: GamificationFlagsRepository,
-    private val reviewRepository: ReviewRepository,
 ) {
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -133,17 +132,12 @@ class GamificationManager(
      * only a genuinely new unlock does.
      */
     private suspend fun evaluateAndUnlock(metrics: GamificationMetrics) {
-        var freshUnlock = false
         for (def in Achievements.ALL) {
             if (!Achievements.isUnlocked(def, metrics)) continue
             if (achievementsRepository.markUnlocked(def.id)) {
                 _unlockedEvents.emit(def)
-                freshUnlock = true
             }
         }
-        // Une seule notification pour toute la passe : la première évaluation après une trace peut
-        // débloquer plusieurs succès d'un coup, ce qui ne justifie pas plusieurs invitations.
-        if (freshUnlock) reviewRepository.onAchievementUnlocked()
     }
 
     /**

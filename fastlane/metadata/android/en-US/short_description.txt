@@ -1,0 +1,1 @@
+Hike tracking, live GNSS satellite view, achievements. Works fully offline

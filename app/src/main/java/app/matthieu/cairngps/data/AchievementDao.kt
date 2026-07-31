@@ -27,10 +27,6 @@ interface AchievementDao {
     @Query("SELECT * FROM achievements")
     suspend fun getAll(): List<AchievementState>
 
-    /** Number of achievements unlocked so far. */
-    @Query("SELECT COUNT(*) FROM achievements")
-    suspend fun count(): Int
-
     /**
      * Inserts every achievement in [states], replacing any existing row with the same id. Used to
      * restore a backup, where the original unlock date must be preserved exactly.
