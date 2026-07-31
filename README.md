@@ -2,49 +2,48 @@
 
 ![Logo CairnGPS](app/src/main/res/mipmap-hdpi/ic_launcher.webp)
 
-Application Android affichant des informations GPS/GNSS en temps réel, avec une
-couche de gamification (succès, records, niveaux) pour la rendre ludique.
+Android app displaying real-time GPS/GNSS information, with a gamification
+layer (achievements, records, levels) to make it fun.
 
-Conçue pour un usage en extérieur (randonnée, déplacements) : lisible en plein
-soleil, économe en batterie, et fonctionnelle sans connexion réseau.
+Designed for outdoor use (hiking, travel): readable in bright sunlight,
+battery-efficient, and fully functional offline.
 
-## Fonctionnalités
+## Features
 
-- **Position** : coordonnées GPS (décimales et DMS), altitude, vitesse,
-  précision horizontale/verticale, mises à jour en temps réel.
-- **Boussole** : cap magnétique et vrai (déclinaison calculée localement),
-  navigation vers un waypoint.
-- **Satellites** : statut GNSS brut (`GnssStatus`) — satellites vus/utilisés,
-  ciel en 2D (sky plot) et en 3D, infos sur les constellations (GPS, GLONASS,
-  Galileo, BeiDou, QZSS, IRNSS).
-- **Carnet** : waypoints (avec icônes) et traces enregistrées (sessions),
-  profils d'altitude et de vitesse, export GPX.
-- **Enregistrement de trace** : suivi en arrière-plan via un service au premier
-  plan (distance, durée, vitesse moyenne/max, dénivelé D+/D−).
-- **Gamification** : succès à débloquer, records personnels, niveaux basés sur
-  l'XP cumulé.
-- **Sauvegarde/restauration** : export/import de toutes les données de l'app
-  dans un seul fichier.
-- Thèmes clair et sombre, français et anglais.
+- **Position**: GPS coordinates (decimal and DMS), altitude, speed,
+  horizontal/vertical accuracy, real-time updates.
+- **Compass**: magnetic and true heading (locally computed declination),
+  navigation to a waypoint.
+- **Satellites**: raw GNSS status (`GnssStatus`) — satellites in view/used,
+  2D sky plot and 3D globe, constellation info (GPS, GLONASS, Galileo,
+  BeiDou, QZSS, IRNSS).
+- **Logbook**: waypoints (with icons) and recorded tracks (sessions),
+  altitude and speed profiles, GPX export.
+- **Track recording**: background tracking via a foreground service
+  (distance, duration, average/max speed, elevation gain/loss).
+- **Gamification**: unlockable achievements, personal records, levels based
+  on accumulated XP.
+- **Backup/restore**: export/import all app data into a single file.
+- Light and dark themes, French and English.
 
-## Stack technique
+## Tech stack
 
 - **Kotlin** + **Jetpack Compose** (Material 3)
-- **Architecture MVVM** : `Repository` (accès aux données) → `ViewModel`
-  (état exposé via `StateFlow`) → `Composable` (affichage, sans logique métier)
-- **Coroutines + Flow** pour l'asynchrone
-- **Room** (via KSP) pour les données métier persistées (waypoints, traces,
-  succès, records), **DataStore Preferences** pour les réglages utilisateur
-- **LocationManager / `GPS_PROVIDER`** — volontairement pas FusedLocationProvider,
-  car l'app a besoin des données brutes satellites (`GnssStatus`)
+- **MVVM architecture**: `Repository` (data access) → `ViewModel`
+  (state exposed via `StateFlow`) → `Composable` (display, no business logic)
+- **Coroutines + Flow** for async operations
+- **Room** (via KSP) for persisted business data (waypoints, tracks,
+  achievements, records), **DataStore Preferences** for user settings
+- **LocationManager / `GPS_PROVIDER`** — deliberately not FusedLocationProvider,
+  since the app needs raw satellite data (`GnssStatus`)
 - minSdk 26 · targetSdk 37 · compileSdk 37
 
-## Prérequis
+## Requirements
 
-- Android Studio récent (AGP 9.3, Kotlin 2.4)
-- JDK 17+ (le JBR fourni avec Android Studio convient)
-- Un appareil ou émulateur avec puce GPS pour tester les fonctionnalités de
-  localisation (un émulateur peut simuler une position/route fictive)
+- Recent Android Studio (AGP 9.3, Kotlin 2.4)
+- JDK 17+ (the JBR bundled with Android Studio works)
+- A device or emulator with a GPS chip to test location features
+  (an emulator can simulate a mock position/route)
 
 ## Build
 
@@ -52,11 +51,11 @@ soleil, économe en batterie, et fonctionnelle sans connexion réseau.
 ./gradlew assembleDebug
 ```
 
-Sous Windows (PowerShell), s'assurer que `JAVA_HOME` pointe vers le JBR
-d'Android Studio avant d'appeler `gradlew` :
+On Windows (PowerShell), make sure `JAVA_HOME` points to the Android Studio
+JBR before calling `gradlew`:
 
 ```powershell
-$env:JAVA_HOME = "<chemin vers Android Studio>\jbr"
+$env:JAVA_HOME = "<path to Android Studio>\jbr"
 .\gradlew.bat assembleDebug
 ```
 
@@ -66,24 +65,24 @@ $env:JAVA_HOME = "<chemin vers Android Studio>\jbr"
 ./gradlew test
 ```
 
-## Structure du projet
+## Project structure
 
 ```
 app/src/main/java/app/matthieu/cairngps/
-├── data/         Repositories, entités Room, DAOs, modèles de données
-├── domain/       Logique métier pure (géodésie, formatage, gamification)
-├── service/      Service au premier plan pour l'enregistrement de traces
-└── ui/           Écrans Compose et ViewModels, par fonctionnalité
-    ├── location/     Écran Position (accueil)
-    ├── compass/      Boussole
-    ├── satellites/   Statut GNSS, globe 3D, infos constellations
-    ├── history/      Carnet (waypoints, traces)
+├── data/         Repositories, Room entities, DAOs, data models
+├── domain/       Pure business logic (geodesy, formatting, gamification)
+├── service/      Foreground service for track recording
+└── ui/           Compose screens and ViewModels, by feature
+    ├── location/     Position screen (home)
+    ├── compass/      Compass
+    ├── satellites/   GNSS status, 3D globe, constellation info
+    ├── history/      Logbook (waypoints, tracks)
     ├── waypoints/
-    ├── gamification/ Succès, records, niveaux
-    ├── profile/      Hub profil
+    ├── gamification/ Achievements, records, levels
+    ├── profile/      Profile hub
     ├── settings/
-    └── permission/   Écran de demande de permission de localisation
+    └── permission/   Location permission request screen
 ```
 
-La base Room (`AppDatabase`, fichier `cairn.db`) et les repositories sont
-instanciés une seule fois et exposés par `CairnApplication`.
+The Room database (`AppDatabase`, file `cairn.db`) and the repositories are
+instantiated once and exposed by `CairnApplication`.
