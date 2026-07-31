@@ -14,3 +14,10 @@
 .cxx
 local.properties
 /.kotlin/
+/app/release/
+*.aab
+*.apk
+*.jks
+*.keystore
+*.p12
+.claude/
