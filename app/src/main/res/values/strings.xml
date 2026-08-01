@@ -460,4 +460,51 @@
     <!-- Levels screen (reached from the Profil hub's level card) -->
     <string name="levels_title">Levels</string>
     <string name="levels_current_badge">Current</string>
+    <!-- About screen (design 7a/7b), reached from the bottom of Settings -->
+    <string name="about_title">About</string>
+    <string name="about_tagline">Offline hiking GPS. Free software, no ads.</string>
+    <string name="about_build_fmt">build %1$d</string>
+    <string name="about_section_project">Project</string>
+    <string name="about_section_contact">Contact</string>
+    <string name="about_source_title">Source code</string>
+    <string name="about_source_url">github.com/MatthieuTinnes/CairnGPS</string>
+    <string name="about_source_uri" translatable="false">https://github.com/MatthieuTinnes/CairnGPS</string>
+    <string name="about_license_row_title">AGPL-3.0 license</string>
+    <string name="about_license_row_subtitle">Free software</string>
+    <string name="about_libraries_title">Third-party components</string>
+    <string name="about_libraries_subtitle_fmt">%1$d open source components</string>
+    <string name="about_website_title">Author\'s website</string>
+    <string name="about_website_url">matthieu.app</string>
+    <string name="about_website_uri" translatable="false">https://matthieu.app</string>
+    <string name="about_email_title">Email the author</string>
+    <string name="about_email_address" translatable="false">cairngps@matthieu.app</string>
+    <string name="about_bug_hint">Report a bug straight on GitHub: it\'s the fastest way to get it fixed.</string>
+    <string name="about_privacy">No data ever leaves your phone.</string>
+    <string name="about_open_external">Opens an external link</string>
+    <string name="about_no_app">No app can open this link</string>
+
+    <!-- License screen (full AGPL-3.0 text, bundled offline) -->
+    <string name="about_license_screen_title">License</string>
+
+    <!-- Third-party components screen -->
+    <string name="about_libraries_screen_title">Third-party components</string>
+    <string name="about_libraries_intro">CairnGPS contains no Google Play Services, no Firebase and no tracking. It builds on the Android platform and on the components below.</string>
+    <string name="credit_androidx_name">AndroidX · Jetpack Compose · Room</string>
+    <string name="credit_androidx_license">Apache-2.0</string>
+    <string name="credit_androidx_desc">Google\'s Android libraries: the user interface, navigation, preference storage and the app database.</string>
+    <string name="credit_kotlin_name">Kotlin · kotlinx</string>
+    <string name="credit_kotlin_license">Apache-2.0</string>
+    <string name="credit_kotlin_desc">The language itself, its coroutines and kotlinx.serialization, used to export and import backups.</string>
+    <string name="credit_natural_earth_name">Natural Earth</string>
+    <string name="credit_natural_earth_license">Public domain</string>
+    <string name="credit_natural_earth_desc">1:110m cultural vector data (world landmasses), drawn on the 3D satellite globe.</string>
+    <string name="credit_egm96_name">EGM96 geoid grid (NGA)</string>
+    <string name="credit_egm96_license">Public domain</string>
+    <string name="credit_egm96_desc">Geoid model that turns the raw ellipsoidal GPS height into an altitude above sea level.</string>
+    <string name="credit_fonts_name">Roboto Mono · Material Symbols</string>
+    <string name="credit_fonts_license">Apache-2.0</string>
+    <string name="credit_fonts_desc">Google\'s typeface and icon set. Both are bundled with the app, which downloads no font.</string>
+
+    <!-- About row in the Profil hub -->
+    <string name="profile_hub_about_subtitle_fmt">Version %1$s · license and credits</string>
 </resources>

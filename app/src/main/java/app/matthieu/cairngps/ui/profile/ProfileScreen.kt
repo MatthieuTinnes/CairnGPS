@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.matthieu.cairngps.BuildConfig
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.SessionRepository
@@ -75,8 +76,9 @@ import app.matthieu.cairngps.ui.theme.OnAmberButton
 import app.matthieu.cairngps.ui.theme.Sym
 
 /**
- * Route: the "Profil" tab — a hub of lifetime totals and shortcuts to Carnet, Succès, Records and
- * Réglages (screen 1g). Owns the [ProfileViewModel], a pure read model over existing repositories.
+ * Route: the "Profil" tab — a hub of lifetime totals and shortcuts to Carnet, Succès, Records, À
+ * propos and Réglages (screen 1g). Owns the [ProfileViewModel], a pure read model over existing
+ * repositories.
  */
 @Composable
 fun ProfileRoute(
@@ -89,6 +91,7 @@ fun ProfileRoute(
     onOpenAchievements: () -> Unit,
     onOpenRecords: () -> Unit,
     onOpenLevels: () -> Unit,
+    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: ProfileViewModel = viewModel(
@@ -107,6 +110,7 @@ fun ProfileRoute(
         onOpenAchievements = onOpenAchievements,
         onOpenRecords = onOpenRecords,
         onOpenLevels = onOpenLevels,
+        onOpenAbout = onOpenAbout,
         modifier = modifier,
     )
 }
@@ -121,6 +125,7 @@ private fun ProfileScreen(
     onOpenAchievements: () -> Unit,
     onOpenRecords: () -> Unit,
     onOpenLevels: () -> Unit,
+    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -295,6 +300,18 @@ private fun ProfileScreen(
                     title = stringResource(R.string.records_title),
                     subtitle = stringResource(R.string.profile_hub_records_subtitle),
                     onClick = onOpenRecords,
+                )
+            }
+            item(key = "hub-about") {
+                ProfileHubRow(
+                    glyph = Glyph.Info,
+                    iconTint = CairnGreen,
+                    title = stringResource(R.string.about_title),
+                    subtitle = stringResource(
+                        R.string.profile_hub_about_subtitle_fmt,
+                        BuildConfig.VERSION_NAME,
+                    ),
+                    onClick = onOpenAbout,
                 )
             }
         }

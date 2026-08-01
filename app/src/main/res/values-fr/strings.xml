@@ -460,4 +460,48 @@
     <!-- Écran des niveaux (accessible depuis le bloc niveau de l'onglet Profil) -->
     <string name="levels_title">Niveaux</string>
     <string name="levels_current_badge">Actuel</string>
+    <!-- Écran À propos (design 7a/7b), accessible en bas des Réglages -->
+    <string name="about_title">À propos</string>
+    <string name="about_tagline">GPS de randonnée hors-ligne, libre et sans publicité.</string>
+    <string name="about_build_fmt">build %1$d</string>
+    <string name="about_section_project">Projet</string>
+    <string name="about_section_contact">Contact</string>
+    <string name="about_source_title">Code source</string>
+    <string name="about_source_url">github.com/MatthieuTinnes/CairnGPS</string>
+    <string name="about_license_row_title">Licence AGPL-3.0</string>
+    <string name="about_license_row_subtitle">Logiciel libre</string>
+    <string name="about_libraries_title">Bibliothèques tierces</string>
+    <string name="about_libraries_subtitle_fmt">%1$d composants open source</string>
+    <string name="about_website_title">Site de l\'auteur</string>
+    <string name="about_website_url">matthieu.app</string>
+    <string name="about_email_title">Écrire à l\'auteur</string>
+    <string name="about_bug_hint">Signalez un bug directement sur GitHub : c\'est le moyen le plus rapide d\'obtenir un correctif.</string>
+    <string name="about_privacy">Aucune donnée ne quitte votre téléphone.</string>
+    <string name="about_open_external">Ouvre un lien externe</string>
+    <string name="about_no_app">Aucune application ne peut ouvrir ce lien</string>
+
+    <!-- Écran de licence (texte AGPL-3.0 intégral, embarqué et lisible hors ligne) -->
+    <string name="about_license_screen_title">Licence</string>
+
+    <!-- Écran des bibliothèques tierces -->
+    <string name="about_libraries_screen_title">Bibliothèques tierces</string>
+    <string name="about_libraries_intro">CairnGPS ne contient ni services Google Play, ni Firebase, ni pistage. L\'application repose sur la plateforme Android et sur les composants ci-dessous.</string>
+    <string name="credit_androidx_name">AndroidX · Jetpack Compose · Room</string>
+    <string name="credit_androidx_license">Apache-2.0</string>
+    <string name="credit_androidx_desc">Les bibliothèques Android de Google : l\'interface, la navigation, le stockage des préférences et la base de données de l\'application.</string>
+    <string name="credit_kotlin_name">Kotlin · kotlinx</string>
+    <string name="credit_kotlin_license">Apache-2.0</string>
+    <string name="credit_kotlin_desc">Le langage lui-même, ses coroutines et kotlinx.serialization, utilisée pour l\'export et l\'import des sauvegardes.</string>
+    <string name="credit_natural_earth_name">Natural Earth</string>
+    <string name="credit_natural_earth_license">Domaine public</string>
+    <string name="credit_natural_earth_desc">Données vectorielles culturelles au 1:110m (masses continentales), dessinées sur le globe 3D des satellites.</string>
+    <string name="credit_egm96_name">Grille de géoïde EGM96 (NGA)</string>
+    <string name="credit_egm96_license">Domaine public</string>
+    <string name="credit_egm96_desc">Modèle de géoïde qui convertit la hauteur ellipsoïdale brute du GPS en altitude au-dessus du niveau de la mer.</string>
+    <string name="credit_fonts_name">Roboto Mono · Material Symbols</string>
+    <string name="credit_fonts_license">Apache-2.0</string>
+    <string name="credit_fonts_desc">La police et les icônes de Google. Toutes deux sont embarquées : l\'application ne télécharge aucune police.</string>
+
+    <!-- Ligne À propos du hub Profil -->
+    <string name="profile_hub_about_subtitle_fmt">Version %1$s · licence et crédits</string>
 </resources>

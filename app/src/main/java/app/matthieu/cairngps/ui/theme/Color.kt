@@ -145,3 +145,14 @@ val ConstellationQzss = Color(0xFF9B7BE0)
 val ConstellationSbas = Color(0xFFA1887F)
 val ConstellationIrnss = Color(0xFFFFF176)
 val ConstellationUnknown = Color(0xFF6E756B)
+
+// Écran À propos (design 7a/7b) : puce de version, séparateurs de liste et gris secondaires, que la
+// maquette fixe en dur dans les deux thèmes plutôt que via un rôle Material. Le fond de la pastille
+// du logo réutilise CairnGreenDark et son glyphe OnGreenButton, identiques dans les deux thèmes.
+val AboutChipBg = Color(0xFF24361F)
+val AboutChipBgLight = Color(0xFFDCEBD3)
+val AboutChipTextLight = Color(0xFF1E3D17) // en thème sombre : OnGreenButton
+val AboutDivider = Color(0xFF232B25)
+val AboutDividerLight = Color(0xFFE7ECE4)
+val AboutMuted = Color(0xFF6E7A6B) // notes de bas de groupe, et icône de fin de ligne en sombre
+val AboutTrailingIconLight = Color(0xFF96A092)

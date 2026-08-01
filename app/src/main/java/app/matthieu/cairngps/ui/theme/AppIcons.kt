@@ -98,6 +98,15 @@ object Glyph {
     const val PinDrop = ''
     const val Sailing = ''
     const val Waves = ''
+
+    // Écran À propos (écrans 7a/7b) — ajoutés au subset de la police avec les glyphes ci-dessus.
+    const val Code = ''
+    const val OpenInNew = ''
+    const val Balance = ''
+    const val Inventory2 = ''
+    const val Language = ''
+    const val Mail = ''
+    const val VisibilityOff = ''
 }
 
 /**

@@ -25,6 +25,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.matthieu.cairngps.CairnApplication
 import app.matthieu.cairngps.R
+import app.matthieu.cairngps.ui.about.AboutScreen
+import app.matthieu.cairngps.ui.about.LicenseScreen
+import app.matthieu.cairngps.ui.about.ThirdPartyScreen
 import app.matthieu.cairngps.ui.compass.CompassRoute
 import app.matthieu.cairngps.ui.gamification.AchievementsRoute
 import app.matthieu.cairngps.ui.gamification.LevelsRoute
@@ -60,6 +63,9 @@ private object Routes {
     const val CONSTELLATION_INFO = "constellation_info"
     const val SATELLITE_GLOBE = "satellite_globe"
     const val SETTINGS = "settings"
+    const val ABOUT = "about"
+    const val LICENSE = "license"
+    const val THIRD_PARTY = "third_party"
 
     const val WAYPOINT_ID_ARG = "waypointId"
     const val WAYPOINT_DETAIL = "waypoint_detail/{$WAYPOINT_ID_ARG}"
@@ -200,6 +206,7 @@ fun MainScaffold(app: CairnApplication) {
                         onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
                         onOpenRecords = { navController.navigate(Routes.RECORDS) },
                         onOpenLevels = { navController.navigate(Routes.LEVELS) },
+                        onOpenAbout = { navController.navigate(Routes.ABOUT) },
                     )
                 }
                 composable(Routes.HISTORY) {
@@ -283,6 +290,23 @@ fun MainScaffold(app: CairnApplication) {
                         repository = app.settingsRepository,
                         backupRepository = app.backupRepository,
                         gamificationFlagsRepository = app.gamificationFlagsRepository,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(Routes.ABOUT) {
+                    AboutScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenLicense = { navController.navigate(Routes.LICENSE) },
+                        onOpenThirdParty = { navController.navigate(Routes.THIRD_PARTY) },
+                    )
+                }
+                composable(Routes.LICENSE) {
+                    LicenseScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(Routes.THIRD_PARTY) {
+                    ThirdPartyScreen(
                         onBack = { navController.popBackStack() },
                     )
                 }
