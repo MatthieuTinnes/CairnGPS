@@ -6,6 +6,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.core.content.getSystemService
+import app.matthieu.cairngps.demo.DemoGpsSource
+import app.matthieu.cairngps.demo.DemoMode
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -43,15 +45,21 @@ class CompassRepository(context: Context) {
     private val rotationVectorSensor: Sensor? =
         sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
+    // Screenshot/screencast demo mode (debug builds only): the heading follows the simulated walk
+    // instead of the magnetometer, so the dial and the position on screen agree. See DemoMode.
+    private val demo: DemoGpsSource? = if (DemoMode.isEnabled) DemoGpsSource() else null
+
     /** Whether this device exposes a rotation vector sensor at all (some cheap devices don't). */
-    val isSensorAvailable: Boolean get() = rotationVectorSensor != null
+    val isSensorAvailable: Boolean get() = demo != null || rotationVectorSensor != null
 
     /**
      * Cold [Flow] of compass readings. A listener is registered per collector and unregistered
      * automatically when collection stops, so listening follows the collector's lifecycle
      * (typically ON_START → ON_STOP). Emits nothing if the device has no rotation vector sensor.
      */
-    fun headingUpdates(): Flow<CompassReading> = callbackFlow {
+    fun headingUpdates(): Flow<CompassReading> = demo?.headingUpdates() ?: sensorHeadingUpdates()
+
+    private fun sensorHeadingUpdates(): Flow<CompassReading> = callbackFlow {
         val sensor = rotationVectorSensor
         if (sensor == null) {
             close()

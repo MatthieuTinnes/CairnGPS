@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.matthieu.cairngps.R
+import app.matthieu.cairngps.demo.DemoMode
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.Sym
@@ -62,6 +63,13 @@ fun LocationPermissionGate(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
+
+    // Demo mode reads no real sensor, so the gate would only stand between the screenshots and a
+    // permission dialog that has nothing to grant. Debug builds only — see DemoMode.
+    if (DemoMode.isEnabled) {
+        content()
+        return
+    }
 
     var hasPermission by remember { mutableStateOf(context.hasLocationPermission()) }
     // True once we've asked at least once, so we can distinguish "not asked yet" from "denied".

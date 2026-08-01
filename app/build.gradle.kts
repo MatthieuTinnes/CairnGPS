@@ -68,6 +68,10 @@ android {
     }
     buildFeatures {
         compose = true
+        // BuildConfig.DEBUG gates the screenshot demo mode (see demo/DemoMode.kt). It is a
+        // compile-time constant, so R8 folds every `if (BuildConfig.DEBUG)` branch away in release
+        // and the whole demo package is shrunk out of the published APK.
+        buildConfig = true
     }
     testOptions {
         unitTests {

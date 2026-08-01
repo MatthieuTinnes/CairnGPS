@@ -64,6 +64,10 @@
     <string name="settings_unit_system">Unit system</string>
     <string name="unit_system_metric">Metric</string>
     <string name="unit_system_imperial">Imperial</string>
+    <!-- Debug builds only: the screenshot demo mode is shrunk out of the release APK. -->
+    <string name="settings_demo_section">Debug</string>
+    <string name="settings_demo_title">Demo mode</string>
+    <string name="settings_demo_subtitle">Simulated position, satellites and history for screenshots. Restarts the app.</string>
     <string name="settings_data_section">Data</string>
     <string name="settings_export_title">Export data</string>
     <string name="settings_export_subtitle">Waypoints, tracks, achievements and settings in a single file</string>

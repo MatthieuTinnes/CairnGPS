@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -53,6 +54,7 @@ import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
 import app.matthieu.cairngps.data.UnitSystem
+import app.matthieu.cairngps.demo.DemoMode
 import app.matthieu.cairngps.ui.common.SegmentedToggle
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.Glyph
@@ -332,6 +334,49 @@ private fun SettingsScreen(
                     subtitle = stringResource(R.string.settings_import_subtitle),
                     enabled = !isBackupWorking,
                     onClick = { showImportConfirm = true },
+                )
+            }
+
+            // Debug builds only: absent from the release APK, where DemoMode.isAvailable is the
+            // compile-time constant false.
+            if (DemoMode.isAvailable) {
+                DemoModeSection()
+            }
+        }
+    }
+}
+
+/**
+ * The screenshot/screencast demo-mode switch. Toggling it restarts the app, since which database
+ * file is open and whether the sensors are simulated are both decided at process start — see
+ * [DemoMode].
+ */
+@Composable
+private fun DemoModeSection() {
+    val context = LocalContext.current
+    val enabled = remember { DemoMode.isPersistedEnabled(context) }
+
+    SettingsSection(stringResource(R.string.settings_demo_section)) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_demo_title),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_demo_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LabelMuted,
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = { DemoMode.setEnabled(context, it) },
                 )
             }
         }

@@ -64,6 +64,10 @@
     <string name="settings_unit_system">Système d\'unités</string>
     <string name="unit_system_metric">Métrique</string>
     <string name="unit_system_imperial">Impérial</string>
+    <!-- Debug builds only: the screenshot demo mode is shrunk out of the release APK. -->
+    <string name="settings_demo_section">Debug</string>
+    <string name="settings_demo_title">Mode démo</string>
+    <string name="settings_demo_subtitle">Position, satellites et historique simulés pour les captures. Redémarre l\'application.</string>
     <string name="settings_data_section">Données</string>
     <string name="settings_export_title">Exporter les données</string>
     <string name="settings_export_subtitle">Repères, sessions, succès et réglages dans un fichier</string>

@@ -15,6 +15,8 @@ import android.os.Handler
 import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.core.content.getSystemService
+import app.matthieu.cairngps.demo.DemoGpsSource
+import app.matthieu.cairngps.demo.DemoMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
@@ -53,8 +56,15 @@ class LocationRepository(context: Context) {
     @Volatile
     private var geoid: Egm96Geoid = Egm96Geoid.forTesting(null)
 
+    // Screenshot/screencast demo mode (debug builds only): every public flow below serves synthetic
+    // data and the GPS chip is never touched. Null — and, in release, folded away entirely — in
+    // every normal run. See DemoMode.
+    private val demo: DemoGpsSource? = if (DemoMode.isEnabled) DemoGpsSource() else null
+
     init {
-        scope.launch(Dispatchers.IO) { geoid = Egm96Geoid.fromAssets(appContext) }
+        if (demo == null) {
+            scope.launch(Dispatchers.IO) { geoid = Egm96Geoid.fromAssets(appContext) }
+        }
     }
 
     /**
@@ -64,9 +74,10 @@ class LocationRepository(context: Context) {
      */
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     fun lastKnownLocation(): LocationData? =
-        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let {
-            it.toLocationData(geoid.separationMeters(it.latitude, it.longitude))
-        }
+        demo?.lastKnownLocation()
+            ?: locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)?.let {
+                it.toLocationData(geoid.separationMeters(it.latitude, it.longitude))
+            }
 
     /**
      * [Flow] of GPS fixes, shared across every collector : several call sites used to
@@ -83,7 +94,7 @@ class LocationRepository(context: Context) {
     fun locationUpdates(): Flow<LocationData> = sharedLocationUpdates
 
     private val sharedLocationUpdates: Flow<LocationData> =
-        locationUpdatesCold(minTimeMs = 1_000L, minDistanceM = 0f)
+        (demo?.locationUpdates() ?: locationUpdatesCold(minTimeMs = 1_000L, minDistanceM = 0f))
             .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
 
     /**
@@ -96,7 +107,7 @@ class LocationRepository(context: Context) {
     private fun locationUpdatesCold(
         minTimeMs: Long,
         minDistanceM: Float,
-    ): Flow<LocationData> = callbackFlow {
+    ): Flow<LocationData> = callbackFlow @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]) {
         val listener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
                 val separation = geoid.separationMeters(location.latitude, location.longitude)
@@ -148,7 +159,7 @@ class LocationRepository(context: Context) {
     fun satelliteUpdates(): Flow<List<SatelliteInfo>> = sharedSatelliteUpdates
 
     private val sharedSatelliteUpdates: Flow<List<SatelliteInfo>> =
-        satelliteUpdatesCold()
+        (demo?.satelliteUpdates() ?: satelliteUpdatesCold())
             .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
 
     /** Cold [Flow] of GNSS satellite snapshots backing [satelliteUpdates]; see its doc for details. */
@@ -211,7 +222,13 @@ class LocationRepository(context: Context) {
      */
     fun gpsProviderEnabled(): Flow<Boolean> = sharedGpsProviderEnabled
 
-    private val sharedGpsProviderEnabled: Flow<Boolean> = callbackFlow {
+    // Demo mode never reads the real provider, so it reports permanently enabled: a capture must
+    // not be interrupted by the GPS-disabled banner just because location is off on the device.
+    private val sharedGpsProviderEnabled: Flow<Boolean> =
+        if (demo != null) flowOf(true) else providerEnabledCold()
+
+    /** Cold [Flow] backing [gpsProviderEnabled]; see its doc for details. */
+    private fun providerEnabledCold(): Flow<Boolean> = callbackFlow {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 trySend(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
