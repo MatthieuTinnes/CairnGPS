@@ -1,5 +1,1 @@
-First public release of CairnGPS.
-
-Real-time GPS position, detailed satellite view with 3D globe, compass, track recording, waypoints, trip log, achievements and levels, GPX export.
-
-Feedback is very welcome, it will shape what comes next.
+Initial release

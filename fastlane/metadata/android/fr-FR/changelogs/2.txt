@@ -1,0 +1,5 @@
+Première version publique de CairnGPS.
+
+Position GPS en temps réel, vue satellite détaillée avec globe 3D, boussole, enregistrement de traces, repères, carnet de route, succès et niveaux, export GPX.
+
+Vos retours sont les bienvenus, ils orienteront la suite.
