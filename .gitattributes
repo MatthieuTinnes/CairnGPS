@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+# Les scripts batch Windows doivent être extraits en CRLF : cmd.exe gère mal
+# les labels/goto dans un .bat en LF seul.
+*.bat text eol=crlf
+
+# Déclaration explicite plutôt que détection automatique : un build F-Droid
+# reproductible est irréversible une fois publié.
+*.jar  binary
+*.png  binary
+*.webp binary
+*.ttf  binary
+*.dat  binary
