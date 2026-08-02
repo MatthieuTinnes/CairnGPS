@@ -107,3 +107,8 @@ Third-party data and assets used by the app:
 - **[Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono)** and
   **[Material Symbols](https://fonts.google.com/icons)** (Google) —
   licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+Tools used around the project:
+
+- **[Screenshots Pro](https://screenshots.pro/)** — used to produce the store
+  screenshots in `fastlane/metadata/android/*/images/*Screenshots`.
