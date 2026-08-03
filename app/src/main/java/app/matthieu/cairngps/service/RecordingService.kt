@@ -19,8 +19,10 @@ import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.RecordingState
 import app.matthieu.cairngps.data.SettingsRepository
+import app.matthieu.cairngps.data.StopResult
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.domain.format.distanceUnitLabel
+import app.matthieu.cairngps.domain.format.formatAccuracy
 import app.matthieu.cairngps.domain.format.formatAltitude
 import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatDuration
@@ -34,6 +36,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Foreground service that keeps a recording alive (and visible via an ongoing notification) while
@@ -71,7 +74,8 @@ class RecordingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> handleStart()
-            ACTION_STOP -> handleStop()
+            ACTION_STOP -> handleStop(fromNotification = false)
+            ACTION_STOP_FROM_NOTIFICATION -> handleStop(fromNotification = true)
             // Sticky restart after the process was killed: resume the in-progress recording that
             // RecordingRepository durably checkpointed, if there was one — see its class doc.
             null -> handleResume()
@@ -121,7 +125,7 @@ class RecordingService : Service() {
                 while (recordingRepository.state.value.isRecording) {
                     val current = recordingRepository.state.value
                     notificationManager.notify(NOTIFICATION_ID, buildNotification(current, elapsedSince(current.startTimestamp)))
-                    delay(1_000L)
+                    delay(1_000L.milliseconds)
                 }
                 tickerJob = null
                 if (isForeground) {
@@ -136,15 +140,51 @@ class RecordingService : Service() {
     private fun elapsedSince(startTimestamp: Long): Long =
         (System.currentTimeMillis() - startTimestamp).coerceAtLeast(0)
 
-    private fun handleStop() {
+    /**
+     * @param fromNotification Whether this Stop came from the notification's own action rather
+     *                         than the app's UI. In that case the app may not have any screen on
+     *                         top to show the discard banner, so a discarded recording is
+     *                         reported via a system notification instead (see [notifyDiscarded]).
+     */
+    private fun handleStop(fromNotification: Boolean) {
         scope.launch {
-            recordingRepository.stop()
+            val result = recordingRepository.stop()
             tickerJob?.cancel()
             tickerJob = null
             stopForeground(STOP_FOREGROUND_REMOVE)
             isForeground = false
+            if (fromNotification && result is StopResult.Discarded) {
+                notifyDiscarded(result)
+            }
             stopSelf()
         }
+    }
+
+    /** One-shot notification telling the user their track wasn't saved; only used when [handleStop] can't rely on a visible banner. */
+    private fun notifyDiscarded(result: StopResult.Discarded) {
+        createDiscardedNotificationChannel()
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+        val message = result.lastRejectedAccuracyMeters?.let { accuracy ->
+            getString(
+                R.string.recording_discarded_message_fmt,
+                formatAccuracy(accuracy, unitSystem),
+                shortUnitLabel(unitSystem),
+            )
+        } ?: getString(R.string.recording_discarded_message_no_fix)
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID_DISCARDED)
+            .setSmallIcon(R.drawable.ic_stat_recording)
+            .setContentTitle(getString(R.string.recording_discarded_title))
+            .setContentText(message)
+            .setAutoCancel(true)
+            .setContentIntent(contentIntent)
+            .build()
+        notificationManager.notify(NOTIFICATION_ID_DISCARDED, notification)
     }
 
     override fun onDestroy() {
@@ -168,6 +208,15 @@ class RecordingService : Service() {
         notificationManager.createNotificationChannel(channel)
     }
 
+    private fun createDiscardedNotificationChannel() {
+        val channel = NotificationChannel(
+            CHANNEL_ID_DISCARDED,
+            getString(R.string.recording_discarded_channel_name),
+            NotificationManager.IMPORTANCE_DEFAULT,
+        )
+        notificationManager.createNotificationChannel(channel)
+    }
+
     private fun buildNotification(state: RecordingState, elapsedMs: Long): Notification {
         val contentIntent = PendingIntent.getActivity(
             this,
@@ -178,12 +227,18 @@ class RecordingService : Service() {
         val stopIntent = PendingIntent.getService(
             this,
             0,
-            Intent(this, RecordingService::class.java).setAction(ACTION_STOP),
+            Intent(this, RecordingService::class.java).setAction(ACTION_STOP_FROM_NOTIFICATION),
             PendingIntent.FLAG_IMMUTABLE,
         )
 
         val title = getString(R.string.recording_notification_title_fmt, formatDuration(elapsedMs))
-        val content = getString(
+        val content = state.rejectedAccuracyMeters?.let { accuracy ->
+            getString(
+                R.string.recording_notification_signal_too_noisy_fmt,
+                formatAccuracy(accuracy, unitSystem),
+                shortUnitLabel(unitSystem),
+            )
+        } ?: getString(
             R.string.recording_notification_content,
             formatAltitude(state.currentAltitude, unitSystem),
             shortUnitLabel(unitSystem),
@@ -206,9 +261,12 @@ class RecordingService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "recording"
+        private const val CHANNEL_ID_DISCARDED = "recording_discarded"
         private const val NOTIFICATION_ID = 1
+        private const val NOTIFICATION_ID_DISCARDED = 2
         private const val ACTION_START = "app.matthieu.cairngps.action.START_RECORDING"
         private const val ACTION_STOP = "app.matthieu.cairngps.action.STOP_RECORDING"
+        private const val ACTION_STOP_FROM_NOTIFICATION = "app.matthieu.cairngps.action.STOP_RECORDING_FROM_NOTIFICATION"
 
         /** Starts (or resumes) the recording foreground service. Requires location permission. */
         fun start(context: Context) {

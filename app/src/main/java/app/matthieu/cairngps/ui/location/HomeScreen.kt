@@ -405,6 +405,24 @@ private fun SessionCard(uiState: RecordingUiState, unitSystem: UnitSystem) {
             Spacer(Modifier.width(8.dp))
             CardTitle(stringResource(R.string.recording_title))
         }
+        uiState.rejectedAccuracyMeters?.let { accuracy ->
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.Top) {
+                Sym(icon = Glyph.Warning, contentDescription = null, tint = QualityPoor)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(
+                        R.string.recording_signal_too_noisy_fmt,
+                        formatAccuracy(accuracy, unitSystem),
+                        shortUnitLabel(unitSystem),
+                        formatAccuracy(RecordingRepository.MAX_ACCURACY_METERS, unitSystem),
+                        shortUnitLabel(unitSystem),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = QualityPoor,
+                )
+            }
+        }
         Spacer(Modifier.height(12.dp))
 
         // Two rows of three rather than three rows of two: it reads as a single glanceable block

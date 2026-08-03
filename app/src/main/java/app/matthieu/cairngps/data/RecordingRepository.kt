@@ -13,8 +13,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -28,7 +31,9 @@ import kotlinx.coroutines.withContext
  *
  * Duration is deliberately not included here: the UI derives it from [startTimestamp] with its
  * own 1-second ticker, so this state doesn't need to change purely because time passed without a
- * new GPS fix.
+ * new GPS fix. [rejectedAccuracyMeters] is the exception: it does change on a rejected fix (see
+ * [RecordingRepository.onFix]), since that's the only way the UI can learn that nothing is
+ * currently being recorded.
  */
 data class RecordingState(
     val isRecording: Boolean = false,
@@ -40,7 +45,26 @@ data class RecordingState(
     val elevationLoss: Double = 0.0, // D-, meters
     val currentAltitude: Double? = null, // meters, from the last accepted fix; null until then
     val currentSpeed: Float? = null, // m/s, from the last accepted fix; null until then
+    // Accuracy of the last rejected fix, once a run of consecutive rejections gets long enough to
+    // warn about; null while fixes are being accepted. See onFix's REJECTED_FIX_WARNING_STREAK.
+    val rejectedAccuracyMeters: Float? = null,
 )
+
+/** Outcome of [RecordingRepository.stop]. */
+sealed interface StopResult {
+    /** The recording was persisted as a [Session]. */
+    data class Saved(val sessionId: Long) : StopResult
+
+    /**
+     * Nothing was persisted: not a single GPS fix was accurate enough to accept (see
+     * [RecordingRepository.MAX_ACCURACY_METERS]). [lastRejectedAccuracyMeters] is the accuracy of
+     * the last fix seen, or `null` if the GPS never delivered one at all.
+     */
+    data class Discarded(val durationMs: Long, val lastRejectedAccuracyMeters: Float?) : StopResult
+
+    /** No recording was in progress; [stop] was a no-op. */
+    data object NotRecording : StopResult
+}
 
 /**
  * Accumulates GPS fixes from [LocationRepository] into a running [RecordingState] while a
@@ -70,6 +94,13 @@ class RecordingRepository(
     private val _state = MutableStateFlow(RecordingState())
     val state: StateFlow<RecordingState> = _state.asStateFlow()
 
+    // App-scoped (mirrors GamificationManager.unlockedEvents), so a root-level banner can observe
+    // it regardless of which screen is on top when the recording is stopped.
+    private val _discardedEvents = MutableSharedFlow<StopResult.Discarded>(extraBufferCapacity = 4)
+
+    /** Emits when [stop] discards a recording for lack of any accepted fix; drives the discard banner. */
+    val discardedEvents: SharedFlow<StopResult.Discarded> = _discardedEvents.asSharedFlow()
+
     val isRecording: Boolean get() = _state.value.isRecording
 
     // Guards every access to createdWaypointIds/pendingAttachments below, together with the
@@ -97,6 +128,8 @@ class RecordingRepository(
     // sampling (see onFix) so a process death loses at most one sampling interval of aggregates.
     private var activeSession: Session? = null
     private var lastAcceptedFix: LocationData? = null
+    // Consecutive fixes rejected by the accuracy gate in onFix; drives rejectedAccuracyMeters.
+    private var consecutiveRejectedFixes = 0
     private var referenceAltitude: Double? = null
     private var movingDistanceMeters = 0.0
     private var movingTimeMs = 0L
@@ -164,6 +197,7 @@ class RecordingRepository(
     private fun resetAccumulator() {
         activeSession = null
         lastAcceptedFix = null
+        consecutiveRejectedFixes = 0
         referenceAltitude = null
         movingDistanceMeters = 0.0
         movingTimeMs = 0L
@@ -246,7 +280,16 @@ class RecordingRepository(
     private suspend fun onFix(fix: LocationData) {
         // A noisy horizontal fix makes the point itself unreliable for distance/elevation, so it
         // is dropped entirely rather than folded into the track.
-        if (fix.horizontalAccuracy > MAX_ACCURACY_METERS) return
+        if (fix.horizontalAccuracy > MAX_ACCURACY_METERS) {
+            // A single noisy fix isn't surfaced: only a sustained run means nothing is actually
+            // being recorded, avoiding a warning that flickers on and off.
+            consecutiveRejectedFixes++
+            if (consecutiveRejectedFixes >= REJECTED_FIX_WARNING_STREAK) {
+                _state.update { it.copy(rejectedAccuracyMeters = fix.horizontalAccuracy) }
+            }
+            return
+        }
+        consecutiveRejectedFixes = 0
 
         val previous = lastAcceptedFix
         val current = _state.value
@@ -306,6 +349,7 @@ class RecordingRepository(
             elevationLoss = elevationLoss,
             currentAltitude = fix.altitude,
             currentSpeed = fix.speed,
+            rejectedAccuracyMeters = null,
         )
         _state.value = newState
 
@@ -400,13 +444,14 @@ class RecordingRepository(
      * Stops accumulating, persists the final [Session] and attaches any waypoints saved during
      * the recording to it. A no-op if no recording was in progress.
      *
-     * @return l'id de la session enregistrée, ou `null` si rien n'a été persisté (aucune
-     *         acquisition en cours, ou trace abandonnée faute de fix GPS accepté). Le service
-     *         appelant s'en sert pour ne déclencher l'invitation à noter l'app qu'après une
-     *         session réellement sauvegardée.
+     * @return [StopResult.Saved] with the session id, [StopResult.Discarded] if the recording was
+     *         abandoned for lack of any accepted fix (also emitted on [discardedEvents]), or
+     *         [StopResult.NotRecording] if no recording was in progress. The calling service uses
+     *         [StopResult.Saved] to gate the rate-the-app prompt and [StopResult.Discarded] to
+     *         notify the user when it stopped the recording itself (from the notification action).
      */
-    suspend fun stop(): Long? {
-        val job = recordingJob ?: return null
+    suspend fun stop(): StopResult {
+        val job = recordingJob ?: return StopResult.NotRecording
         recordingJob = null
         job.cancelAndJoin()
 
@@ -436,7 +481,7 @@ class RecordingRepository(
             waypointIds = captured.second
             break
         }
-        if (!finalState.isRecording) return null
+        if (!finalState.isRecording) return StopResult.NotRecording
 
         val session = activeSession
         activeSession = null
@@ -449,7 +494,12 @@ class RecordingRepository(
         if (lastAcceptedFix == null || session == null) {
             session?.let { sessionRepository.discardActive(it.id) }
             sessionRepository.clearCheckpoint()
-            return null
+            val discarded = StopResult.Discarded(
+                durationMs = System.currentTimeMillis() - finalState.startTimestamp,
+                lastRejectedAccuracyMeters = finalState.rejectedAccuracyMeters,
+            )
+            _discardedEvents.emit(discarded)
+            return discarded
         }
 
         val finalSession = session.copy(
@@ -469,7 +519,7 @@ class RecordingRepository(
         sessionRepository.finalizeActive(finalSession, decimatedTrack())
         sessionRepository.clearCheckpoint()
         waypointRepository.attachToSession(waypointIds, finalSession.id)
-        return finalSession.id
+        return StopResult.Saved(finalSession.id)
     }
 
     /**
@@ -483,21 +533,24 @@ class RecordingRepository(
         return (0 until TRACK_MAX_POINTS).map { i -> trackBuffer[(i * stride).toInt()] }
     }
 
-    private companion object {
+    companion object {
         /** Fixes less accurate than this are ignored for distance/elevation (spec: > 20 m). */
         const val MAX_ACCURACY_METERS = 20f
 
+        /** Consecutive rejected fixes before warning the user (~3s at a 1Hz fix rate). */
+        private const val REJECTED_FIX_WARNING_STREAK = 3
+
         /** Minimum altitude change counted into D+/D- (spec: 3-5 m); picked mid-range. */
-        const val ALTITUDE_THRESHOLD_METERS = 4.0
+        private const val ALTITUDE_THRESHOLD_METERS = 4.0
 
         /** Below this speed the user is considered stationary; excluded from the moving average. */
-        const val MOVING_SPEED_THRESHOLD_MS = 0.5f
+        private const val MOVING_SPEED_THRESHOLD_MS = 0.5f
 
         /** Minimum spacing between track-buffer samples, so a fast fix rate doesn't bloat memory. */
-        const val TRACK_SAMPLE_INTERVAL_MS = 5_000L
+        private const val TRACK_SAMPLE_INTERVAL_MS = 5_000L
 
         /** Hard cap on stored track points per session; longer tracks are uniformly decimated. */
-        const val TRACK_MAX_POINTS = 1_000
+        private const val TRACK_MAX_POINTS = 1_000
     }
 }
 

@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.data
 
 import android.location.Location
+import app.cash.turbine.test
 import app.matthieu.cairngps.testutil.FakeRecordingCheckpointDao
 import app.matthieu.cairngps.testutil.FakeSessionDao
 import app.matthieu.cairngps.testutil.FakeTrackPointDao
@@ -187,12 +188,66 @@ class RecordingRepositoryTest {
 
         pushFix(h, fix(47.0, 6.0, accuracy = 30f, timestamp = t0)) // rejected: too inaccurate
 
-        // null: nothing was persisted, so RecordingService must not arm the review prompt.
-        assertNull(h.repository.stop())
+        // Discarded: nothing was persisted, so RecordingService must not arm the review prompt.
+        assertTrue(h.repository.stop() is StopResult.Discarded)
         advanceUntilIdle()
 
         assertTrue(h.sessionDao.getAll().isEmpty())
         assertNull(h.checkpointDao.get())
+    }
+
+    @Test
+    fun `stop with no recording in progress returns NotRecording`() = runTest {
+        val h = Harness(testScheduler)
+
+        assertEquals(StopResult.NotRecording, h.repository.stop())
+    }
+
+    @Test
+    fun `rejectedAccuracyMeters is set only once rejected fixes form a sustained streak`() = runTest {
+        val h = Harness(testScheduler)
+        h.repository.start("Trace")
+        advanceUntilIdle()
+
+        pushFix(h, fix(47.0, 6.0, accuracy = 30f, timestamp = t0))
+        pushFix(h, fix(47.0, 6.0, accuracy = 30f, timestamp = t0 + 1_000))
+        // A lone rejected fix (or two) isn't surfaced yet, to avoid flickering the warning on and off.
+        assertNull(h.repository.state.value.rejectedAccuracyMeters)
+
+        pushFix(h, fix(47.0, 6.0, accuracy = 33f, timestamp = t0 + 2_000)) // 3rd in a row: crosses the streak
+        assertEquals(33f, h.repository.state.value.rejectedAccuracyMeters)
+    }
+
+    @Test
+    fun `an accepted fix clears rejectedAccuracyMeters`() = runTest {
+        val h = Harness(testScheduler)
+        h.repository.start("Trace")
+        advanceUntilIdle()
+
+        repeat(3) { i -> pushFix(h, fix(47.0, 6.0, accuracy = 30f, timestamp = t0 + i * 1_000L)) }
+        assertEquals(30f, h.repository.state.value.rejectedAccuracyMeters)
+
+        pushFix(h, fix(47.0, 6.0, timestamp = t0 + 3_000))
+        assertNull(h.repository.state.value.rejectedAccuracyMeters)
+    }
+
+    @Test
+    fun `stop discarding a recording emits on discardedEvents`() = runTest {
+        val h = Harness(testScheduler)
+        h.repository.start("Trace")
+        advanceUntilIdle()
+
+        h.repository.discardedEvents.test {
+            repeat(3) { i -> pushFix(h, fix(47.0, 6.0, accuracy = 30f, timestamp = t0 + i * 1_000L)) }
+
+            val result = h.repository.stop()
+            advanceUntilIdle()
+
+            assertTrue(result is StopResult.Discarded)
+            assertEquals(30f, (result as StopResult.Discarded).lastRejectedAccuracyMeters)
+            assertEquals(30f, awaitItem().lastRejectedAccuracyMeters)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -205,11 +260,11 @@ class RecordingRepositoryTest {
         pushFix(h, fix(47.001, 6.001, altitude = 510.0, timestamp = t0 + 5_000))
         pushFix(h, fix(46.999, 5.999, altitude = 495.0, timestamp = t0 + 10_000))
 
-        val savedId = h.repository.stop()
+        val result = h.repository.stop()
         advanceUntilIdle()
 
         val session = h.sessionDao.getAll().single()
-        assertEquals(session.id, savedId)
+        assertEquals(session.id, (result as StopResult.Saved).sessionId)
         assertFalse(session.isActive)
         assertEquals(10.0, session.elevationGain, 0.0)
         assertEquals(15.0, session.elevationLoss, 0.0)

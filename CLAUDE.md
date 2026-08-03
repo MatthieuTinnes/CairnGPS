@@ -1,80 +1,78 @@
 # CLAUDE.md
 
-Utilise codebase-memory-mcp pour explorer et rechercher dans la codebase
+## Overview
 
-## Vue d'ensemble
+Android app displaying real-time GPS/GNSS information, with a **gamification**
+layer (achievements, records) to make it fun.
 
-Application Android affichant des informations GPS/GNSS en temps réel, avec une
-couche de **gamification** (succès, records) pour la rendre ludique.
+Target audience: outdoor use (hiking, travel). The app must stay readable in
+bright sunlight and be battery-efficient.
+The app works in both dark and light theme.
+Do not launch the app after changes, only verify that the gradle build passes.
+## Tech stack
 
-Public visé : usage en extérieur (randonnée, déplacements). L'app doit rester
-lisible en plein soleil et économe en batterie.
-L'app fonctionne en theme sombre et clair.
-Ne pas lancer l'appli après les modif, uniquement vérifier que le build gradle passe. 
-## Stack technique
+- **Language**: Kotlin
+- **UI**: Jetpack Compose + Material 3
+- **Architecture**: MVVM
+    - `Repository`: access to data sources (GPS, sensors, storage)
+    - `ViewModel`: exposes state via `StateFlow`, has no knowledge of Android UI
+    - `Composable`: observes `StateFlow`, no business logic
+- **minSdk**: 26 — **targetSdk**: latest stable version
+- **Async**: Coroutines + Flow. No callback exposed outside of Repositories.
 
-- **Langage** : Kotlin
-- **UI** : Jetpack Compose + Material 3
-- **Thème** : sombre par défaut
-- **Architecture** : MVVM
-    - `Repository` : accès aux sources de données (GPS, capteurs, stockage)
-    - `ViewModel` : expose l'état via `StateFlow`, ne connaît pas Android UI
-    - `Composable` : observe les `StateFlow`, sans logique métier
-- **minSdk** : 26 — **targetSdk** : dernière version stable
-- **Asynchrone** : Coroutines + Flow. Pas de callback exposé hors des Repository.
+## GPS constraints — IMPORTANT
 
-## Contraintes GPS — IMPORTANTES
-
-- **Utiliser `LocationManager` avec `GPS_PROVIDER`**, PAS FusedLocationProvider.
-  Raison : l'app a besoin des données brutes des satellites (`GnssStatus`), que
-  Fused n'expose pas. Ne jamais remplacer par Fused, même si ça paraît plus simple.
-- Toujours passer par le `LocationRepository` pour les positions ; aucun accès
-  direct au `LocationManager` depuis un ViewModel ou un Composable.
+- **Use `LocationManager` with `GPS_PROVIDER`**, NOT FusedLocationProvider.
+  Reason: the app needs raw satellite data (`GnssStatus`), which Fused does
+  not expose. Never replace with Fused, even if it seems simpler.
+- Always go through `LocationRepository` for positions; no direct access to
+  `LocationManager` from a ViewModel or a Composable.
 
 ## Permissions
 
-- `ACCESS_FINE_LOCATION` : demande runtime, avec écran d'explication si refusée.
-- Déclarer chaque permission dans le Manifest au moment où la feature l'introduit,
-  pas avant.
+- `ACCESS_FINE_LOCATION`: requested at runtime, with an explanation screen if
+  denied.
+- Declare each permission in the Manifest at the moment the feature
+  introduces it, not before.
 
-## Modèle de données
+## Data model
 
-`LocationData` (data class centrale) :
+`LocationData` (central data class):
 - `latitude`, `longitude` (Double)
-- `altitude` en mètres
-- `vitesse` en **m/s** (source) — la conversion km/h se fait à l'affichage
-- `precisionHorizontale` en mètres
-- `precisionVerticale` en mètres si disponible
+- `altitude` in meters
+- `vitesse` (speed) in **m/s** (source) — km/h conversion happens at display time
+- `precisionHorizontale` (horizontal accuracy) in meters
+- `precisionVerticale` (vertical accuracy) in meters if available
 - `timestamp`
 
-## Conventions d'affichage
+## Display conventions
 
-- Coordonnées : degrés décimaux (6 décimales) ET degrés/minutes/secondes.
-- Vitesse affichée en km/h (1 décimale), m/s en complément discret.
-- Altitude : entier, en mètres.
-- Précision : indicateur couleur — vert `< 5 m`, orange `5–15 m`, rouge `> 15 m`.
-- **Pas de fix disponible** : afficher des tirets `--`, jamais `0`.
-- Mises à jour fluides, sans clignotement quand les valeurs changent.
+- Coordinates: decimal degrees (6 decimals) AND degrees/minutes/seconds.
+- Altitude: integer, in meters.
+- Accuracy: color indicator — green `< 5 m`, orange `5–15 m`, red `> 15 m`.
+- **No fix available**: display dashes `--`, never `0`.
+- Smooth updates, no flickering when values change.
 
-## Stockage
+## Storage
 
-Deux mécanismes complémentaires, chacun pour un usage précis :
+Two complementary mechanisms, each for a specific use:
 
-- **Room** : LA base de données de l'app pour toutes les **données métier persistées**
-    - Base unique `AppDatabase` (singleton, construite via `AppDatabase.getInstance`), exposée
-      par `CairnApplication`. Nom de fichier : `cairn.db`.
-    - Une entité par table (`@Entity`), un DAO par entité (méthodes `suspend` pour les écritures,
-      `Flow` pour les lectures observables), et un `Repository` par domaine qui expose le DAO.
-      Les ViewModels/Composables ne touchent jamais au DAO ni à `AppDatabase` directement.
-    - Ajouter une nouvelle feature persistée = ajouter son entité + DAO à `AppDatabase`, incrémenter
-      `version` et fournir une migration. Ne pas créer de base séparée.
-    - Processeur d'annotations : **KSP** (pas kapt).
-- **DataStore (Preferences)** : réservé aux **préférences utilisateur** simples (ex. format des
-  coordonnées), pas aux données métier.
+- **Room**: THE app database for all **persisted business data**
+    - Single `AppDatabase` (singleton, built via `AppDatabase.getInstance`), exposed
+      by `CairnApplication`. File name: `cairn.db`.
+    - One entity per table (`@Entity`), one DAO per entity (`suspend` methods for
+      writes, `Flow` for observable reads), and one `Repository` per domain that
+      exposes the DAO. ViewModels/Composables never touch the DAO or
+      `AppDatabase` directly.
+    - Adding a new persisted feature = add its entity + DAO to `AppDatabase`,
+      bump `version`, and provide a migration. Do not create a separate database.
+    - Annotation processor: **KSP** (not kapt).
+- **DataStore (Preferences)**: reserved for simple **user preferences**
+  (e.g. coordinate format), not business data.
 
 
-## Qualité
+## Quality
 
-- Gérer les cas limites : absence de fix, permission refusée, capteur indisponible.
-- Commenter uniquement ce qui n'est pas évident (choix GPS_PROVIDER, calculs de
-  dénivelé, conversions). Ne pas ajouter de commentaire en cas modif pour correction
+- Handle edge cases: no fix, permission denied, sensor unavailable.
+- Comment only what isn't obvious (GPS_PROVIDER choice, elevation gain
+  calculations, conversions). Do not add a comment when modifying code for a fix.

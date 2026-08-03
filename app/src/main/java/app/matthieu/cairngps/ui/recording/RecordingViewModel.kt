@@ -32,6 +32,7 @@ data class RecordingUiState(
     val maxSpeed: Float = 0f,
     val elevationGain: Double = 0.0,
     val elevationLoss: Double = 0.0,
+    val rejectedAccuracyMeters: Float? = null,
 )
 
 private fun RecordingState.toUiState(elapsedMs: Long): RecordingUiState = RecordingUiState(
@@ -42,6 +43,7 @@ private fun RecordingState.toUiState(elapsedMs: Long): RecordingUiState = Record
     maxSpeed = maxSpeed,
     elevationGain = elevationGain,
     elevationLoss = elevationLoss,
+    rejectedAccuracyMeters = rejectedAccuracyMeters,
 )
 
 /** 1-second ticker used only to keep [RecordingUiState.elapsedMs] advancing while recording. */

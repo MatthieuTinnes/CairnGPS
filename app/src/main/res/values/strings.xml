@@ -148,6 +148,12 @@
     <string name="recording_notification_channel_name">Recording</string>
     <string name="recording_notification_title_fmt">Recording in progress · %1$s</string>
     <string name="recording_notification_content">Alt %1$s %2$s · %3$s %4$s · %5$s %6$s</string>
+    <string name="recording_signal_too_noisy_fmt">Signal too imprecise (±%1$s %2$s) — nothing is being recorded (threshold %3$s %4$s).</string>
+    <string name="recording_notification_signal_too_noisy_fmt">Signal too imprecise (±%1$s %2$s) — nothing recorded</string>
+    <string name="recording_discarded_title">Track not saved</string>
+    <string name="recording_discarded_message_fmt">GPS signal too imprecise (±%1$s %2$s): no point could be recorded.</string>
+    <string name="recording_discarded_message_no_fix">No GPS fix received: nothing could be recorded.</string>
+    <string name="recording_discarded_channel_name">Track not saved</string>
 
     <!-- Session (trace) detail -->
     <string name="session_default_name_prefix">Track</string>

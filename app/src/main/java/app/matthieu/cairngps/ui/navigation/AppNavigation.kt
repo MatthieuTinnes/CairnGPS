@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
@@ -37,6 +38,7 @@ import app.matthieu.cairngps.ui.history.HistoryRoute
 import app.matthieu.cairngps.ui.history.SessionDetailRoute
 import app.matthieu.cairngps.ui.location.HomeRoute
 import app.matthieu.cairngps.ui.profile.ProfileRoute
+import app.matthieu.cairngps.ui.recording.DiscardedRecordingBanner
 import app.matthieu.cairngps.ui.satellites.ConstellationInfoScreen
 import app.matthieu.cairngps.ui.satellites.SatelliteGlobeRoute
 import app.matthieu.cairngps.ui.satellites.SatellitesRoute
@@ -314,7 +316,16 @@ fun MainScaffold(app: CairnApplication) {
         }
         UnlockBanner(
             unlockedEvents = app.gamificationManager.unlockedEvents,
-            modifier = Modifier.align(Alignment.TopCenter),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding(),
+        )
+        DiscardedRecordingBanner(
+            discardedEvents = app.recordingRepository.discardedEvents,
+            settingsRepository = app.settingsRepository,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding(),
         )
     }
 }
