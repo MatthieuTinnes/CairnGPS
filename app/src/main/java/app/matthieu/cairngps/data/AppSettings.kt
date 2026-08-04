@@ -41,7 +41,7 @@ enum class UnitSystem {
  */
 @Serializable
 data class AppSettings(
-    val coordinateFormat: CoordinateFormat = CoordinateFormat.DECIMAL,
+    val coordinateFormat: CoordinateFormat = CoordinateFormat.DMS,
     val themeMode: ThemeMode = ThemeMode.DARK,
     val northReference: NorthReference = NorthReference.MAGNETIC,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
