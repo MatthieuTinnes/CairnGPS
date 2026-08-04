@@ -3,18 +3,19 @@ package app.matthieu.cairngps.ui.settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -38,10 +39,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,9 +61,13 @@ import app.matthieu.cairngps.data.ThemeMode
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.demo.DemoMode
 import app.matthieu.cairngps.ui.common.SegmentedToggle
-import app.matthieu.cairngps.ui.theme.CairnGreen
+import app.matthieu.cairngps.ui.theme.AboutDivider
+import app.matthieu.cairngps.ui.theme.AboutDividerLight
+import app.matthieu.cairngps.ui.theme.AboutMuted
+import app.matthieu.cairngps.ui.theme.AboutTrailingIconLight
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
+import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.Sym
 import java.io.InputStream
 import java.io.OutputStream
@@ -228,7 +237,7 @@ private fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             SettingsSection(stringResource(R.string.settings_display_section)) {
-                SettingCard(stringResource(R.string.settings_coordinate_format)) {
+                SettingRow(glyph = Glyph.Public, title = stringResource(R.string.settings_coordinate_format)) {
                     SegmentedToggle(
                         options = listOf(
                             stringResource(R.string.coordinate_format_decimal),
@@ -240,7 +249,7 @@ private fun SettingsScreen(
                         },
                     )
                 }
-                SettingCard(stringResource(R.string.settings_theme)) {
+                SettingRow(glyph = Glyph.WbTwilight, title = stringResource(R.string.settings_theme)) {
                     SegmentedToggle(
                         options = listOf(
                             stringResource(R.string.theme_system),
@@ -262,22 +271,24 @@ private fun SettingsScreen(
                             )
                         },
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         Sym(
                             icon = Glyph.BatterySaver,
                             contentDescription = null,
                             size = 16.dp,
                             tint = MaterialTheme.colorScheme.primary,
                         )
-                        Spacer(Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.settings_theme_battery_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.5.sp,
+                            color = AboutMuted,
                         )
                     }
                 }
-                SettingCard(stringResource(R.string.settings_language)) {
+                SettingRow(glyph = Glyph.Language, title = stringResource(R.string.settings_language)) {
                     SegmentedToggle(
                         options = listOf(
                             stringResource(R.string.language_system),
@@ -288,7 +299,11 @@ private fun SettingsScreen(
                         onSelect = onLanguageChange,
                     )
                 }
-                SettingCard(stringResource(R.string.settings_unit_system)) {
+                SettingRow(
+                    glyph = Glyph.Speed,
+                    title = stringResource(R.string.settings_unit_system),
+                    last = true,
+                ) {
                     SegmentedToggle(
                         options = listOf(
                             stringResource(R.string.unit_system_metric),
@@ -303,7 +318,11 @@ private fun SettingsScreen(
             }
 
             SettingsSection(stringResource(R.string.settings_navigation_section)) {
-                SettingCard(stringResource(R.string.settings_north_reference)) {
+                SettingRow(
+                    glyph = Glyph.Explore,
+                    title = stringResource(R.string.settings_north_reference),
+                    last = true,
+                ) {
                     SegmentedToggle(
                         options = listOf(
                             stringResource(R.string.compass_north_true),
@@ -334,6 +353,7 @@ private fun SettingsScreen(
                     subtitle = stringResource(R.string.settings_import_subtitle),
                     enabled = !isBackupWorking,
                     onClick = { showImportConfirm = true },
+                    last = true,
                 )
             }
 
@@ -355,34 +375,43 @@ private fun SettingsScreen(
 private fun DemoModeSection() {
     val context = LocalContext.current
     val enabled = remember { DemoMode.isPersistedEnabled(context) }
+    val light = LocalIsLightTheme.current
 
     SettingsSection(stringResource(R.string.settings_demo_section)) {
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.settings_demo_title),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_demo_subtitle),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LabelMuted,
-                    )
-                }
-                Spacer(Modifier.width(14.dp))
-                Switch(
-                    checked = enabled,
-                    onCheckedChange = { DemoMode.setEnabled(context, it) },
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 15.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Sym(
+                icon = Glyph.PhotoCamera,
+                contentDescription = null,
+                size = 22.dp,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.settings_demo_title),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(R.string.settings_demo_subtitle),
+                    fontSize = 12.5.sp,
+                    color = if (light) AboutMuted else LabelMuted,
                 )
             }
+            Switch(
+                checked = enabled,
+                onCheckedChange = { DemoMode.setEnabled(context, it) },
+            )
         }
     }
 }
 
+/** An uppercase group heading over a single card holding that group's rows. */
 @Composable
 private fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -392,24 +421,54 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 4.dp),
         )
-        content()
-    }
-}
-
-@Composable
-private fun SettingCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
             content()
         }
     }
 }
 
-/** A tappable settings row for a single action (export/import), matching the Profile hub's rows. */
+/**
+ * One row inside a [SettingsSection] card: a leading glyph next to the setting's title, with its
+ * control (toggle, hint…) stacked underneath. [last] drops the divider under the final row of a
+ * card.
+ */
+@Composable
+private fun SettingRow(
+    glyph: Char,
+    title: String,
+    last: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 15.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        // The control (below) spans the row's full width rather than sitting inset under the
+        // glyph — a triple SegmentedToggle needs that width or its French labels wrap to 2 lines.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Sym(
+                icon = glyph,
+                contentDescription = null,
+                size = 22.dp,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        }
+        content()
+    }
+    if (!last) RowDivider()
+}
+
+/** A tappable settings row for a single action (export/import), matching the About screen's rows. */
 @Composable
 private fun DataActionRow(
     glyph: Char,
@@ -417,27 +476,54 @@ private fun DataActionRow(
     subtitle: String,
     enabled: Boolean,
     onClick: () -> Unit,
+    last: Boolean = false,
 ) {
-    Card(
-        onClick = onClick,
-        enabled = enabled,
+    val light = LocalIsLightTheme.current
+    val trailingTint = if (light) AboutTrailingIconLight else AboutMuted
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            .alpha(if (enabled) 1f else 0.38f)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Sym(icon = glyph, contentDescription = null, tint = CairnGreen)
-            Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.bodyLarge)
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = LabelMuted)
-            }
-            Sym(icon = Glyph.ChevronRight, contentDescription = null, tint = LabelMuted)
+        Sym(
+            icon = glyph,
+            contentDescription = null,
+            size = 22.dp,
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = subtitle,
+                fontSize = 12.5.sp,
+                color = if (light) AboutMuted else LabelMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
+        Sym(
+            icon = Glyph.ChevronRight,
+            contentDescription = null,
+            size = 19.dp,
+            tint = trailingTint,
+        )
     }
+    if (!last) RowDivider()
+}
+
+/** The hairline separating two rows inside a section card, indented past the leading glyph. */
+@Composable
+private fun RowDivider() {
+    val light = LocalIsLightTheme.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 54.dp)
+            .height(1.dp)
+            .background(if (light) AboutDividerLight else AboutDivider),
+    )
 }
