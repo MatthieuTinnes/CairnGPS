@@ -1,5 +1,8 @@
 package app.matthieu.cairngps.ui.history
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -43,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
@@ -77,6 +81,7 @@ import app.matthieu.cairngps.ui.theme.WaypointIconBg
 import app.matthieu.cairngps.ui.waypoints.DeleteConfirmDialog
 import app.matthieu.cairngps.ui.waypoints.RenameDialog
 import app.matthieu.cairngps.ui.waypoints.WaypointIcons
+import java.io.File
 import java.io.OutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -89,6 +94,25 @@ private val GpxFileNameDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPa
 // valid file name component regardless of what the user typed.
 private fun sanitizeFileName(name: String): String =
     name.replace(Regex("""[/\\:*?"<>|]"""), "_").trim().ifEmpty { "session" }
+
+// Hands [file] (already written to the cache by SessionDetailViewModel.shareGpx) to another app
+// through the FileProvider declared in the manifest. Returns false if no app can open a GPX file,
+// so the caller can fall back to a snackbar instead of a system crash dialog.
+private fun shareGpxFile(context: Context, file: File, title: String): Boolean {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/gpx+xml"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, title)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    return try {
+        context.startActivity(Intent.createChooser(sendIntent, title))
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
+    }
+}
 
 /**
  * Route: loads the session identified by [sessionId] and renders its full detail, including the
@@ -133,6 +157,7 @@ fun SessionDetailRoute(
         onDelete = viewModel::delete,
         onRename = viewModel::rename,
         onExport = viewModel::exportGpx,
+        onShare = viewModel::shareGpx,
         modifier = modifier,
     )
 }
@@ -151,6 +176,7 @@ private fun SessionDetailScreen(
     onDelete: () -> Unit,
     onRename: (String) -> Unit,
     onExport: (OutputStream) -> Unit,
+    onShare: (File) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -166,13 +192,19 @@ private fun SessionDetailScreen(
 
     val exportSuccessMessage = stringResource(R.string.gpx_export_success)
     val exportErrorMessage = stringResource(R.string.gpx_export_error)
+    val shareNoAppMessage = stringResource(R.string.gpx_share_no_app)
+    val shareTitle = stringResource(R.string.action_share_gpx)
     LaunchedEffect(exportEvents) {
         exportEvents.collect { event ->
-            val message = when (event) {
-                GpxExportEvent.Success -> exportSuccessMessage
-                GpxExportEvent.Error -> exportErrorMessage
+            when (event) {
+                GpxExportEvent.Success -> snackbarHostState.showSnackbar(exportSuccessMessage)
+                GpxExportEvent.Error -> snackbarHostState.showSnackbar(exportErrorMessage)
+                is GpxExportEvent.ReadyToShare -> {
+                    if (!shareGpxFile(context, event.file, shareTitle)) {
+                        snackbarHostState.showSnackbar(shareNoAppMessage)
+                    }
+                }
             }
-            snackbarHostState.showSnackbar(message)
         }
     }
 
@@ -230,6 +262,17 @@ private fun SessionDetailScreen(
                 },
                 actions = {
                     if (session != null) {
+                        val shareLabel = stringResource(R.string.action_share_gpx)
+                        IconButton(
+                            onClick = {
+                                val fileName = "${sanitizeFileName(session.name)}-" +
+                                    "${LocalDate.now().format(GpxFileNameDateFormatter)}.gpx"
+                                onShare(File(File(context.cacheDir, "shared-tracks"), fileName))
+                            },
+                            enabled = !isExporting,
+                        ) {
+                            Sym(icon = Glyph.Share, contentDescription = shareLabel)
+                        }
                         val exportLabel = stringResource(R.string.action_export_gpx)
                         IconButton(
                             onClick = {
