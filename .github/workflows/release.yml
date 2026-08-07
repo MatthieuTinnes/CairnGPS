@@ -102,6 +102,23 @@ jobs:
             echo "::warning::changelog truncated to 500 chars for ${VERSION_CODE}; review $dest"
           fi
 
+      - name: Commit and tag (local only — not pushed yet)
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+        run: |
+          set -euo pipefail
+          # Committing and tagging before the build (rather than after) means HEAD is the exact
+          # commit the tag points to when assembleRelease runs below, so the git revision AGP
+          # embeds in META-INF/version-control-info.textproto matches what F-Droid's rebuild sees
+          # when it checks out this tag. Nothing is pushed here — see "Push commit and tag" below,
+          # which only runs after a successful build, so a failed build still leaves main untouched.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle.properties "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          git commit -m "build: release ${VERSION_NAME}"
+          git tag -a "${VERSION_NAME}" -m "Release ${VERSION_NAME}"
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
@@ -159,23 +176,17 @@ jobs:
         run: |
           set -euo pipefail
           {
-            echo "### Dry run — nothing was committed, tagged or published"
+            echo "### Dry run — nothing was pushed, tagged remotely or published"
             echo "Would have released **${VERSION_NAME}** (versionCode ${VERSION_CODE})."
             echo "APK, mapping file, release notes and the draft changelog are attached to this run."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit, tag and push
+      - name: Push commit and tag
         if: "!inputs.dry_run"
         env:
           VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
-          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gradle.properties "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
-          git commit -m "build: release ${VERSION_NAME}"
-          git tag -a "${VERSION_NAME}" -m "Release ${VERSION_NAME}"
           git push origin HEAD:main
           git push origin "refs/tags/${VERSION_NAME}"
 

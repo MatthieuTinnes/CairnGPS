@@ -28,6 +28,17 @@ android {
         includeInBundle = false
     }
 
+    // AGP strips native libraries by default even when they're prebuilt binaries pulled in from a
+    // dependency's AAR (e.g. datastore's libdatastore_shared_counter.so) rather than compiled by
+    // this project. The stripped output depends on the exact NDK strip tool available in the build
+    // environment, so it isn't reproducible across machines — F-Droid's rebuild produces different
+    // bytes for the same .so than ours. Keeping them unstripped removes that variable entirely.
+    packaging {
+        jniLibs {
+            keepDebugSymbols.add("**/*.so")
+        }
+    }
+
     signingConfigs {
         val keystorePath = providers.environmentVariable("KEYSTORE_FILE").orNull
         if (!keystorePath.isNullOrBlank()) {
