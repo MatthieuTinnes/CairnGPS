@@ -1,1 +1,0 @@
-Amélioration de la gestion des positions GPS de faible précision pendant l'enregistrement d'une trace.
