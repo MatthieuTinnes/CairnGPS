@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.data
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.GeomagneticField
@@ -148,6 +149,9 @@ class GamificationManager(
      * (`CairnApplication`'s `ProcessLifecycleOwner` observer) doesn't gate on permission itself, so
      * live records simply start on the next foreground transition after the permission is granted.
      */
+    // hasLocationPermission() below guards every path into locationUpdates()/satelliteUpdates();
+    // lint can't trace that guard across the scope.launch { launch { ... } } boundary.
+    @SuppressLint("MissingPermission")
     fun startLiveTracking() {
         if (liveJob?.isActive == true) return
         // Demo mode feeds simulated fixes through the same repository, so the records/achievements

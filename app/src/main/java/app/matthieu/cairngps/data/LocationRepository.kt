@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.data
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -104,6 +105,9 @@ class LocationRepository(context: Context) {
      * @param minTimeMs      Minimum interval between updates, in milliseconds.
      * @param minDistanceM   Minimum movement between updates, in meters.
      */
+    // The @RequiresPermission below documents the requirement for callers, but lint doesn't honor
+    // an annotation on a lambda receiver at the requestLocationUpdates() call site inside it.
+    @SuppressLint("MissingPermission")
     private fun locationUpdatesCold(
         minTimeMs: Long,
         minDistanceM: Float,
@@ -163,6 +167,9 @@ class LocationRepository(context: Context) {
             .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
 
     /** Cold [Flow] of GNSS satellite snapshots backing [satelliteUpdates]; see its doc for details. */
+    // satelliteUpdates() carries @RequiresPermission, but lint can't trace that through the
+    // property initializer down into this private helper's own requestLocationUpdates() call.
+    @SuppressLint("MissingPermission")
     private fun satelliteUpdatesCold(): Flow<List<SatelliteInfo>> = callbackFlow {
         val callback = object : GnssStatus.Callback() {
             override fun onSatelliteStatusChanged(status: GnssStatus) {
