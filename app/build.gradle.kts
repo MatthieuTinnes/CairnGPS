@@ -24,8 +24,8 @@ android {
         applicationId = "app.matthieu.cairngps"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = (project.property("VERSION_CODE") as String).toInt()
+        versionName = project.property("VERSION_NAME") as String
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

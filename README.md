@@ -1,12 +1,21 @@
-# CairnGPS
-
-![Logo CairnGPS](app/src/main/res/mipmap-hdpi/ic_launcher.webp)
-
-Android app displaying real-time GPS/GNSS information, with a gamification
+<p align="center">
+  <img src="app/src/main/res/mipmap-hdpi/ic_launcher.webp" alt="Logo CairnGPS" />
+</p>
+<h1 align="center">CairnGPS</h1>
+<p align="center">
+<b>Android app displaying</b> real-time GPS/GNSS information, with a gamification
 layer (achievements, records, levels) to make it fun.
+<br />
+Get it now from <a href="https://github.com/MatthieuTinnes/CairnGPS/releases">Releases</a>.
+</p>
 
-Designed for outdoor use (hiking, travel): readable in bright sunlight,
-battery-efficient, and fully functional offline.
+## Screenshots
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="20%" alt="Position screen showing coordinates, speed, altitude and accuracy" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="20%" alt="Skyplot of satellites in view" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="20%" alt="3D globe view of satellites in view" />
+</p>
 
 ## Features
 
