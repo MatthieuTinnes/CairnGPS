@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.service
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -83,6 +84,9 @@ class RecordingService : Service() {
         return START_STICKY
     }
 
+    // hasLocationPermission() below guards the permission-requiring call further down; lint
+    // can't trace that guard across recordingRepository's own internal coroutine boundary.
+    @SuppressLint("MissingPermission")
     private fun handleStart() {
         if (!hasLocationPermission()) {
             // Should not happen: the UI only calls start() from behind LocationPermissionGate.
@@ -93,6 +97,8 @@ class RecordingService : Service() {
         showForegroundNotification()
     }
 
+    // Same as handleStart(): the guard below doesn't reach across the scope.launch { ... } lambda.
+    @SuppressLint("MissingPermission")
     private fun handleResume() {
         if (!hasLocationPermission()) {
             // Should not happen: a recording can only have started from behind the permission gate.

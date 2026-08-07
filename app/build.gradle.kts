@@ -1,15 +1,8 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-}
-
-val keystoreProperties = Properties().apply {
-    val file = rootProject.file("keystore.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
 }
 
 android {
@@ -24,8 +17,8 @@ android {
         applicationId = "app.matthieu.cairngps"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = (project.property("VERSION_CODE") as String).toInt()
+        versionName = project.property("VERSION_NAME") as String
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,12 +29,13 @@ android {
     }
 
     signingConfigs {
-        if (keystoreProperties.isNotEmpty()) {
+        val keystorePath = providers.environmentVariable("KEYSTORE_FILE").orNull
+        if (!keystorePath.isNullOrBlank()) {
             create("release") {
-                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystorePath)
+                storePassword = providers.environmentVariable("KEYSTORE_PASSWORD").orNull
+                keyAlias = providers.environmentVariable("KEY_ALIAS").orNull
+                keyPassword = providers.environmentVariable("KEY_PASSWORD").orNull
             }
         }
     }
