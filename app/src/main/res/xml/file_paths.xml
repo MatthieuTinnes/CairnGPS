@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Roots exposed by the FileProvider declared in AndroidManifest.xml. Only the GPX share
+     sub-directory is exposed — nothing else in the app's storage is reachable through it. -->
+<paths>
+    <cache-path name="shared_tracks" path="shared-tracks/" />
+</paths>

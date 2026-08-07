@@ -83,6 +83,9 @@ object Glyph {
     const val FileDownload = ''
     const val FileUpload = ''
 
+    // Share a session's GPX to another app (session detail) — already present in the font subset.
+    const val Share = ''
+
     // Waypoint icon picker (screens 6a/6b) — added to the font subset alongside the glyphs above.
     const val Terrain = ''
     const val Forest = ''

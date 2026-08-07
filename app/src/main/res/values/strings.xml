@@ -101,6 +101,8 @@
     <string name="action_export_gpx">Export as GPX</string>
     <string name="gpx_export_success">GPX file exported</string>
     <string name="gpx_export_error">Couldn\'t export the GPX file</string>
+    <string name="action_share_gpx">Share track</string>
+    <string name="gpx_share_no_app">No app can open a GPX file</string>
     <string name="waypoint_delete_dialog_title">Delete this waypoint?</string>
     <string name="waypoint_delete_dialog_message_fmt">\"%1$s\" will be permanently deleted. The parent track is not affected. This action is irreversible.</string>
     <string name="waypoint_parent_session">Parent track</string>

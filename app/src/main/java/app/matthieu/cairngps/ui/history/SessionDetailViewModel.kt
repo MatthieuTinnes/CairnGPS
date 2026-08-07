@@ -11,6 +11,8 @@ import app.matthieu.cairngps.data.TrackPoint
 import app.matthieu.cairngps.data.Waypoint
 import app.matthieu.cairngps.data.WaypointRepository
 import app.matthieu.cairngps.ui.common.factoryOf
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,9 +24,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** One-shot outcome of a GPX export attempt, consumed by the session detail screen as a snackbar. */
+/** One-shot outcome of a GPX export attempt, consumed by the session detail screen. */
 sealed interface GpxExportEvent {
+    /** Written via the system save dialog — the screen shows a success snackbar. */
     data object Success : GpxExportEvent
+    /** Written to [file] in the cache — the screen opens the share sheet on it. */
+    data class ReadyToShare(val file: File) : GpxExportEvent
     data object Error : GpxExportEvent
 }
 
@@ -106,14 +111,38 @@ class SessionDetailViewModel(
      * (via the system save dialog) and this will close. No-ops if the session hasn't loaded yet.
      */
     fun exportGpx(output: OutputStream) {
+        writeGpx { session, track, waypoints ->
+            gpxExporter.export(session, track, waypoints, output)
+            GpxExportEvent.Success
+        }
+    }
+
+    /**
+     * Writes the current session's track and waypoints to [target] in the app's cache, ready for
+     * the screen to hand to another app through a [androidx.core.content.FileProvider]. No-ops if
+     * the session hasn't loaded yet.
+     */
+    fun shareGpx(target: File) {
+        writeGpx { session, track, waypoints ->
+            target.parentFile?.mkdirs()
+            // export() closes the stream itself once written (see GpxExporter).
+            gpxExporter.export(session, track, waypoints, FileOutputStream(target))
+            GpxExportEvent.ReadyToShare(target)
+        }
+    }
+
+    /** Shared plumbing for [exportGpx] and [shareGpx]: loading flag, error handling, event, flag. */
+    private fun writeGpx(
+        write: suspend (session: Session, track: List<TrackPoint>, waypoints: List<Waypoint>) -> GpxExportEvent,
+    ) {
         val state = _uiState.value
         val session = state.session ?: return
         viewModelScope.launch {
             _isExporting.value = true
             val event = try {
-                gpxExporter.export(session, state.track, state.waypoints, output)
+                val result = write(session, state.track, state.waypoints)
                 gamificationFlagsRepository.set("app_export")
-                GpxExportEvent.Success
+                result
             } catch (e: IOException) {
                 GpxExportEvent.Error
             }

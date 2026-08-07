@@ -46,6 +46,18 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
+        <!-- Hands a session's exported GPX file to another app (Komoot, Strava…) via the share
+             sheet, without exposing the rest of the app's private storage. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Lets AppCompatDelegate.setApplicationLocales persist the per-app language choice
              automatically (autoStoreLocales), without wiring it into our own DataStore prefs. -->
         <service
