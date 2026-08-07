@@ -1,0 +1,165 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require dispatch from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          echo "::error::Releases can only be dispatched from main (got ${GITHUB_REF})"
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Compute next version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          set -euo pipefail
+          current="$(grep -m1 '^VERSION_NAME=' gradle.properties | cut -d= -f2)"
+          bash scripts/bump-version.sh "$current" "$BUMP" > /tmp/version.env
+          cat /tmp/version.env >> "$GITHUB_OUTPUT"
+          # shellcheck disable=SC1091
+          source /tmp/version.env
+          if git rev-parse -q --verify "refs/tags/${VERSION_NAME}" >/dev/null; then
+            echo "::error::Tag ${VERSION_NAME} already exists"
+            exit 1
+          fi
+
+      - name: Generate release notes
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --unreleased --tag ${{ steps.version.outputs.VERSION_NAME }} --strip all -o RELEASE_NOTES.md
+
+      - name: Update gradle.properties
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+        run: |
+          set -euo pipefail
+          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=${VERSION_NAME}/" gradle.properties
+          sed -i "s/^VERSION_CODE=.*/VERSION_CODE=${VERSION_CODE}/" gradle.properties
+          grep -q "^VERSION_NAME=${VERSION_NAME}$" gradle.properties
+          grep -q "^VERSION_CODE=${VERSION_CODE}$" gradle.properties
+
+      - name: Write fastlane changelog (en-US)
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+        run: |
+          set -euo pipefail
+          mkdir -p fastlane/metadata/android/en-US/changelogs
+          dest="fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+
+          # F-Droid renders this as plain text: drop the markdown heading markers and
+          # blank lines, keeping "Features" as a bare label above its bullets.
+          sed -e 's/^### //' -e '/^[[:space:]]*$/d' RELEASE_NOTES.md > "$dest"
+
+          # F-Droid and Play both reject changelogs over 500 characters. Cut at a line
+          # boundary rather than mid-word, and warn instead of failing the release.
+          if [ "$(wc -c < "$dest")" -gt 500 ]; then
+            head -c 500 "$dest" | sed '$d' > "$dest.tmp" && mv "$dest.tmp" "$dest"
+            echo "::warning::changelog truncated to 500 chars for ${VERSION_CODE}; review $dest"
+          fi
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "${RUNNER_TEMP}/release.keystore"
+
+      - name: Build signed release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Rename artifacts
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+        run: |
+          set -euo pipefail
+          apk_src="app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$apk_src" ]; then
+            echo "::error::Expected signed APK at ${apk_src} (build produced an unsigned APK — check the KEYSTORE_* secrets)"
+            exit 1
+          fi
+          cp "$apk_src" "CairnGPS-${VERSION_NAME}.apk"
+
+          mapping_src="app/build/outputs/mapping/release/mapping.txt"
+          if [ ! -f "$mapping_src" ]; then
+            echo "::error::Expected R8 mapping file at ${mapping_src}"
+            exit 1
+          fi
+          cp "$mapping_src" "mapping-${VERSION_NAME}.txt"
+
+      - name: Commit, tag and push
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle.properties "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+          git commit -m "build: release ${VERSION_NAME}"
+          git tag -a "${VERSION_NAME}" -m "Release ${VERSION_NAME}"
+          git push origin HEAD:main
+          git push origin "refs/tags/${VERSION_NAME}"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+        run: |
+          set -euo pipefail
+          gh release create "${VERSION_NAME}" \
+            --title "${VERSION_NAME}" \
+            --notes-file RELEASE_NOTES.md \
+            "CairnGPS-${VERSION_NAME}.apk" \
+            "mapping-${VERSION_NAME}.txt"
+
+      - name: Remove decoded keystore
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/release.keystore"
