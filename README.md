@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/icon.png" width="10%" alt="Logo CairnGPS" />
+  <img src="fastlane/metadata/android/en-US/images/icon.png" width="15%" alt="Logo CairnGPS" />
 </p>
 <h1 align="center">CairnGPS</h1>
 <p align="center">
@@ -8,8 +8,6 @@ layer (achievements, records, levels) to make it fun.
 <br />
 Get it now from <a href="https://github.com/MatthieuTinnes/CairnGPS/releases">Releases</a>.
 </p>
-
-## Screenshots
 
 <p align="center">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="30%" alt="Position screen showing coordinates, speed, altitude and accuracy" />
