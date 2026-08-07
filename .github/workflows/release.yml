@@ -12,6 +12,11 @@ on:
           - minor
           - major
         default: patch
+      dry_run:
+        description: "Dry run: build and sign, but skip commit/tag/push/publish. Uploads the APK as a workflow artifact instead. Can be run from any branch."
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -25,10 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Require dispatch from main
-        if: github.ref != 'refs/heads/main'
+        if: github.ref != 'refs/heads/main' && !inputs.dry_run
         run: |
           set -euo pipefail
-          echo "::error::Releases can only be dispatched from main (got ${GITHUB_REF})"
+          echo "::error::Releases can only be dispatched from main (got ${GITHUB_REF}). Use dry_run to test from another branch."
           exit 1
 
       - name: Checkout
@@ -134,7 +139,33 @@ jobs:
           fi
           cp "$mapping_src" "mapping-${VERSION_NAME}.txt"
 
+      - name: Upload dry-run artifacts
+        if: inputs.dry_run
+        uses: actions/upload-artifact@v7
+        with:
+          name: dry-run-${{ steps.version.outputs.VERSION_NAME }}
+          path: |
+            CairnGPS-${{ steps.version.outputs.VERSION_NAME }}.apk
+            mapping-${{ steps.version.outputs.VERSION_NAME }}.txt
+            RELEASE_NOTES.md
+            fastlane/metadata/android/en-US/changelogs/${{ steps.version.outputs.VERSION_CODE }}.txt
+          retention-days: 14
+
+      - name: Dry-run summary
+        if: inputs.dry_run
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Dry run — nothing was committed, tagged or published"
+            echo "Would have released **${VERSION_NAME}** (versionCode ${VERSION_CODE})."
+            echo "APK, mapping file, release notes and the draft changelog are attached to this run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Commit, tag and push
+        if: "!inputs.dry_run"
         env:
           VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
           VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
@@ -149,6 +180,7 @@ jobs:
           git push origin "refs/tags/${VERSION_NAME}"
 
       - name: Publish GitHub release
+        if: "!inputs.dry_run"
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
