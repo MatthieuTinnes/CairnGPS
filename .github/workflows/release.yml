@@ -129,13 +129,16 @@ jobs:
           set -euo pipefail
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "${RUNNER_TEMP}/release.keystore"
 
-      - name: Build signed release APK
+      - name: Build signed release APK and AAB
         env:
           KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease
+        # Both tasks in one invocation: they share the same R8 task for the release build type,
+        # so the APK (GitHub/F-Droid) and the AAB (Play) come from a single minification pass
+        # and the mapping file below applies to both.
+        run: ./gradlew assembleRelease bundleRelease
 
       - name: Rename artifacts
         env:
@@ -148,6 +151,15 @@ jobs:
             exit 1
           fi
           cp "$apk_src" "CairnGPS-${VERSION_NAME}.apk"
+
+          # Unlike the APK, an unsigned bundle keeps the same file name, so the signing check is the
+          # APK one above: both come from the same signingConfig.
+          aab_src="app/build/outputs/bundle/release/app-release.aab"
+          if [ ! -f "$aab_src" ]; then
+            echo "::error::Expected release AAB at ${aab_src}"
+            exit 1
+          fi
+          cp "$aab_src" "CairnGPS-${VERSION_NAME}.aab"
 
           mapping_src="app/build/outputs/mapping/release/mapping.txt"
           if [ ! -f "$mapping_src" ]; then
@@ -163,10 +175,24 @@ jobs:
           name: dry-run-${{ steps.version.outputs.VERSION_NAME }}
           path: |
             CairnGPS-${{ steps.version.outputs.VERSION_NAME }}.apk
+            CairnGPS-${{ steps.version.outputs.VERSION_NAME }}.aab
             mapping-${{ steps.version.outputs.VERSION_NAME }}.txt
             RELEASE_NOTES.md
             fastlane/metadata/android/en-US/changelogs/${{ steps.version.outputs.VERSION_CODE }}.txt
           retention-days: 14
+
+      # The AAB is signed with the upload key and is only usable by Play Console, so it is kept as a
+      # workflow artifact rather than attached to the public GitHub release (where users would
+      # download a file they cannot install).
+      - name: Upload Play bundle
+        if: "!inputs.dry_run"
+        uses: actions/upload-artifact@v7
+        with:
+          name: play-bundle-${{ steps.version.outputs.VERSION_NAME }}
+          path: |
+            CairnGPS-${{ steps.version.outputs.VERSION_NAME }}.aab
+            mapping-${{ steps.version.outputs.VERSION_NAME }}.txt
+          retention-days: 90
 
       - name: Dry-run summary
         if: inputs.dry_run
@@ -178,7 +204,7 @@ jobs:
           {
             echo "### Dry run — nothing was pushed, tagged remotely or published"
             echo "Would have released **${VERSION_NAME}** (versionCode ${VERSION_CODE})."
-            echo "APK, mapping file, release notes and the draft changelog are attached to this run."
+            echo "APK, Play AAB, mapping file, release notes and the draft changelog are attached to this run."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Push commit and tag
