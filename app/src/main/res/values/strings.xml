@@ -193,7 +193,7 @@
     <string name="sats_help_sat_id_name">Satellite ID</string>
     <string name="sats_help_sat_id_desc">A letter for the constellation (G for GPS, R for GLONASS, E for Galileo, C for BeiDou…) followed by the satellite\'s number within it.</string>
     <string name="sats_help_signal_name">Signal (C/N0)</string>
-    <string name="sats_help_signal_desc">Carrier-to-noise density: how clean the satellite\'s signal is. Below 25 dB-Hz is weak, 25–35 is usable, above 40 is excellent.</string>
+    <string name="sats_help_signal_desc">Carrier-to-noise density: how clean the satellite\'s signal is.\n&lt; 25 dB-Hz : weak\n&lt; 25 dB-Hz and &gt; 35 dB-Hz : usable\n&gt; 40 dB-Hz : excellent</string>
     <string name="sats_help_elevation_name">Elevation</string>
     <string name="sats_help_elevation_desc">Height of the satellite above the horizon, from 0° (at the horizon) to 90° (directly overhead).</string>
     <string name="sats_help_azimuth_name">Azimuth</string>
