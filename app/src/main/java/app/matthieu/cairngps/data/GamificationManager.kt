@@ -13,6 +13,7 @@ import app.matthieu.cairngps.domain.gamification.GamificationMetrics
 import app.matthieu.cairngps.demo.DemoMode
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -43,9 +44,10 @@ class GamificationManager(
     private val recordsRepository: RecordsRepository,
     private val achievementsRepository: AchievementsRepository,
     private val gamificationFlagsRepository: GamificationFlagsRepository,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val appContext = context.applicationContext
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     private val _unlockedEvents = MutableSharedFlow<AchievementDef>(extraBufferCapacity = 8)
 
@@ -183,6 +185,10 @@ class GamificationManager(
     }
 
     private suspend fun submitLiveFix(fix: LocationData) {
+        // A noisy fix can report an altitude or speed tens of metres off, which would permanently
+        // poison a record and unlock its achievement — same gate the recording path applies.
+        if (!fix.isAccurateEnough()) return
+
         recordsRepository.submit(RecordType.MAX_SPEED, fix.speed.toDouble())
         recordsRepository.submit(RecordType.MAX_ALTITUDE, fix.altitude)
         recordsRepository.submit(RecordType.MIN_ALTITUDE, fix.altitude)

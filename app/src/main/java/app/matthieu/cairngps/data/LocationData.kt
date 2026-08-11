@@ -25,7 +25,18 @@ data class LocationData(
     val horizontalAccuracy: Float,
     val verticalAccuracy: Float?,
     val timestamp: Long,
-)
+) {
+    /**
+     * Whether this fix is precise enough to be trusted for derived values (distance, elevation,
+     * records). A noisier fix is dropped outright rather than folded in.
+     */
+    fun isAccurateEnough(): Boolean = horizontalAccuracy <= MAX_ACCURACY_METERS
+
+    companion object {
+        /** Fixes less accurate than this are ignored (spec: > 20 m). */
+        const val MAX_ACCURACY_METERS = 20f
+    }
+}
 
 /**
  * Maps a framework [Location] into our domain [LocationData], converting altitude from the

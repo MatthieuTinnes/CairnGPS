@@ -79,4 +79,25 @@ class LocationDataTest {
 
         assertEquals(-17.2, result.altitude, 0.0)
     }
+
+    @Test
+    fun `isAccurateEnough is true well within the threshold`() {
+        val fix = locationOf(accuracy = 5f).toLocationData(geoidSeparationMeters = 0.0)
+
+        assertEquals(true, fix.isAccurateEnough())
+    }
+
+    @Test
+    fun `isAccurateEnough is true exactly at the threshold`() {
+        val fix = locationOf(accuracy = 20f).toLocationData(geoidSeparationMeters = 0.0)
+
+        assertEquals(true, fix.isAccurateEnough())
+    }
+
+    @Test
+    fun `isAccurateEnough is false beyond the threshold`() {
+        val fix = locationOf(accuracy = 25f).toLocationData(geoidSeparationMeters = 0.0)
+
+        assertEquals(false, fix.isAccurateEnough())
+    }
 }
