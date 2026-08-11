@@ -57,7 +57,7 @@ sealed interface StopResult {
 
     /**
      * Nothing was persisted: not a single GPS fix was accurate enough to accept (see
-     * [RecordingRepository.MAX_ACCURACY_METERS]). [lastRejectedAccuracyMeters] is the accuracy of
+     * [LocationData.isAccurateEnough]). [lastRejectedAccuracyMeters] is the accuracy of
      * the last fix seen, or `null` if the GPS never delivered one at all.
      */
     data class Discarded(val durationMs: Long, val lastRejectedAccuracyMeters: Float?) : StopResult
@@ -280,7 +280,7 @@ class RecordingRepository(
     private suspend fun onFix(fix: LocationData) {
         // A noisy horizontal fix makes the point itself unreliable for distance/elevation, so it
         // is dropped entirely rather than folded into the track.
-        if (fix.horizontalAccuracy > MAX_ACCURACY_METERS) {
+        if (!fix.isAccurateEnough()) {
             // A single noisy fix isn't surfaced: only a sustained run means nothing is actually
             // being recorded, avoiding a warning that flickers on and off.
             consecutiveRejectedFixes++
@@ -534,9 +534,6 @@ class RecordingRepository(
     }
 
     companion object {
-        /** Fixes less accurate than this are ignored for distance/elevation (spec: > 20 m). */
-        const val MAX_ACCURACY_METERS = 20f
-
         /** Consecutive rejected fixes before warning the user (~3s at a 1Hz fix rate). */
         private const val REJECTED_FIX_WARNING_STREAK = 3
 

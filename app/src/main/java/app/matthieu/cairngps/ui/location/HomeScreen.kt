@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
@@ -415,7 +416,7 @@ private fun SessionCard(uiState: RecordingUiState, unitSystem: UnitSystem) {
                         R.string.recording_signal_too_noisy_fmt,
                         formatAccuracy(accuracy, unitSystem),
                         shortUnitLabel(unitSystem),
-                        formatAccuracy(RecordingRepository.MAX_ACCURACY_METERS, unitSystem),
+                        formatAccuracy(LocationData.MAX_ACCURACY_METERS, unitSystem),
                         shortUnitLabel(unitSystem),
                     ),
                     style = MaterialTheme.typography.bodySmall,
