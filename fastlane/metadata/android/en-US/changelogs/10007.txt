@@ -1,0 +1,5 @@
+Bug Fixes
+- Legend clipping in sky plot and 3D globe (#5)
+- Filter fix without enough accuracy from achievement (#6)
+Features
+- Add signal labels and legend info on satellites screen (#4)
