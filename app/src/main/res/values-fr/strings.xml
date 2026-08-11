@@ -183,6 +183,23 @@
     <string name="sats_status_chip_fmt">%1$d vus · %2$d fix</string>
     <string name="sat_elevation_azimuth">él. %1$d° · az. %2$d°</string>
     <string name="unit_dbhz">dB-Hz</string>
+    <string name="sats_col_sat">SAT</string>
+    <string name="sats_col_el_az">ÉL · AZ</string>
+    <string name="sats_col_el">ÉL</string>
+    <string name="sats_col_az">AZ</string>
+    <string name="sats_col_signal">SIGNAL</string>
+    <string name="sats_help_cd">Que signifient ces valeurs ?</string>
+    <string name="sats_help_title">Légende</string>
+    <string name="sats_help_sat_id_name">Identifiant satellite</string>
+    <string name="sats_help_sat_id_desc">Une lettre pour la constellation (G pour GPS, R pour GLONASS, E pour Galileo, C pour BeiDou…) suivie du numéro du satellite dans cette constellation.</string>
+    <string name="sats_help_signal_name">Signal (C/N0)</string>
+    <string name="sats_help_signal_desc">Rapport porteuse/bruit : la qualité du signal reçu du satellite. En dessous de 25 dB-Hz c\'est faible, entre 25 et 35 c\'est exploitable, au-dessus de 40 c\'est excellent.</string>
+    <string name="sats_help_elevation_name">Élévation</string>
+    <string name="sats_help_elevation_desc">Hauteur du satellite au-dessus de l\'horizon, de 0° (à l\'horizon) à 90° (à la verticale).</string>
+    <string name="sats_help_azimuth_name">Azimut</string>
+    <string name="sats_help_azimuth_desc">Direction du satellite, mesurée dans le sens horaire depuis le nord vrai (0° = nord, 90° = est, 180° = sud).</string>
+    <string name="sats_help_fixed_name">Fixé / vu</string>
+    <string name="sats_help_fixed_desc">Un satellite peut être suivi (vu) sans être utilisé pour calculer la position actuelle (fixé). Les satellites non utilisés dans le fix sont affichés en grisé.</string>
 
     <!-- 3D satellite globe -->
     <string name="action_open_satellite_globe">Globe 3D</string>

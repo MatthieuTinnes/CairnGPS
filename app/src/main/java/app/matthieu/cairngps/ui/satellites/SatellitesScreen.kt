@@ -25,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,6 +33,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -123,19 +127,22 @@ private fun SatellitesScreen(
     onOpenGlobe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showHelp by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.satellites_title)) },
-                // Transparent rather than the default surface container — see HomeScreen's
-                // TopAppBar for the same fix (avoids a stray white block behind the title in light
-                // theme, design 5c).
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     if (uiState.hasData) {
                         StatusChip(inView = uiState.inViewCount, usedInFix = uiState.usedInFixCount)
                         Spacer(Modifier.width(8.dp))
+                    }
+                    val helpLabel = stringResource(R.string.sats_help_cd)
+                    IconButton(onClick = { showHelp = true }) {
+                        Sym(icon = Glyph.Info, contentDescription = helpLabel)
                     }
                 },
             )
@@ -184,6 +191,10 @@ private fun SatellitesScreen(
                 }
             }
         }
+    }
+
+    if (showHelp) {
+        SatelliteHelpSheet(onDismiss = { showHelp = false })
     }
 }
 
@@ -324,6 +335,7 @@ private fun ConstellationGroupCard(constellation: Constellation, satellites: Lis
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             ConstellationGroupHeader(constellation = constellation, count = satellites.size)
+            SatelliteColumnHeader()
             satellites.forEach { satellite ->
                 SatelliteRow(satellite)
             }
@@ -348,6 +360,47 @@ private fun ConstellationGroupHeader(constellation: Constellation, count: Int) {
             modifier = Modifier.weight(1f),
         )
         Text(text = count.toString(), fontSize = 12.sp, color = LabelMuted)
+    }
+}
+
+/** Column labels for [SatelliteRow], aligned to the same widths so values line up beneath them. */
+@Composable
+private fun SatelliteColumnHeader() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = stringResource(R.string.sats_col_sat),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.5.sp,
+            color = LabelMuted,
+            modifier = Modifier.width(38.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = stringResource(R.string.sats_col_el_az),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.5.sp,
+            color = LabelMuted,
+            modifier = Modifier.width(110.dp),
+        )
+        Text(
+            text = stringResource(R.string.sats_col_signal),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.5.sp,
+            color = LabelMuted,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = stringResource(R.string.unit_dbhz),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = LabelMuted,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(30.dp),
+        )
     }
 }
 
