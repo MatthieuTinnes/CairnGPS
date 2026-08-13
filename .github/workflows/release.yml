@@ -49,6 +49,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          validate-wrappers: true
 
       - name: Compute next version
         id: version
