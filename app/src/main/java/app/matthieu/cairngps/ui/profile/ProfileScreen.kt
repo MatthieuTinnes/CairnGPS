@@ -89,6 +89,7 @@ fun ProfileRoute(
     onOpenSettings: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenAchievements: () -> Unit,
+    onOpenAchievement: (String) -> Unit,
     onOpenRecords: () -> Unit,
     onOpenLevels: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -108,6 +109,7 @@ fun ProfileRoute(
         onOpenSettings = onOpenSettings,
         onOpenHistory = onOpenHistory,
         onOpenAchievements = onOpenAchievements,
+        onOpenAchievement = onOpenAchievement,
         onOpenRecords = onOpenRecords,
         onOpenLevels = onOpenLevels,
         onOpenAbout = onOpenAbout,
@@ -123,6 +125,7 @@ private fun ProfileScreen(
     onOpenSettings: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenAchievements: () -> Unit,
+    onOpenAchievement: (String) -> Unit,
     onOpenRecords: () -> Unit,
     onOpenLevels: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -210,7 +213,7 @@ private fun ProfileScreen(
                     // pick light-theme-specific values here.
                     val light = LocalIsLightTheme.current
                     Card(
-                        onClick = onOpenAchievements,
+                        onClick = { onOpenAchievement(lastUnlocked.id) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .border(

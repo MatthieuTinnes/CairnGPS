@@ -59,7 +59,10 @@ private object Routes {
     const val SATELLITES = "satellites"
     const val PROFILE = "profile"
     const val HISTORY = "history"
-    const val ACHIEVEMENTS = "achievements"
+    const val ACHIEVEMENT_ID_ARG = "achievementId"
+    const val ACHIEVEMENTS = "achievements?$ACHIEVEMENT_ID_ARG={$ACHIEVEMENT_ID_ARG}"
+    fun achievements(highlightId: String? = null): String =
+        if (highlightId == null) "achievements" else "achievements?$ACHIEVEMENT_ID_ARG=$highlightId"
     const val RECORDS = "records"
     const val LEVELS = "levels"
     const val CONSTELLATION_INFO = "constellation_info"
@@ -205,7 +208,8 @@ fun MainScaffold(app: CairnApplication) {
                         settingsRepository = app.settingsRepository,
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                         onOpenHistory = { navController.navigate(Routes.HISTORY) },
-                        onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
+                        onOpenAchievements = { navController.navigate(Routes.achievements()) },
+                        onOpenAchievement = { id -> navController.navigate(Routes.achievements(id)) },
                         onOpenRecords = { navController.navigate(Routes.RECORDS) },
                         onOpenLevels = { navController.navigate(Routes.LEVELS) },
                         onOpenAbout = { navController.navigate(Routes.ABOUT) },
@@ -259,13 +263,24 @@ fun MainScaffold(app: CairnApplication) {
                         onOpenWaypoint = { waypointId -> navController.navigate(Routes.waypointDetail(waypointId)) },
                     )
                 }
-                composable(Routes.ACHIEVEMENTS) {
+                composable(
+                    Routes.ACHIEVEMENTS,
+                    arguments = listOf(
+                        navArgument(Routes.ACHIEVEMENT_ID_ARG) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
+                ) { backStackEntry ->
+                    val highlightId = backStackEntry.arguments?.getString(Routes.ACHIEVEMENT_ID_ARG)
                     AchievementsRoute(
                         achievementsRepository = app.achievementsRepository,
                         recordsRepository = app.recordsRepository,
                         sessionRepository = app.sessionRepository,
                         waypointRepository = app.waypointRepository,
                         settingsRepository = app.settingsRepository,
+                        highlightAchievementId = highlightId,
                         onBack = { navController.popBackStack() },
                     )
                 }

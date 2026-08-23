@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.ui.gamification
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -29,7 +31,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -40,6 +46,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.AchievementsRepository
 import app.matthieu.cairngps.data.RecordsRepository
@@ -76,6 +84,7 @@ fun AchievementsRoute(
     waypointRepository: WaypointRepository,
     settingsRepository: SettingsRepository,
     onBack: () -> Unit,
+    highlightAchievementId: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: AchievementsViewModel = viewModel(
@@ -95,6 +104,7 @@ fun AchievementsRoute(
         uiState = uiState,
         unitSystem = settings.unitSystem,
         onBack = onBack,
+        highlightAchievementId = highlightAchievementId,
         modifier = modifier,
     )
 }
@@ -134,6 +144,7 @@ private fun AchievementsScreen(
     uiState: AchievementsUiState,
     unitSystem: UnitSystem,
     onBack: () -> Unit,
+    highlightAchievementId: String? = null,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -175,8 +186,23 @@ private fun AchievementsScreen(
             return@Scaffold
         }
 
+        val gridState = rememberLazyGridState()
+        var highlighted by remember(highlightAchievementId) { mutableStateOf(highlightAchievementId) }
+
+        LaunchedEffect(highlightAchievementId, items) {
+            if (highlightAchievementId == null) return@LaunchedEffect
+            val headerCount = if (uiState.next != null) 1 else 0
+            val targetIndex = items.indexOfFirst { it.def.id == highlightAchievementId }
+            if (targetIndex >= 0) {
+                gridState.animateScrollToItem(headerCount + targetIndex)
+            }
+            delay(HIGHLIGHT_MS.milliseconds)
+            highlighted = null
+        }
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
+            state = gridState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -187,10 +213,14 @@ private fun AchievementsScreen(
             uiState.next?.let { next ->
                 item(span = { GridItemSpan(maxLineSpan) }) { NextAchievementCard(next, unitSystem) }
             }
-            items(items, key = { it.def.id }) { item -> AchievementBadge(item, unitSystem) }
+            items(items, key = { it.def.id }) { item ->
+                AchievementBadge(item, unitSystem, isHighlighted = item.def.id == highlighted)
+            }
         }
     }
 }
+
+private const val HIGHLIGHT_MS = 3_000L
 
 @Composable
 private fun NextAchievementCard(next: NextAchievementUi, unitSystem: UnitSystem) {
@@ -255,11 +285,13 @@ private fun NextAchievementCard(next: NextAchievementUi, unitSystem: UnitSystem)
 }
 
 @Composable
-private fun AchievementBadge(item: AchievementItem, unitSystem: UnitSystem) {
+private fun AchievementBadge(item: AchievementItem, unitSystem: UnitSystem, isHighlighted: Boolean = false) {
+    val ringAlpha by animateFloatAsState(targetValue = if (isHighlighted) 1f else 0f, animationSpec = tween(600))
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (item.isUnlocked) 1f else 0.4f),
+            .alpha(if (item.isUnlocked) 1f else 0.4f)
+            .border(width = 2.dp, color = CairnAmber.copy(alpha = ringAlpha), shape = RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
