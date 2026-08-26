@@ -39,7 +39,15 @@ import kotlinx.coroutines.launch
  * FusedLocationProviderClient: we need direct access to the GPS chip so that we can later
  * consume raw GNSS satellite measurements from the same provider.
  */
-class LocationRepository(context: Context) {
+class LocationRepository internal constructor(context: Context, private val demo: DemoGpsSource?) {
+
+    constructor(context: Context) : this(
+        context,
+        // Screenshot/screencast demo mode (debug builds only): every public flow below serves
+        // synthetic data and the GPS chip is never touched. Null — and, in release, folded away
+        // entirely — in every normal run. See DemoMode.
+        demo = if (DemoMode.isEnabled) DemoGpsSource() else null,
+    )
 
     // Application context is stored via getSystemService below; we don't retain the Context itself.
     private val locationManager: LocationManager =
@@ -56,11 +64,6 @@ class LocationRepository(context: Context) {
     // a no-op (separationMeters() == 0.0) and is replaced once the ~130 KB asset has been read off
     @Volatile
     private var geoid: Egm96Geoid = Egm96Geoid.forTesting(null)
-
-    // Screenshot/screencast demo mode (debug builds only): every public flow below serves synthetic
-    // data and the GPS chip is never touched. Null — and, in release, folded away entirely — in
-    // every normal run. See DemoMode.
-    private val demo: DemoGpsSource? = if (DemoMode.isEnabled) DemoGpsSource() else null
 
     init {
         if (demo == null) {
@@ -249,4 +252,13 @@ class LocationRepository(context: Context) {
         .distinctUntilChanged()
         .flowOn(Dispatchers.Default)
         .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
+
+    companion object {
+        /**
+         * A [LocationRepository] permanently backed by [DemoGpsSource], regardless of [DemoMode].
+         * Used by the onboarding tour so it can walk the real screens on synthetic data without
+         * ever touching the GPS chip or requiring [android.Manifest.permission.ACCESS_FINE_LOCATION].
+         */
+        fun simulated(context: Context): LocationRepository = LocationRepository(context, DemoGpsSource())
+    }
 }

@@ -56,6 +56,8 @@ import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatWaypointTimestamp
 import app.matthieu.cairngps.ui.common.StatTile
 import app.matthieu.cairngps.ui.gamification.LevelInfo
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.AchievementBannerBg
 import app.matthieu.cairngps.ui.theme.AchievementBannerBorder
@@ -177,7 +179,11 @@ private fun ProfileScreen(
             }
 
             item(key = "level") {
-                LevelCard(uiState.level, onClick = onOpenLevels)
+                LevelCard(
+                    uiState.level,
+                    onClick = onOpenLevels,
+                    modifier = Modifier.onboardingTarget(OnboardingTarget.PROFILE_LEVEL),
+                )
             }
 
             item(key = "stats") {
@@ -281,6 +287,7 @@ private fun ProfileScreen(
                         uiState.sessionCount,
                     ),
                     onClick = onOpenHistory,
+                    modifier = Modifier.onboardingTarget(OnboardingTarget.PROFILE_LOGBOOK),
                 )
             }
             item(key = "hub-achievements") {
@@ -294,6 +301,7 @@ private fun ProfileScreen(
                         uiState.totalAchievements,
                     ),
                     onClick = onOpenAchievements,
+                    modifier = Modifier.onboardingTarget(OnboardingTarget.PROFILE_ACHIEVEMENTS),
                 )
             }
             item(key = "hub-records") {
@@ -326,9 +334,10 @@ private fun ProfileScreen(
  * Tapping it opens the full level scale (see [app.matthieu.cairngps.ui.gamification.LevelsRoute]).
  */
 @Composable
-private fun LevelCard(level: LevelInfo, onClick: () -> Unit) {
+private fun LevelCard(level: LevelInfo, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         onClick = onClick,
+        modifier = modifier,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
@@ -399,10 +408,17 @@ private fun LevelCard(level: LevelInfo, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ProfileHubRow(glyph: Char, iconTint: Color, title: String, subtitle: String, onClick: () -> Unit) {
+private fun ProfileHubRow(
+    glyph: Char,
+    iconTint: Color,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Card(
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp),
         shape = RoundedCornerShape(20.dp),

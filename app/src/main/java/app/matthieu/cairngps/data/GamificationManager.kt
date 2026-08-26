@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -225,4 +226,13 @@ class GamificationManager(
     private fun hasLocationPermission(): Boolean =
         ContextCompat.checkSelfPermission(appContext, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
+
+    /**
+     * Cancels every collector started in [init] and by [startLiveTracking]. The app-wide instance
+     * never calls this — it lives for the process. The onboarding tour's own instance does, so its
+     * collectors don't keep running against an in-memory database that's about to be closed.
+     */
+    fun close() {
+        scope.cancel()
+    }
 }

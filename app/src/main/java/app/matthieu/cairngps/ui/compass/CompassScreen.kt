@@ -92,6 +92,8 @@ import app.matthieu.cairngps.ui.theme.LightStatusText
 import app.matthieu.cairngps.ui.theme.LightWaypointIconBg
 import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.theme.OnGreenButton
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.theme.WaypointIconBg
@@ -189,13 +191,19 @@ private fun CompassScreen(
                     if (uiState.needsCalibration) {
                         CalibrationBanner()
                     }
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .onboardingTarget(OnboardingTarget.COMPASS_DIAL),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         CompassDial(uiState)
                     }
                     DeclinationInfo(uiState)
                     TargetCard(
                         uiState = uiState,
                         onChangeTarget = { showTargetPicker = true },
+                        modifier = Modifier.onboardingTarget(OnboardingTarget.COMPASS_TARGET),
                     )
                 }
             }
@@ -347,10 +355,10 @@ private fun DeclinationInfo(uiState: CompassUiState) {
  * arrow glyph rotated to point at it, or an empty-state inviting the user to pick one.
  */
 @Composable
-private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit) {
+private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit, modifier: Modifier = Modifier) {
     val light = LocalIsLightTheme.current
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

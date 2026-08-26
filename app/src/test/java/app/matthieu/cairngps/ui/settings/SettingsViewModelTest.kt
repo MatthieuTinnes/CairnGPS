@@ -73,4 +73,18 @@ class SettingsViewModelTest {
         coVerify { repository.setThemeMode(ThemeMode.LIGHT) }
         coVerify { repository.setNorthReference(NorthReference.TRUE) }
     }
+
+    @Test
+    fun `replayOnboarding resets the onboarding-completed flag`() = runTest {
+        val repository = mockk<SettingsRepository> {
+            every { settings } returns MutableStateFlow(AppSettings())
+            coEvery { setOnboardingCompleted(any()) } returns Unit
+        }
+        val viewModel = SettingsViewModel(repository)
+
+        viewModel.replayOnboarding()
+        runCurrent()
+
+        coVerify { repository.setOnboardingCompleted(false) }
+    }
 }

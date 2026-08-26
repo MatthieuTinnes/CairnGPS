@@ -64,6 +64,8 @@ import app.matthieu.cairngps.domain.format.shortUnitLabel
 import app.matthieu.cairngps.domain.format.speedUnitLabel
 import app.matthieu.cairngps.domain.gamification.AchievementDef
 import app.matthieu.cairngps.domain.gamification.AchievementFamily
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.CairnAmber
 import app.matthieu.cairngps.ui.theme.CairnGreen
@@ -205,7 +207,8 @@ private fun AchievementsScreen(
             state = gridState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .onboardingTarget(OnboardingTarget.ACHIEVEMENT_GRID),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),

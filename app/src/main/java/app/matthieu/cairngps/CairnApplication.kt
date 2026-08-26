@@ -5,6 +5,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import app.matthieu.cairngps.data.AchievementsRepository
+import app.matthieu.cairngps.data.AppContainer
 import app.matthieu.cairngps.data.AppDatabase
 import app.matthieu.cairngps.data.BackupRepository
 import app.matthieu.cairngps.data.CompassRepository
@@ -29,39 +30,39 @@ import kotlinx.coroutines.launch
  * changes and can be shared across ViewModels — a lightweight manual alternative to a full DI
  * framework.
  */
-class CairnApplication : Application() {
+class CairnApplication : Application(), AppContainer {
 
-    val locationRepository: LocationRepository by lazy { LocationRepository(this) }
+    override val locationRepository: LocationRepository by lazy { LocationRepository(this) }
 
-    val compassRepository: CompassRepository by lazy { CompassRepository(this) }
+    override val compassRepository: CompassRepository by lazy { CompassRepository(this) }
 
-    val settingsRepository: SettingsRepository by lazy { SettingsRepository(this) }
+    override val settingsRepository: SettingsRepository by lazy { SettingsRepository(this) }
 
     private val database: AppDatabase by lazy { AppDatabase.getInstance(this) }
 
-    val waypointRepository: WaypointRepository by lazy { WaypointRepository(database.waypointDao()) }
+    override val waypointRepository: WaypointRepository by lazy { WaypointRepository(database.waypointDao()) }
 
-    val sessionRepository: SessionRepository by lazy {
+    override val sessionRepository: SessionRepository by lazy {
         SessionRepository(database.sessionDao(), database.trackPointDao(), database.recordingCheckpointDao())
     }
 
-    val navigationTargetRepository: NavigationTargetRepository by lazy { NavigationTargetRepository() }
+    override val navigationTargetRepository: NavigationTargetRepository by lazy { NavigationTargetRepository() }
 
-    val recordingRepository: RecordingRepository by lazy {
+    override val recordingRepository: RecordingRepository by lazy {
         RecordingRepository(locationRepository, sessionRepository, waypointRepository)
     }
 
-    val recordsRepository: RecordsRepository by lazy { RecordsRepository(database.recordDao()) }
+    override val recordsRepository: RecordsRepository by lazy { RecordsRepository(database.recordDao()) }
 
-    val achievementsRepository: AchievementsRepository by lazy {
+    override val achievementsRepository: AchievementsRepository by lazy {
         AchievementsRepository(database.achievementDao())
     }
 
-    val gamificationFlagsRepository: GamificationFlagsRepository by lazy {
+    override val gamificationFlagsRepository: GamificationFlagsRepository by lazy {
         GamificationFlagsRepository(database.gamificationFlagDao())
     }
 
-    val backupRepository: BackupRepository by lazy {
+    override val backupRepository: BackupRepository by lazy {
         BackupRepository(
             database = database,
             waypointDao = database.waypointDao(),
@@ -74,7 +75,7 @@ class CairnApplication : Application() {
         )
     }
 
-    val gamificationManager: GamificationManager by lazy {
+    override val gamificationManager: GamificationManager by lazy {
         GamificationManager(
             this,
             locationRepository,

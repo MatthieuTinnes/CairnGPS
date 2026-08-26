@@ -62,6 +62,8 @@ import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.domain.EcefPosition
 import app.matthieu.cairngps.domain.SatelliteGeometry
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.theme.DarkOnSurface
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.GlobeLegendBorder
@@ -88,6 +90,7 @@ fun SatelliteGlobeRoute(
     locationRepository: LocationRepository,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    initialZoom: Float = 1f,
 ) {
     val viewModel: SatelliteGlobeViewModel =
         viewModel(factory = SatelliteGlobeViewModel.factory(locationRepository))
@@ -102,6 +105,7 @@ fun SatelliteGlobeRoute(
         uiState = uiState,
         onBack = onBack,
         modifier = modifier,
+        initialZoom = initialZoom,
     )
 }
 
@@ -111,6 +115,7 @@ private fun SatelliteGlobeScreen(
     uiState: SatelliteGlobeUiState,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    initialZoom: Float = 1f,
 ) {
     Scaffold(
         modifier = modifier,
@@ -154,9 +159,11 @@ private fun SatelliteGlobeScreen(
                 GlobeCanvas(
                     observer = observer,
                     satellites = uiState.satellites,
+                    initialZoom = initialZoom,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .onboardingTarget(OnboardingTarget.GLOBE_CANVAS),
                 )
                 val present = uiState.satellites
                     .filter { it.info.usedInFix }
@@ -241,11 +248,12 @@ private fun GlobeCanvas(
     observer: LocationData,
     satellites: List<GlobeSatellite>,
     modifier: Modifier = Modifier,
+    initialZoom: Float = 1f,
 ) {
     // Camera state. Initialized so the observer's position faces the viewer on first composition.
     var yawDeg by rememberSaveable { mutableFloatStateOf(observer.longitude.toFloat()) }
     var pitchDeg by rememberSaveable { mutableFloatStateOf(observer.latitude.toFloat()) }
-    var zoom by rememberSaveable { mutableFloatStateOf(1f) }
+    var zoom by rememberSaveable { mutableFloatStateOf(initialZoom) }
 
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var selectedKey by remember { mutableStateOf<Pair<Constellation, Int>?>(null) }

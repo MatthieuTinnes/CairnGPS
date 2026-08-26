@@ -4,10 +4,13 @@ Le mode démo remplace **toutes** les données affichées par des données ficti
 faire des captures d'écran et des screencasts (F-Droid, README, store) sans jamais exposer sa
 position réelle, ses traces ou ses repères.
 
-Il n'existe **que dans les builds debug**. Dans le build release, `DemoMode.isAvailable` vaut
-`BuildConfig.DEBUG`, donc `false` : R8 supprime toutes les branches concernées, et le package
-`demo` disparaît entièrement de l'APK. Vérifié sur `mapping.txt` — zéro classe `cairngps.demo`
-conservée. La reproductibilité du build F-Droid n'est pas affectée.
+L'interrupteur lui-même et la bascule de base de données (`cairn-demo.db`) n'existent **que dans
+les builds debug** : `DemoMode.isAvailable` vaut `BuildConfig.DEBUG`, donc `false` en release, et
+R8 supprime ces branches. En revanche `demo/DemoGpsSource.kt`, `demo/DemoRoute.kt` et
+`demo/DemoDataSeeder.kt` sont aussi utilisés par la visite guidée du premier lancement (voir
+`docs/onboarding.md`), qui doit fonctionner en release : ces trois fichiers restent donc dans
+l'APK release (quelques Ko). Seul `DemoMode` et son redémarrage de processus disparaissent.
+La reproductibilité du build F-Droid n'est pas affectée.
 
 ## Utilisation
 

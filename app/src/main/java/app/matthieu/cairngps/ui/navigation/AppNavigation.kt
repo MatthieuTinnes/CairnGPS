@@ -18,14 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import app.matthieu.cairngps.CairnApplication
 import app.matthieu.cairngps.R
+import app.matthieu.cairngps.data.AppContainer
 import app.matthieu.cairngps.ui.about.AboutScreen
 import app.matthieu.cairngps.ui.about.LicenseScreen
 import app.matthieu.cairngps.ui.about.ThirdPartyScreen
@@ -37,6 +38,8 @@ import app.matthieu.cairngps.ui.gamification.UnlockBanner
 import app.matthieu.cairngps.ui.history.HistoryRoute
 import app.matthieu.cairngps.ui.history.SessionDetailRoute
 import app.matthieu.cairngps.ui.location.HomeRoute
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.profile.ProfileRoute
 import app.matthieu.cairngps.ui.recording.DiscardedRecordingBanner
 import app.matthieu.cairngps.ui.satellites.ConstellationInfoScreen
@@ -53,7 +56,9 @@ import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.Sym
 import app.matthieu.cairngps.ui.waypoints.WaypointDetailRoute
 
-private object Routes {
+// Internal rather than private: the onboarding tour (ui/onboarding) drives this same NavHost by
+// route to walk the app's real screens, and needs these constants to stay in lockstep with it.
+internal object Routes {
     const val HOME = "home"
     const val COMPASS = "compass"
     const val SATELLITES = "satellites"
@@ -92,21 +97,35 @@ private enum class TopLevelTab(
     val route: String,
     val glyph: Char,
     @StringRes val labelRes: Int,
+    val onboardingTarget: OnboardingTarget,
 ) {
-    HOME(Routes.HOME, Glyph.MyLocation, R.string.tab_home),
-    COMPASS(Routes.COMPASS, Glyph.Explore, R.string.tab_compass),
-    SATELLITES(Routes.SATELLITES, Glyph.SatelliteAlt, R.string.tab_satellites),
-    PROFILE(Routes.PROFILE, Glyph.Person, R.string.tab_profile),
+    HOME(Routes.HOME, Glyph.MyLocation, R.string.tab_home, OnboardingTarget.TAB_HOME),
+    COMPASS(Routes.COMPASS, Glyph.Explore, R.string.tab_compass, OnboardingTarget.TAB_COMPASS),
+    SATELLITES(Routes.SATELLITES, Glyph.SatelliteAlt, R.string.tab_satellites, OnboardingTarget.TAB_SATELLITES),
+    PROFILE(Routes.PROFILE, Glyph.Person, R.string.tab_profile, OnboardingTarget.TAB_PROFILE),
 }
 
 /**
  * The app's nav graph plus its bottom navigation bar and the floating achievement-unlock banner.
  * The only entry point [app.matthieu.cairngps.MainActivity] needs — it otherwise just owns the
  * theme and the location-permission gate.
+ *
+ * Takes an [AppContainer] rather than [app.matthieu.cairngps.CairnApplication] directly so the
+ * onboarding tour ([app.matthieu.cairngps.ui.onboarding.OnboardingHost]) can render these same
+ * real screens against its own synthetic-data container. It also accepts its own
+ * [NavHostController] and can hide the unlock/discarded-recording banners for that same reason:
+ * the tour drives navigation itself and seeds a full achievement history on entry, which would
+ * otherwise fire a banner for every achievement it derives. [satelliteGlobeInitialZoom] exists for
+ * the same reason: the onboarding tour opens the globe already zoomed in, past its normal
+ * full-earth default, so its spotlighted satellites read clearly without the user having to pinch.
  */
 @Composable
-fun MainScaffold(app: CairnApplication) {
-    val navController = rememberNavController()
+fun MainScaffold(
+    container: AppContainer,
+    navController: NavHostController = rememberNavController(),
+    showBanners: Boolean = true,
+    satelliteGlobeInitialZoom: Float = 1f,
+) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     // The bottom bar is only shown on top-level tabs; secondary screens (Settings) take the full
     // height and rely on their own back navigation.
@@ -126,6 +145,7 @@ fun MainScaffold(app: CairnApplication) {
                             val selected = currentRoute == tab.route
                             NavigationBarItem(
                                 selected = selected,
+                                modifier = Modifier.onboardingTarget(tab.onboardingTarget),
                                 onClick = {
                                     if (!selected) {
                                         navController.navigate(tab.route) {
@@ -171,41 +191,42 @@ fun MainScaffold(app: CairnApplication) {
             ) {
                 composable(Routes.HOME) {
                     HomeRoute(
-                        locationRepository = app.locationRepository,
-                        settingsRepository = app.settingsRepository,
-                        waypointRepository = app.waypointRepository,
-                        recordingRepository = app.recordingRepository,
+                        locationRepository = container.locationRepository,
+                        settingsRepository = container.settingsRepository,
+                        waypointRepository = container.waypointRepository,
+                        recordingRepository = container.recordingRepository,
                     )
                 }
                 composable(Routes.COMPASS) {
                     CompassRoute(
-                        compassRepository = app.compassRepository,
-                        locationRepository = app.locationRepository,
-                        settingsRepository = app.settingsRepository,
-                        waypointRepository = app.waypointRepository,
-                        navigationTargetRepository = app.navigationTargetRepository,
-                        recordingRepository = app.recordingRepository,
+                        compassRepository = container.compassRepository,
+                        locationRepository = container.locationRepository,
+                        settingsRepository = container.settingsRepository,
+                        waypointRepository = container.waypointRepository,
+                        navigationTargetRepository = container.navigationTargetRepository,
+                        recordingRepository = container.recordingRepository,
                     )
                 }
                 composable(Routes.SATELLITES) {
                     SatellitesRoute(
-                        locationRepository = app.locationRepository,
+                        locationRepository = container.locationRepository,
                         onOpenInfo = { navController.navigate(Routes.CONSTELLATION_INFO) },
                         onOpenGlobe = { navController.navigate(Routes.SATELLITE_GLOBE) },
                     )
                 }
                 composable(Routes.SATELLITE_GLOBE) {
                     SatelliteGlobeRoute(
-                        locationRepository = app.locationRepository,
+                        locationRepository = container.locationRepository,
                         onBack = { navController.popBackStack() },
+                        initialZoom = satelliteGlobeInitialZoom,
                     )
                 }
                 composable(Routes.PROFILE) {
                     ProfileRoute(
-                        sessionRepository = app.sessionRepository,
-                        achievementsRepository = app.achievementsRepository,
-                        waypointRepository = app.waypointRepository,
-                        settingsRepository = app.settingsRepository,
+                        sessionRepository = container.sessionRepository,
+                        achievementsRepository = container.achievementsRepository,
+                        waypointRepository = container.waypointRepository,
+                        settingsRepository = container.settingsRepository,
                         onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                         onOpenHistory = { navController.navigate(Routes.HISTORY) },
                         onOpenAchievements = { navController.navigate(Routes.achievements()) },
@@ -217,9 +238,9 @@ fun MainScaffold(app: CairnApplication) {
                 }
                 composable(Routes.HISTORY) {
                     HistoryRoute(
-                        waypointRepository = app.waypointRepository,
-                        sessionRepository = app.sessionRepository,
-                        settingsRepository = app.settingsRepository,
+                        waypointRepository = container.waypointRepository,
+                        sessionRepository = container.sessionRepository,
+                        settingsRepository = container.settingsRepository,
                         onOpenWaypoint = { id -> navController.navigate(Routes.waypointDetail(id)) },
                         onOpenSession = { id -> navController.navigate(Routes.sessionDetail(id)) },
                         onBack = { navController.popBackStack() },
@@ -232,14 +253,14 @@ fun MainScaffold(app: CairnApplication) {
                     val id = backStackEntry.arguments?.getLong(Routes.WAYPOINT_ID_ARG) ?: return@composable
                     WaypointDetailRoute(
                         waypointId = id,
-                        waypointRepository = app.waypointRepository,
-                        sessionRepository = app.sessionRepository,
-                        locationRepository = app.locationRepository,
-                        settingsRepository = app.settingsRepository,
+                        waypointRepository = container.waypointRepository,
+                        sessionRepository = container.sessionRepository,
+                        locationRepository = container.locationRepository,
+                        settingsRepository = container.settingsRepository,
                         onBack = { navController.popBackStack() },
                         onOpenSession = { sessionId -> navController.navigate(Routes.sessionDetail(sessionId)) },
                         onNavigate = { targetId ->
-                            app.navigationTargetRepository.setTarget(targetId)
+                            container.navigationTargetRepository.setTarget(targetId)
                             navController.navigate(Routes.COMPASS) {
                                 popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                 launchSingleTop = true
@@ -255,10 +276,10 @@ fun MainScaffold(app: CairnApplication) {
                     val id = backStackEntry.arguments?.getLong(Routes.SESSION_ID_ARG) ?: return@composable
                     SessionDetailRoute(
                         sessionId = id,
-                        sessionRepository = app.sessionRepository,
-                        waypointRepository = app.waypointRepository,
-                        settingsRepository = app.settingsRepository,
-                        gamificationFlagsRepository = app.gamificationFlagsRepository,
+                        sessionRepository = container.sessionRepository,
+                        waypointRepository = container.waypointRepository,
+                        settingsRepository = container.settingsRepository,
+                        gamificationFlagsRepository = container.gamificationFlagsRepository,
                         onBack = { navController.popBackStack() },
                         onOpenWaypoint = { waypointId -> navController.navigate(Routes.waypointDetail(waypointId)) },
                     )
@@ -275,25 +296,25 @@ fun MainScaffold(app: CairnApplication) {
                 ) { backStackEntry ->
                     val highlightId = backStackEntry.arguments?.getString(Routes.ACHIEVEMENT_ID_ARG)
                     AchievementsRoute(
-                        achievementsRepository = app.achievementsRepository,
-                        recordsRepository = app.recordsRepository,
-                        sessionRepository = app.sessionRepository,
-                        waypointRepository = app.waypointRepository,
-                        settingsRepository = app.settingsRepository,
+                        achievementsRepository = container.achievementsRepository,
+                        recordsRepository = container.recordsRepository,
+                        sessionRepository = container.sessionRepository,
+                        waypointRepository = container.waypointRepository,
+                        settingsRepository = container.settingsRepository,
                         highlightAchievementId = highlightId,
                         onBack = { navController.popBackStack() },
                     )
                 }
                 composable(Routes.RECORDS) {
                     RecordsRoute(
-                        recordsRepository = app.recordsRepository,
-                        settingsRepository = app.settingsRepository,
+                        recordsRepository = container.recordsRepository,
+                        settingsRepository = container.settingsRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }
                 composable(Routes.LEVELS) {
                     LevelsRoute(
-                        achievementsRepository = app.achievementsRepository,
+                        achievementsRepository = container.achievementsRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }
@@ -304,9 +325,9 @@ fun MainScaffold(app: CairnApplication) {
                 }
                 composable(Routes.SETTINGS) {
                     SettingsRoute(
-                        repository = app.settingsRepository,
-                        backupRepository = app.backupRepository,
-                        gamificationFlagsRepository = app.gamificationFlagsRepository,
+                        repository = container.settingsRepository,
+                        backupRepository = container.backupRepository,
+                        gamificationFlagsRepository = container.gamificationFlagsRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }
@@ -329,18 +350,20 @@ fun MainScaffold(app: CairnApplication) {
                 }
             }
         }
-        UnlockBanner(
-            unlockedEvents = app.gamificationManager.unlockedEvents,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .statusBarsPadding(),
-        )
-        DiscardedRecordingBanner(
-            discardedEvents = app.recordingRepository.discardedEvents,
-            settingsRepository = app.settingsRepository,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .statusBarsPadding(),
-        )
+        if (showBanners) {
+            UnlockBanner(
+                unlockedEvents = container.gamificationManager.unlockedEvents,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding(),
+            )
+            DiscardedRecordingBanner(
+                discardedEvents = container.recordingRepository.discardedEvents,
+                settingsRepository = container.settingsRepository,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding(),
+            )
+        }
     }
 }

@@ -70,6 +70,14 @@ class SettingsViewModel(
         viewModelScope.launch { repository.setUnitSystem(unitSystem) }
     }
 
+    /**
+     * Resets the first-launch onboarding flag so [app.matthieu.cairngps.MainActivity] switches to
+     * [app.matthieu.cairngps.ui.onboarding.OnboardingHost] on its next recomposition.
+     */
+    fun replayOnboarding() {
+        viewModelScope.launch { repository.setOnboardingCompleted(false) }
+    }
+
     companion object {
         fun factory(
             repository: SettingsRepository,
