@@ -35,7 +35,14 @@ data class CompassReading(
  * and magnetometer: the rotation vector is already gravity-compensated and tilt-corrected by the
  * platform sensor-fusion, so it is far more stable and needs no hand-rolled complementary filter.
  */
-class CompassRepository(context: Context) {
+class CompassRepository internal constructor(context: Context, private val demo: DemoGpsSource?) {
+
+    constructor(context: Context) : this(
+        context,
+        // Screenshot/screencast demo mode (debug builds only): the heading follows the simulated
+        // walk instead of the magnetometer, so the dial and the position on screen agree. See DemoMode.
+        demo = if (DemoMode.isEnabled) DemoGpsSource() else null,
+    )
 
     private val sensorManager: SensorManager =
         requireNotNull(context.applicationContext.getSystemService()) {
@@ -44,10 +51,6 @@ class CompassRepository(context: Context) {
 
     private val rotationVectorSensor: Sensor? =
         sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-
-    // Screenshot/screencast demo mode (debug builds only): the heading follows the simulated walk
-    // instead of the magnetometer, so the dial and the position on screen agree. See DemoMode.
-    private val demo: DemoGpsSource? = if (DemoMode.isEnabled) DemoGpsSource() else null
 
     /** Whether this device exposes a rotation vector sensor at all (some cheap devices don't). */
     val isSensorAvailable: Boolean get() = demo != null || rotationVectorSensor != null
@@ -95,4 +98,13 @@ class CompassRepository(context: Context) {
     }
         // Keep only the latest reading if a slow collector falls behind.
         .conflate()
+
+    companion object {
+        /**
+         * A [CompassRepository] permanently backed by [DemoGpsSource], regardless of [DemoMode].
+         * Used by the onboarding tour so the dial follows the simulated walk on the real Compass
+         * screen without registering a real sensor listener.
+         */
+        fun simulated(context: Context): CompassRepository = CompassRepository(context, DemoGpsSource())
+    }
 }

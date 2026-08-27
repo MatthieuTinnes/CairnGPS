@@ -64,6 +64,9 @@
     <string name="settings_unit_system">Unit system</string>
     <string name="unit_system_metric">Metric</string>
     <string name="unit_system_imperial">Imperial</string>
+    <string name="settings_help_section">Help</string>
+    <string name="settings_replay_onboarding_title">Replay the tour</string>
+    <string name="settings_replay_onboarding_subtitle">Walk through the app\'s screens again with sample data</string>
     <!-- Debug builds only: the screenshot demo mode is shrunk out of the release APK. -->
     <string name="settings_demo_section">Debug</string>
     <string name="settings_demo_title">Demo mode</string>
@@ -81,6 +84,45 @@
     <string name="settings_import_success">Data restored successfully</string>
     <string name="settings_import_error_unreadable">Unreadable backup file</string>
     <string name="settings_import_error_future_version">This backup comes from a newer version of the app</string>
+
+    <!-- Onboarding tour: walks the real screens on sample data, shown on first launch and
+         replayable from Settings > Help. -->
+    <string name="onboarding_step_1_title">Welcome to CairnGPS</string>
+    <string name="onboarding_step_1_body">This quick tour uses sample data — nothing here is your real position or history. Tap anywhere to continue.</string>
+    <string name="onboarding_step_2_title">Your coordinates</string>
+    <string name="onboarding_step_2_body">Latitude and longitude update live. Tap the card to copy them, or switch between decimal and DMS format in Settings.</string>
+    <string name="onboarding_step_3_title">Altitude and signal quality</string>
+    <string name="onboarding_step_3_body">Altitude is shown in meters. The colored dot shows GPS accuracy: green is good, orange is fair, red is poor. Dashes mean no fix yet.</string>
+    <string name="onboarding_step_4_title">Mark a cairn, record a hike</string>
+    <string name="onboarding_step_4_body">Save a waypoint at your current position, or start recording a track to capture distance, elevation and speed as you go.</string>
+    <string name="onboarding_step_5_title">Let\'s check the compass</string>
+    <string name="onboarding_step_5_body">Tap Navigate to see your heading and the bearing to a target.</string>
+    <string name="onboarding_step_6_title">Find your way</string>
+    <string name="onboarding_step_6_body">The dial shows your heading, true or magnetic. Pick a saved waypoint as a target to see its bearing and distance.</string>
+    <string name="onboarding_step_7_title">Now the satellites</string>
+    <string name="onboarding_step_7_body">Tap Satellites to see what the GPS chip can see overhead.</string>
+    <string name="onboarding_step_8_title">The sky plot</string>
+    <string name="onboarding_step_8_body">Each dot is a satellite, positioned by azimuth and elevation. Color shows its constellation; a filled dot means it\'s used in your fix.</string>
+    <string name="onboarding_step_9_title">See it in 3D</string>
+    <string name="onboarding_step_9_body">Open the 3D globe for a fuller picture of the satellites orbiting above you.</string>
+    <string name="onboarding_step_10_title">The 3D globe</string>
+    <string name="onboarding_step_10_body">Drag to rotate the globe, and tap a satellite to see its details.</string>
+    <string name="onboarding_step_11_title">Your profile</string>
+    <string name="onboarding_step_11_body">Let\'s head to your Profile, where your progress and history live.</string>
+    <string name="onboarding_step_12_title">Your logbook</string>
+    <string name="onboarding_step_12_body">The logbook keeps every waypoint you save and every hike you record.</string>
+    <string name="onboarding_step_13_title">Waypoints and tracks</string>
+    <string name="onboarding_step_13_body">Switch between saved waypoints and recorded tracks. Tap any entry to see its full detail.</string>
+    <string name="onboarding_step_14_title">Achievements</string>
+    <string name="onboarding_step_14_body">Hiking unlocks achievements and levels — tap here to see the full catalog.</string>
+    <string name="onboarding_step_15_title">Track your progress</string>
+    <string name="onboarding_step_15_body">Each badge tracks a milestone, from your first waypoint to your highest summit.</string>
+    <string name="onboarding_step_16_title">You\'re ready</string>
+    <string name="onboarding_step_16_body">That\'s the tour. You can replay it anytime from Settings.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Start</string>
+    <string name="onboarding_progress">%1$d/%2$d</string>
 
     <!-- Waypoints -->
     <string name="action_save_waypoint">Save a waypoint</string>

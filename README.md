@@ -6,7 +6,13 @@
 <b>Android app displaying</b> real-time GPS/GNSS information, with a gamification
 layer (achievements, records, levels) to make it fun.
 <br />
-Get it now from <a href="https://github.com/MatthieuTinnes/CairnGPS/releases">Releases</a>.
+Get it now from <a href="https://github.com/MatthieuTinnes/CairnGPS/releases">Releases</a>
+or on Google Play.
+</p>
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id=app.matthieu.cairngps">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="90" alt="Get it on Google Play" />
+  </a>
 </p>
 
 <p align="center">

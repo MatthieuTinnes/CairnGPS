@@ -64,6 +64,9 @@
     <string name="settings_unit_system">Système d\'unités</string>
     <string name="unit_system_metric">Métrique</string>
     <string name="unit_system_imperial">Impérial</string>
+    <string name="settings_help_section">Aide</string>
+    <string name="settings_replay_onboarding_title">Rejouer la visite</string>
+    <string name="settings_replay_onboarding_subtitle">Repasser en revue les écrans de l\'application avec des données fictives</string>
     <!-- Debug builds only: the screenshot demo mode is shrunk out of the release APK. -->
     <string name="settings_demo_section">Debug</string>
     <string name="settings_demo_title">Mode démo</string>
@@ -81,6 +84,45 @@
     <string name="settings_import_success">Données restaurées avec succès</string>
     <string name="settings_import_error_unreadable">Fichier de sauvegarde illisible</string>
     <string name="settings_import_error_future_version">Cette sauvegarde provient d\'une version plus récente de l\'application</string>
+
+    <!-- Onboarding tour: walks the real screens on sample data, shown on first launch and
+         replayable from Settings > Help. -->
+    <string name="onboarding_step_1_title">Bienvenue sur CairnGPS</string>
+    <string name="onboarding_step_1_body">Cette visite guidée utilise des données fictives — rien ici n\'est votre position ou votre historique réel. Touchez l\'écran pour continuer.</string>
+    <string name="onboarding_step_2_title">Vos coordonnées</string>
+    <string name="onboarding_step_2_body">La latitude et la longitude se mettent à jour en direct. Touchez la carte pour les copier, ou changez de format (décimal / DMS) dans les Réglages.</string>
+    <string name="onboarding_step_3_title">Altitude et qualité du signal</string>
+    <string name="onboarding_step_3_body">L\'altitude est affichée en mètres. Le point coloré indique la précision GPS : vert pour bonne, orange pour moyenne, rouge pour mauvaise. Des tirets signifient qu\'aucun fix n\'est encore disponible.</string>
+    <string name="onboarding_step_4_title">Poser un cairn, enregistrer une trace</string>
+    <string name="onboarding_step_4_body">Enregistrez un repère à votre position actuelle, ou démarrez l\'enregistrement d\'une trace pour suivre distance, dénivelé et vitesse.</string>
+    <string name="onboarding_step_5_title">Passons à la boussole</string>
+    <string name="onboarding_step_5_body">Touchez Naviguer pour voir votre cap et le relèvement vers une destination.</string>
+    <string name="onboarding_step_6_title">Trouvez votre chemin</string>
+    <string name="onboarding_step_6_body">Le cadran indique votre cap, vrai ou magnétique. Choisissez un repère enregistré comme destination pour voir son relèvement et sa distance.</string>
+    <string name="onboarding_step_7_title">Passons aux satellites</string>
+    <string name="onboarding_step_7_body">Touchez Satellites pour voir ce que la puce GPS capte au-dessus de vous.</string>
+    <string name="onboarding_step_8_title">Le ciel des satellites</string>
+    <string name="onboarding_step_8_body">Chaque point représente un satellite, positionné par azimut et élévation. La couleur indique sa constellation ; un point plein signifie qu\'il est utilisé dans le fix.</string>
+    <string name="onboarding_step_9_title">Une vue en 3D</string>
+    <string name="onboarding_step_9_body">Ouvrez le globe 3D pour une vue plus complète des satellites en orbite au-dessus de vous.</string>
+    <string name="onboarding_step_10_title">Le globe 3D</string>
+    <string name="onboarding_step_10_body">Faites glisser pour tourner le globe, et touchez un satellite pour voir son détail.</string>
+    <string name="onboarding_step_11_title">Votre profil</string>
+    <string name="onboarding_step_11_body">Direction le Profil, où se trouvent votre progression et votre historique.</string>
+    <string name="onboarding_step_12_title">Votre carnet</string>
+    <string name="onboarding_step_12_body">Le carnet conserve chaque repère enregistré et chaque randonnée suivie.</string>
+    <string name="onboarding_step_13_title">Repères et traces</string>
+    <string name="onboarding_step_13_body">Basculez entre les repères enregistrés et les traces suivies. Touchez une entrée pour en voir le détail complet.</string>
+    <string name="onboarding_step_14_title">Succès</string>
+    <string name="onboarding_step_14_body">Randonner débloque des succès et des niveaux — touchez ici pour voir le catalogue complet.</string>
+    <string name="onboarding_step_15_title">Suivez votre progression</string>
+    <string name="onboarding_step_15_body">Chaque badge marque une étape, de votre premier repère à votre plus haut sommet.</string>
+    <string name="onboarding_step_16_title">Vous êtes prêt</string>
+    <string name="onboarding_step_16_body">C\'est la fin de la visite. Vous pouvez la rejouer à tout moment depuis les Réglages.</string>
+    <string name="onboarding_skip">Passer</string>
+    <string name="onboarding_next">Suivant</string>
+    <string name="onboarding_start">Commencer</string>
+    <string name="onboarding_progress">%1$d/%2$d</string>
 
     <!-- Waypoints -->
     <string name="action_save_waypoint">Marquer un repère</string>

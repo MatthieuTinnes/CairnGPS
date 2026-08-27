@@ -84,6 +84,8 @@ import app.matthieu.cairngps.ui.common.BigValue
 import app.matthieu.cairngps.ui.common.CardTitle
 import app.matthieu.cairngps.ui.common.DataCard
 import app.matthieu.cairngps.ui.common.PulsingDot
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.recording.RecordingUiState
 import app.matthieu.cairngps.ui.recording.RecordingViewModel
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
@@ -252,6 +254,7 @@ private fun HomeScreen(
                 onSaveWaypoint = { showSaveDialog = true },
                 onStartRecording = onStartRecording,
                 onStopRecording = onStopRecording,
+                modifier = Modifier.onboardingTarget(OnboardingTarget.HOME_ACTIONS),
             )
         },
     ) { innerPadding ->
@@ -267,6 +270,7 @@ private fun HomeScreen(
                 isFixLost = uiState.isFixLost,
                 satellitesUsedInFix = uiState.satellitesUsedInFix,
                 satellitesVisible = uiState.satellitesVisible,
+                modifier = Modifier.onboardingTarget(OnboardingTarget.STATUS_LINE),
             )
             Spacer(Modifier.height(8.dp))
 
@@ -280,6 +284,7 @@ private fun HomeScreen(
                     uiState = uiState,
                     format = coordinateFormat,
                     onCopy = { copyCoordinates(context, uiState) },
+                    modifier = Modifier.onboardingTarget(OnboardingTarget.COORDINATES_CARD),
                 )
 
                 SpeedCard(uiState = uiState, unitSystem = unitSystem)
@@ -288,7 +293,9 @@ private fun HomeScreen(
                     AltitudeCard(
                         uiState = uiState,
                         unitSystem = unitSystem,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .onboardingTarget(OnboardingTarget.ALTITUDE_CARD),
                     )
                     AccuracyCard(
                         uiState = uiState,
@@ -330,6 +337,7 @@ private fun BottomActionsRow(
     onSaveWaypoint: () -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val isIdleWithoutFix = !hasFix && !isRecording
     val light = LocalIsLightTheme.current
@@ -343,7 +351,7 @@ private fun BottomActionsRow(
     val onStartButton = if (light) LightOnStartButton else OnAmberButton
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .alpha(if (isIdleWithoutFix) 0.38f else 1f),
@@ -560,8 +568,9 @@ private fun StatusLine(
     isFixLost: Boolean,
     satellitesUsedInFix: Int?,
     satellitesVisible: Int?,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Indeterminate bar — shown while acquiring, and again while reacquiring a lost fix.
         if (!hasFix) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -610,6 +619,7 @@ private fun CoordinatesCard(
     uiState: LocationUiState,
     format: CoordinateFormat,
     onCopy: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val westLabel = stringResource(R.string.hemisphere_west)
     val latitude = if (uiState.hasFix) {
@@ -631,7 +641,7 @@ private fun CoordinatesCard(
     // Tapping anywhere on the card copies the coordinates (only meaningful once we have a fix).
     // The design shows the two numbers alone, stacked; the label/value pairing is kept for screen
     // readers via contentDescription rather than as visible text.
-    DataCard(onClick = onCopy, enabled = uiState.hasFix) {
+    DataCard(modifier = modifier, onClick = onCopy, enabled = uiState.hasFix) {
         CardTitle(stringResource(R.string.label_coordinates))
         Spacer(Modifier.height(4.dp))
         Text(

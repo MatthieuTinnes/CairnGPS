@@ -71,6 +71,8 @@ import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.LightBorderSubtle
 import app.matthieu.cairngps.ui.theme.LightNavBar
 import app.matthieu.cairngps.ui.theme.LightStatusText
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OutlineSubtle
@@ -164,7 +166,10 @@ private fun SatellitesScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item(key = "skyplot") {
-                    SkyPlotCard(satellites = uiState.satellites.orEmpty())
+                    SkyPlotCard(
+                        satellites = uiState.satellites.orEmpty(),
+                        modifier = Modifier.onboardingTarget(OnboardingTarget.SKY_PLOT),
+                    )
                 }
                 item(key = "shortcuts") {
                     Row(
@@ -175,7 +180,9 @@ private fun SatellitesScreen(
                             icon = Glyph.Public,
                             label = stringResource(R.string.action_open_satellite_globe),
                             onClick = onOpenGlobe,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .onboardingTarget(OnboardingTarget.GLOBE_BUTTON),
                         )
                         ShortcutButton(
                             icon = Glyph.Info,
@@ -246,9 +253,9 @@ private fun StatusChip(inView: Int, usedInFix: Int) {
 
 /** The sky-plot card: polar az/el plot plus a per-constellation legend row (screen 1d). */
 @Composable
-private fun SkyPlotCard(satellites: List<SatelliteInfo>) {
+private fun SkyPlotCard(satellites: List<SatelliteInfo>, modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {

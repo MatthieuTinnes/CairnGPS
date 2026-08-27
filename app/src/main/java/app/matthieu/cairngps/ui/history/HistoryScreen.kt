@@ -53,6 +53,8 @@ import app.matthieu.cairngps.domain.format.formatElevation
 import app.matthieu.cairngps.domain.format.formatWaypointShortDateTime
 import app.matthieu.cairngps.domain.format.shortUnitLabel
 import app.matthieu.cairngps.ui.common.SegmentedToggle
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.settings.SettingsViewModel
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
@@ -149,7 +151,8 @@ private fun HistoryScreen(
                 onSelect = { index -> selectedTab = HistoryTab.entries[index] },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .onboardingTarget(OnboardingTarget.LOGBOOK_TOGGLE),
             )
 
             when (selectedTab) {

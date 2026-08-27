@@ -198,5 +198,13 @@ abstract class AppDatabase : RoomDatabase() {
             )
                 .addMigrations(*ALL_MIGRATIONS)
                 .build()
+
+        /**
+         * A throwaway, process-memory-only database, created fresh at the current schema (no
+         * migration needed) and gone once its handle is closed. Used by the onboarding tour so it
+         * never reads or writes [databaseName]'s file — not even the debug-only demo one.
+         */
+        fun inMemory(context: Context): AppDatabase =
+            Room.inMemoryDatabaseBuilder(context.applicationContext, AppDatabase::class.java).build()
     }
 }

@@ -8,13 +8,16 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.ThemeMode
 import app.matthieu.cairngps.ui.navigation.MainScaffold
+import app.matthieu.cairngps.ui.onboarding.OnboardingHost
 import app.matthieu.cairngps.ui.permission.LocationPermissionGate
 import app.matthieu.cairngps.ui.theme.CairnGpsTheme
+import kotlinx.coroutines.launch
 
 // AppCompatActivity (rather than plain ComponentActivity) is required for per-app language
 // switching via AppCompatDelegate.setApplicationLocales (Settings > Language).
@@ -37,10 +40,25 @@ class MainActivity : AppCompatActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
+            // Null on the very first frame, before DataStore has delivered its first value —
+            // deliberately distinct from `false` so a user who already finished onboarding never
+            // sees it flash on screen while the preference is still loading.
+            val onboardingCompleted by app.settingsRepository.onboardingCompleted
+                .collectAsStateWithLifecycle(initialValue = null)
+            val scope = rememberCoroutineScope()
+
             CairnGpsTheme(darkTheme = darkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    LocationPermissionGate {
-                        MainScaffold(app)
+                    when (onboardingCompleted) {
+                        null -> Unit
+                        false -> OnboardingHost(
+                            onFinish = {
+                                scope.launch { app.settingsRepository.setOnboardingCompleted(true) }
+                            },
+                        )
+                        true -> LocationPermissionGate {
+                            MainScaffold(app)
+                        }
                     }
                 }
             }

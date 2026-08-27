@@ -128,6 +128,7 @@ fun SettingsRoute(
         backupEvents = backupViewModel.backupEvents,
         onExport = backupViewModel::exportBackup,
         onImport = backupViewModel::importBackup,
+        onReplayOnboarding = viewModel::replayOnboarding,
         onBack = onBack,
         modifier = modifier,
     )
@@ -150,6 +151,7 @@ private fun SettingsScreen(
     backupEvents: SharedFlow<BackupEvent>,
     onExport: (OutputStream) -> Unit,
     onImport: (InputStream) -> Unit,
+    onReplayOnboarding: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -334,6 +336,17 @@ private fun SettingsScreen(
                         },
                     )
                 }
+            }
+
+            SettingsSection(stringResource(R.string.settings_help_section)) {
+                DataActionRow(
+                    glyph = Glyph.PlayArrow,
+                    title = stringResource(R.string.settings_replay_onboarding_title),
+                    subtitle = stringResource(R.string.settings_replay_onboarding_subtitle),
+                    enabled = true,
+                    onClick = onReplayOnboarding,
+                    last = true,
+                )
             }
 
             SettingsSection(stringResource(R.string.settings_data_section)) {

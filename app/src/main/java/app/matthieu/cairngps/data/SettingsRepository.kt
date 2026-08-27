@@ -3,6 +3,7 @@ package app.matthieu.cairngps.data
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -29,6 +30,7 @@ class SettingsRepository(context: Context) {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val NORTH_REFERENCE = stringPreferencesKey("north_reference")
         val UNIT_SYSTEM = stringPreferencesKey("unit_system")
+        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 
     // Single source for default values, reused below instead of repeating each enum default in
@@ -72,6 +74,19 @@ class SettingsRepository(context: Context) {
 
     suspend fun setUnitSystem(unitSystem: UnitSystem) {
         dataStore.edit { prefs -> prefs[Keys.UNIT_SYSTEM] = unitSystem.name }
+    }
+
+    /**
+     * Whether the first-launch onboarding tour has been completed or skipped. Deliberately kept
+     * out of [AppSettings]/[replaceAll]: that model is serialized whole into a backup, and
+     * restoring one must never replay — or silently dismiss — the tour on an unrelated device.
+     */
+    val onboardingCompleted: Flow<Boolean> = dataStore.data
+        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .map { prefs -> prefs[Keys.ONBOARDING_COMPLETED] ?: false }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { prefs -> prefs[Keys.ONBOARDING_COMPLETED] = completed }
     }
 
     /** Snapshot of the current settings, for exporting a backup. */
