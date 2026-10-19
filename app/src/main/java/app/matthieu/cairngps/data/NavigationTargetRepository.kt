@@ -4,8 +4,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+/** What the Naviguer (compass) screen points at: a saved waypoint or free-form coordinates. */
+sealed interface NavigationTarget {
+    data class SavedWaypoint(val id: Long) : NavigationTarget
+    data class Coordinates(val latitude: Double, val longitude: Double) : NavigationTarget
+}
+
 /**
- * Holds the id of the [Waypoint] currently targeted on the Naviguer (compass) screen.
+ * Holds the [NavigationTarget] currently selected on the Naviguer (compass) screen.
  *
  * App-scoped and in-memory only, unlike the Room-backed repositories: the selected target is
  * transient navigation state, not persisted business data or a user preference, so it doesn't
@@ -14,16 +20,21 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class NavigationTargetRepository {
 
-    private val _targetWaypointId = MutableStateFlow<Long?>(null)
-    val targetWaypointId: StateFlow<Long?> = _targetWaypointId.asStateFlow()
+    private val _target = MutableStateFlow<NavigationTarget?>(null)
+    val target: StateFlow<NavigationTarget?> = _target.asStateFlow()
 
     /** Sets the waypoint to navigate toward. */
     fun setTarget(waypointId: Long) {
-        _targetWaypointId.value = waypointId
+        _target.value = NavigationTarget.SavedWaypoint(waypointId)
+    }
+
+    /** Sets arbitrary coordinates (decimal degrees) to navigate toward. */
+    fun setTarget(latitude: Double, longitude: Double) {
+        _target.value = NavigationTarget.Coordinates(latitude, longitude)
     }
 
     /** Clears the current target, if any. */
     fun clear() {
-        _targetWaypointId.value = null
+        _target.value = null
     }
 }

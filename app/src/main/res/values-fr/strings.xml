@@ -292,6 +292,11 @@
     <string name="compass_change_target">Changer de repère cible</string>
     <string name="compass_select_target_title">Repère cible</string>
     <string name="compass_create_target_here">Créer un nouveau repère ici</string>
+    <string name="compass_enter_coordinates">Saisir des coordonnées</string>
+    <string name="compass_coordinates_dialog_title">Coordonnées cibles</string>
+    <string name="compass_coordinates_hint">Degrés décimaux, p. ex. 45.832600 et 6.864500. Utilisez un signe moins pour le sud ou l\'ouest.</string>
+    <string name="compass_coordinates_paste">Coller depuis le presse-papiers</string>
+    <string name="compass_coordinates_paste_invalid">Impossible de trouver deux coordonnées dans le presse-papiers.</string>
     <string name="compass_no_waypoints">Aucun repère enregistré.\n\nDepuis l\'écran Position, appuyez sur « Marquer un repère » pour en créer un.</string>
     <string name="compass_no_target_hint">Sélectionnez un repère à atteindre.</string>
     <string name="action_navigate_to_waypoint">Naviguer vers ce repère</string>

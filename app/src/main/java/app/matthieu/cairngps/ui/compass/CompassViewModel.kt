@@ -11,6 +11,7 @@ import app.matthieu.cairngps.data.CompassReading
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
+import app.matthieu.cairngps.data.NavigationTarget
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.RecordingRepository
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -70,6 +72,7 @@ class CompassViewModel(
     // to the sensor tracking lifecycle by itself — the target can be picked/loaded at any time —
     // but the position stream (locationJob) only runs while the screen is visible.
     private var targetWaypoint: Waypoint? = null
+    private var targetCoordinates: NavigationTarget.Coordinates? = null
     private var currentLocation: LocationData? = null
 
     // Backs the "Changer de repère cible" picker; kept live regardless of screen visibility, like
@@ -85,9 +88,10 @@ class CompassViewModel(
             }
             .launchIn(viewModelScope)
 
-        navigationTargetRepository.targetWaypointId
-            .onEach { id ->
-                targetWaypoint = id?.let { waypointRepository.get(it) }
+        navigationTargetRepository.target
+            .onEach { target ->
+                targetWaypoint = (target as? NavigationTarget.SavedWaypoint)?.let { waypointRepository.get(it.id) }
+                targetCoordinates = target as? NavigationTarget.Coordinates
                 publish()
             }
             .launchIn(viewModelScope)
@@ -146,6 +150,11 @@ class CompassViewModel(
         navigationTargetRepository.setTarget(waypointId)
     }
 
+    /** Sets arbitrary coordinates (decimal degrees) to navigate toward, invoked from the target picker. */
+    fun setTargetCoordinates(latitude: Double, longitude: Double) {
+        navigationTargetRepository.setTarget(latitude, longitude)
+    }
+
     /**
      * Creates a waypoint at the current position (invoked from the target picker's "Créer un
      * nouveau repère ici" row) and immediately makes it the navigation target. A no-op when no
@@ -190,13 +199,16 @@ class CompassViewModel(
         val useTrueNorth = northReference == NorthReference.TRUE && declination != null
 
         val target = targetWaypoint
+        val coordinates = targetCoordinates
+        val targetLatitude = target?.latitude ?: coordinates?.latitude
+        val targetLongitude = target?.longitude ?: coordinates?.longitude
         val location = currentLocation
         var targetDistance: Double? = null
         var targetBearing: Float? = null
-        if (target != null && location != null) {
+        if (targetLatitude != null && targetLongitude != null && location != null) {
             val toTarget = distanceAndBearing(
                 location.latitude, location.longitude,
-                target.latitude, target.longitude,
+                targetLatitude, targetLongitude,
             )
             targetDistance = toTarget.distanceMeters
             // The computed bearing is always relative to true north; convert it into the same
@@ -212,8 +224,10 @@ class CompassViewModel(
             sensorAvailable = compassRepository.isSensorAvailable,
             useTrueNorth = useTrueNorth,
             declinationDegrees = declination,
-            targetName = target?.name,
+            targetName = target?.name
+                ?: coordinates?.let { String.format(Locale.US, "%.5f, %.5f", it.latitude, it.longitude) },
             targetIcon = target?.icon,
+            targetIsCoordinates = coordinates != null,
             targetDistanceMeters = targetDistance,
             bearingToTargetDegrees = targetBearing,
             waypoints = waypoints,
