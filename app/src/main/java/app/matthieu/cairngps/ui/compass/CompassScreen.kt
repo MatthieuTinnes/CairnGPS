@@ -1,6 +1,7 @@
 package app.matthieu.cairngps.ui.compass
 
 import android.annotation.SuppressLint
+import android.content.ClipboardManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,12 +23,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +38,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,12 +48,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
@@ -139,6 +145,7 @@ fun CompassRoute(
     CompassScreen(
         uiState = uiState,
         onSelectTarget = viewModel::setTarget,
+        onSelectCoordinates = viewModel::setTargetCoordinates,
         onCreateTargetHere = viewModel::createWaypointHere,
         modifier = modifier,
     )
@@ -149,6 +156,7 @@ fun CompassRoute(
 private fun CompassScreen(
     uiState: CompassUiState,
     onSelectTarget: (Long) -> Unit,
+    onSelectCoordinates: (Double, Double) -> Unit,
     onCreateTargetHere: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -164,6 +172,10 @@ private fun CompassScreen(
                 onSelectTarget(id)
             },
             onCreateHere = onCreateTargetHere,
+            onSelectCoordinates = { latitude, longitude ->
+                showTargetPicker = false
+                onSelectCoordinates(latitude, longitude)
+            },
             onDismiss = { showTargetPicker = false },
         )
     }
@@ -371,7 +383,11 @@ private fun TargetCard(uiState: CompassUiState, onChangeTarget: () -> Unit, modi
                         contentAlignment = Alignment.Center,
                     ) {
                         Sym(
-                            icon = WaypointIcons.glyphFor(uiState.targetIcon ?: "flag"),
+                            icon = if (uiState.targetIsCoordinates) {
+                                Glyph.PinDrop
+                            } else {
+                                WaypointIcons.glyphFor(uiState.targetIcon ?: "flag")
+                            },
                             contentDescription = null,
                             filled = true,
                             tint = OnGreenButton,
@@ -452,10 +468,22 @@ private fun TargetPickerSheet(
     unitSystem: UnitSystem,
     onSelect: (Long) -> Unit,
     onCreateHere: (String) -> Unit,
+    onSelectCoordinates: (Double, Double) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val light = LocalIsLightTheme.current
     var showCreateDialog by remember { mutableStateOf(false) }
+    var showCoordinatesDialog by remember { mutableStateOf(false) }
+
+    if (showCoordinatesDialog) {
+        CoordinatesDialog(
+            onDismiss = { showCoordinatesDialog = false },
+            onConfirm = { latitude, longitude ->
+                showCoordinatesDialog = false
+                onSelectCoordinates(latitude, longitude)
+            },
+        )
+    }
 
     // Naming step for "Créer un nouveau repère ici": reuses the shared rename/name dialog rather
     // than duplicating an OutlinedTextField dialog here.
@@ -474,7 +502,7 @@ private fun TargetPickerSheet(
         )
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(modifier = Modifier.padding(horizontal = 8.dp)) {
             Text(
                 text = stringResource(R.string.compass_select_target_title),
@@ -534,10 +562,125 @@ private fun TargetPickerSheet(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showCoordinatesDialog = true }
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(if (light) LightWaypointIconBg else WaypointIconBg, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Sym(
+                        icon = Glyph.PinDrop,
+                        contentDescription = null,
+                        tint = if (light) LightStatusText else CairnStone,
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Text(
+                    text = stringResource(R.string.compass_enter_coordinates),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
             Spacer(Modifier.height(8.dp))
         }
     }
 }
+
+/** Dialog to type a target as decimal-degree latitude/longitude instead of picking a waypoint. */
+@Composable
+private fun CoordinatesDialog(onDismiss: () -> Unit, onConfirm: (Double, Double) -> Unit) {
+    var latitudeText by remember { mutableStateOf("") }
+    var longitudeText by remember { mutableStateOf("") }
+    val latitude = parseCoordinate(latitudeText, 90.0)
+    val longitude = parseCoordinate(longitudeText, 180.0)
+    var pasteFailed by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.compass_coordinates_dialog_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                CoordinateField(
+                    value = latitudeText,
+                    onValueChange = { latitudeText = it },
+                    label = stringResource(R.string.label_latitude),
+                    invalid = latitudeText.isNotBlank() && latitude == null,
+                )
+                CoordinateField(
+                    value = longitudeText,
+                    onValueChange = { longitudeText = it },
+                    label = stringResource(R.string.label_longitude),
+                    invalid = longitudeText.isNotBlank() && longitude == null,
+                )
+                TextButton(
+                    onClick = {
+                        val clipboard = context.getSystemService(ClipboardManager::class.java)
+                        val text = clipboard?.primaryClip?.takeIf { it.itemCount > 0 }
+                            ?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
+                        val pasted = parsePastedCoordinates(text)
+                        pasteFailed = pasted == null
+                        if (pasted != null) {
+                            latitudeText = pasted.first
+                            longitudeText = pasted.second
+                        }
+                    },
+                ) { Text(stringResource(R.string.compass_coordinates_paste)) }
+                Text(
+                    text = stringResource(
+                        if (pasteFailed) R.string.compass_coordinates_paste_invalid else R.string.compass_coordinates_hint,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (pasteFailed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (latitude != null && longitude != null) onConfirm(latitude, longitude) },
+                enabled = latitude != null && longitude != null,
+            ) { Text(stringResource(R.string.action_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun CoordinateField(value: String, onValueChange: (String) -> Unit, label: String, invalid: Boolean) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { if (it.length <= 20) onValueChange(it) },
+        singleLine = true,
+        isError = invalid,
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+private val pastedNumber = Regex("""-?\d+(?:[.,]\d+)?""")
+
+/** Extracts "lat, lon" from clipboard text such as `45.8326, 6.8645`; `null` unless both are valid. */
+private fun parsePastedCoordinates(text: String): Pair<String, String>? {
+    val numbers = pastedNumber.findAll(text).map { it.value }.toList()
+    if (numbers.size < 2) return null
+    val (latitude, longitude) = numbers
+    if (parseCoordinate(latitude, 90.0) == null || parseCoordinate(longitude, 180.0) == null) return null
+    return latitude to longitude
+}
+
+/** Parses a decimal-degree value (comma or dot separator); `null` if malformed or beyond +/-[limit]. */
+private fun parseCoordinate(text: String, limit: Double): Double? =
+    text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() && kotlin.math.abs(it) <= limit }
 
 /** One waypoint row in [TargetPickerSheet]: icon circle, name, muted metadata subtitle. */
 @Composable
@@ -599,6 +742,7 @@ private fun CompassScreenPreview() {
                 bearingToTargetDegrees = 312f,
             ),
             onSelectTarget = {},
+            onSelectCoordinates = { _, _ -> },
             onCreateTargetHere = {},
         )
     }

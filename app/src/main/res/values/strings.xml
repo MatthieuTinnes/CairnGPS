@@ -292,6 +292,11 @@
     <string name="compass_change_target">Change target waypoint</string>
     <string name="compass_select_target_title">Target waypoint</string>
     <string name="compass_create_target_here">Create a new waypoint here</string>
+    <string name="compass_enter_coordinates">Enter coordinates</string>
+    <string name="compass_coordinates_dialog_title">Target coordinates</string>
+    <string name="compass_coordinates_hint">Decimal degrees, e.g. 45.832600 and 6.864500. Use a minus sign for south or west.</string>
+    <string name="compass_coordinates_paste">Paste from clipboard</string>
+    <string name="compass_coordinates_paste_invalid">Couldn\'t find two coordinates in the clipboard.</string>
     <string name="compass_no_waypoints">No waypoints saved.\n\nFrom the Position screen, tap \"Save a waypoint\" to create one.</string>
     <string name="compass_no_target_hint">Select a waypoint to head to.</string>
     <string name="action_navigate_to_waypoint">Navigate to this waypoint</string>
