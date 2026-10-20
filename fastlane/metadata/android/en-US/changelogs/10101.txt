@@ -1,0 +1,2 @@
+Features
+- Add navigation to coordinate in compass (#10)
