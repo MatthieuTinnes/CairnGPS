@@ -1,0 +1,6 @@
+Bug Fixes
+- Elevation calculation (#14)
+Features
+- Docked session bar with full-screen session view (#13)
+Other
+- Add F-Droid link to README (#11)
