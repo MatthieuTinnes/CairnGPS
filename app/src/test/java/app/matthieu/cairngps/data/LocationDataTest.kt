@@ -2,7 +2,9 @@ package app.matthieu.cairngps.data
 
 import android.location.Location
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -78,6 +80,22 @@ class LocationDataTest {
         val result = location.toLocationData(geoidSeparationMeters = 17.2)
 
         assertEquals(-17.2, result.altitude, 0.0)
+    }
+
+    @Test
+    fun `toLocationData reports altitude and speed as available when the fix has them`() {
+        val result = locationOf().toLocationData(geoidSeparationMeters = 0.0)
+
+        assertTrue(result.hasAltitude)
+        assertTrue(result.hasSpeed)
+    }
+
+    @Test
+    fun `toLocationData reports altitude and speed as missing when the fix has none`() {
+        val result = Location("gps").toLocationData(geoidSeparationMeters = 0.0)
+
+        assertFalse(result.hasAltitude)
+        assertFalse(result.hasSpeed)
     }
 
     @Test
