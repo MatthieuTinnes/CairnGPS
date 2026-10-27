@@ -106,14 +106,14 @@ fun formatAltitude(altitudeMeters: Double?, unitSystem: UnitSystem): String = al
 
 /** Speed converted to km/h or mph (per [unitSystem]) with one decimal, or [DASH]. */
 fun formatSpeed(speedMetersPerSecond: Float?, unitSystem: UnitSystem): String = speedMetersPerSecond?.let {
-    val value = if (unitSystem == UnitSystem.METRIC) it * 3.6f else it * MPS_TO_MPH.toFloat()
-    "%.1f".format(value)
+    val v = it.coerceAtLeast(0f)
+    "%.1f".format(if (unitSystem == UnitSystem.METRIC) v * 3.6f else v * MPS_TO_MPH.toFloat())
 } ?: DASH
 
 /** Secondary speed readout in m/s or ft/s (per [unitSystem]) with one decimal, or [DASH]. */
 fun formatSpeedSecondary(speedMetersPerSecond: Float?, unitSystem: UnitSystem): String = speedMetersPerSecond?.let {
-    val value = if (unitSystem == UnitSystem.METRIC) it else it * METERS_TO_FEET.toFloat()
-    "%.1f".format(value)
+    val v = it.coerceAtLeast(0f)
+    "%.1f".format(if (unitSystem == UnitSystem.METRIC) v else v * METERS_TO_FEET.toFloat())
 } ?: DASH
 
 /** Horizontal accuracy radius in meters or feet (per [unitSystem]) with one decimal, or [DASH]. */
