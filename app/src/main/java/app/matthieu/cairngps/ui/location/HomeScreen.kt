@@ -57,7 +57,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
-import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
@@ -67,13 +66,10 @@ import app.matthieu.cairngps.domain.format.AccuracyQuality
 import app.matthieu.cairngps.domain.format.accuracyQuality
 import app.matthieu.cairngps.domain.format.copyCoordinates
 import app.matthieu.cairngps.domain.format.defaultWaypointName
-import app.matthieu.cairngps.domain.format.distanceUnitLabel
 import app.matthieu.cairngps.domain.format.formatAccuracy
 import app.matthieu.cairngps.domain.format.formatAltitude
 import app.matthieu.cairngps.domain.format.formatCoordinate
-import app.matthieu.cairngps.domain.format.formatDistance
 import app.matthieu.cairngps.domain.format.formatDuration
-import app.matthieu.cairngps.domain.format.formatElevation
 import app.matthieu.cairngps.domain.format.formatSpeed
 import app.matthieu.cairngps.domain.format.formatSpeedSecondary
 import app.matthieu.cairngps.domain.format.shortUnitLabel
@@ -95,7 +91,6 @@ import app.matthieu.cairngps.ui.theme.DashMuted
 import app.matthieu.cairngps.ui.theme.DashText
 import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.IdleButtonBg
-import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.LightOnSaveButton
 import app.matthieu.cairngps.ui.theme.LightOnStartButton
 import app.matthieu.cairngps.ui.theme.LightRecChipBg
@@ -120,7 +115,7 @@ import app.matthieu.cairngps.ui.theme.ValueMuted
 import java.text.DecimalFormatSymbols
 
 private const val DASH_COORD_DMS = "--°--'--.-\"-"
-private const val DASH_ALTITUDE = "-- --"
+internal const val DASH_ALTITUDE = "-- --"
 
 /**
  * The decimal separator of the active locale, so dash placeholders that stand in for
@@ -129,7 +124,7 @@ private const val DASH_ALTITUDE = "-- --"
  */
 private fun localeDecimalSeparator(): Char = DecimalFormatSymbols.getInstance().decimalSeparator
 
-private fun dashSpeed(): String = "--${localeDecimalSeparator()}-"
+internal fun dashSpeed(): String = "--${localeDecimalSeparator()}-"
 
 private fun dashCoordDecimal(): String = "--${localeDecimalSeparator()}------°"
 
@@ -138,7 +133,7 @@ private fun coordinateDash(format: CoordinateFormat): String = when (format) {
     CoordinateFormat.DMS -> DASH_COORD_DMS
 }
 
-private fun dashAccuracy(unitSystem: UnitSystem): String = "± -- ${shortUnitLabel(unitSystem)}"
+internal fun dashAccuracy(unitSystem: UnitSystem): String = "± -- ${shortUnitLabel(unitSystem)}"
 
 /**
  * Screen route. Wires up the [LocationViewModel] and binds GPS tracking to the screen lifecycle:
@@ -218,6 +213,28 @@ private fun HomeScreen(
 ) {
     val context = LocalContext.current
     var showSaveDialog by remember { mutableStateOf(false) }
+    var showSessionSheet by remember { mutableStateOf(false) }
+
+    val actionsRow: @Composable (Modifier) -> Unit = { rowModifier ->
+        BottomActionsRow(
+            hasFix = uiState.hasFix,
+            isRecording = recordingUiState.isRecording,
+            onSaveWaypoint = { showSaveDialog = true },
+            onStartRecording = onStartRecording,
+            onStopRecording = onStopRecording,
+            modifier = rowModifier,
+        )
+    }
+
+    if (showSessionSheet && recordingUiState.isRecording) {
+        SessionSheet(
+            recording = recordingUiState,
+            location = uiState,
+            unitSystem = unitSystem,
+            onDismiss = { showSessionSheet = false },
+            actions = { actionsRow(Modifier) },
+        )
+    }
 
     if (showSaveDialog) {
         SaveWaypointDialog(
@@ -248,14 +265,16 @@ private fun HomeScreen(
             )
         },
         bottomBar = {
-            BottomActionsRow(
-                hasFix = uiState.hasFix,
-                isRecording = recordingUiState.isRecording,
-                onSaveWaypoint = { showSaveDialog = true },
-                onStartRecording = onStartRecording,
-                onStopRecording = onStopRecording,
-                modifier = Modifier.onboardingTarget(OnboardingTarget.HOME_ACTIONS),
-            )
+            Column {
+                if (recordingUiState.isRecording) {
+                    SessionBar(
+                        uiState = recordingUiState,
+                        unitSystem = unitSystem,
+                        onClick = { showSessionSheet = true },
+                    )
+                }
+                actionsRow(Modifier.onboardingTarget(OnboardingTarget.HOME_ACTIONS))
+            }
         },
     ) { innerPadding ->
         Column(
@@ -306,10 +325,6 @@ private fun HomeScreen(
 
                 if (!uiState.hasFix) {
                     NoFixHintCard()
-                }
-
-                if (recordingUiState.isRecording) {
-                    SessionCard(uiState = recordingUiState, unitSystem = unitSystem)
                 }
 
                 Spacer(Modifier.height(4.dp))
@@ -402,99 +417,6 @@ private fun BottomActionsRow(
             Spacer(Modifier.width(8.dp))
             Text(stringResource(if (isRecording) R.string.recording_stop else R.string.recording_start))
         }
-    }
-}
-
-/** The "SESSION EN COURS" card: a 2×3 grid of live recording stats, shown only while recording. */
-@Composable
-private fun SessionCard(uiState: RecordingUiState, unitSystem: UnitSystem) {
-    DataCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            PulsingDot(color = QualityPoor)
-            Spacer(Modifier.width(8.dp))
-            CardTitle(stringResource(R.string.recording_title))
-        }
-        uiState.rejectedAccuracyMeters?.let { accuracy ->
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.Top) {
-                Sym(icon = Glyph.Warning, contentDescription = null, tint = QualityPoor)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(
-                        R.string.recording_signal_too_noisy_fmt,
-                        formatAccuracy(accuracy, unitSystem),
-                        shortUnitLabel(unitSystem),
-                        formatAccuracy(LocationData.MAX_ACCURACY_METERS, unitSystem),
-                        shortUnitLabel(unitSystem),
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = QualityPoor,
-                )
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-
-        // Two rows of three rather than three rows of two: it reads as a single glanceable block
-        // instead of a list of pairs.
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            RecordingStat(
-                label = stringResource(R.string.recording_distance),
-                value = "${formatDistance(uiState.distanceMeters, unitSystem)} ${distanceUnitLabel(unitSystem)}",
-                modifier = Modifier.weight(1f),
-            )
-            RecordingStat(
-                label = stringResource(R.string.recording_elevation_gain),
-                value = "+${formatElevation(uiState.elevationGain, unitSystem)} ${shortUnitLabel(unitSystem)}",
-                valueColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f),
-            )
-            RecordingStat(
-                label = stringResource(R.string.recording_elevation_loss),
-                value = "-${formatElevation(uiState.elevationLoss, unitSystem)} ${shortUnitLabel(unitSystem)}",
-                valueColor = MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        Spacer(Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            RecordingStat(
-                label = stringResource(R.string.recording_avg_speed),
-                value = "${formatSpeed(uiState.averageSpeed, unitSystem)} ${speedUnitLabel(unitSystem)}",
-                modifier = Modifier.weight(1f),
-            )
-            RecordingStat(
-                label = stringResource(R.string.recording_max_speed),
-                value = "${formatSpeed(uiState.maxSpeed, unitSystem)} ${speedUnitLabel(unitSystem)}",
-                modifier = Modifier.weight(1f),
-            )
-            RecordingStat(
-                label = stringResource(R.string.recording_duration),
-                value = formatDuration(uiState.elapsedMs),
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun RecordingStat(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    valueColor: Color = Color.Unspecified,
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontFamily = MonoFontFamily,
-            color = valueColor,
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = LabelMuted,
-        )
     }
 }
 

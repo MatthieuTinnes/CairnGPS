@@ -189,6 +189,9 @@
     <string name="recording_max_speed">Max speed</string>
     <string name="recording_elevation_gain">D+</string>
     <string name="recording_elevation_loss">D−</string>
+    <string name="recording_current_speed">Current speed</string>
+    <string name="recording_expand">Open session full screen</string>
+    <string name="recording_collapse">Collapse session</string>
     <string name="recording_notification_channel_name">Recording</string>
     <string name="recording_notification_title_fmt">Recording in progress · %1$s</string>
     <string name="recording_notification_content">Alt %1$s %2$s · %3$s %4$s · %5$s %6$s</string>

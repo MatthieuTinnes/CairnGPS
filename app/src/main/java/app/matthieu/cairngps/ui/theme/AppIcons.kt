@@ -75,6 +75,7 @@ object Glyph {
 
     const val Elevation = ''
     const val Speed = ''
+    const val TrendingUp = '\uE8E5'
     const val LocationOff = ''
     const val Lock = ''
     const val BatterySaver = ''
