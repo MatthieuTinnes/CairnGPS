@@ -16,6 +16,8 @@ import android.location.Location
  * @property verticalAccuracy   Estimated vertical accuracy, in meters, or `null` if the
  *                              current fix does not report one.
  * @property timestamp      UTC time of this fix, in milliseconds since the epoch.
+ * @property hasAltitude    Whether the fix reports an altitude; [altitude] is meaningless otherwise.
+ * @property hasSpeed       Whether the fix reports a speed; [speed] reads 0 otherwise.
  */
 data class LocationData(
     val latitude: Double,
@@ -25,6 +27,8 @@ data class LocationData(
     val horizontalAccuracy: Float,
     val verticalAccuracy: Float?,
     val timestamp: Long,
+    val hasAltitude: Boolean = true,
+    val hasSpeed: Boolean = true,
 ) {
     /**
      * Whether this fix is precise enough to be trusted for derived values (distance, elevation,
@@ -51,4 +55,6 @@ fun Location.toLocationData(geoidSeparationMeters: Double): LocationData = Locat
     horizontalAccuracy = accuracy,
     verticalAccuracy = if (hasVerticalAccuracy()) verticalAccuracyMeters else null,
     timestamp = time,
+    hasAltitude = hasAltitude(),
+    hasSpeed = hasSpeed(),
 )

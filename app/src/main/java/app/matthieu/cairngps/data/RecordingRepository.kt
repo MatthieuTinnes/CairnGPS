@@ -3,9 +3,8 @@ package app.matthieu.cairngps.data
 import android.Manifest
 import android.location.Location
 import androidx.annotation.RequiresPermission
-import java.time.Instant
-import java.time.ZoneId
-import kotlin.math.abs
+import app.matthieu.cairngps.data.RecordingRepository.Companion.TRACK_MAX_POINTS
+import app.matthieu.cairngps.domain.ElevationAccumulator
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +24,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * Live aggregates of an in-progress (or just-reset) recording, as shown by the Position screen.
@@ -130,7 +131,7 @@ class RecordingRepository(
     private var lastAcceptedFix: LocationData? = null
     // Consecutive fixes rejected by the accuracy gate in onFix; drives rejectedAccuracyMeters.
     private var consecutiveRejectedFixes = 0
-    private var referenceAltitude: Double? = null
+    private var elevation = ElevationAccumulator()
     private var movingDistanceMeters = 0.0
     private var movingTimeMs = 0L
     private var minAltitude = Double.POSITIVE_INFINITY
@@ -198,7 +199,7 @@ class RecordingRepository(
         activeSession = null
         lastAcceptedFix = null
         consecutiveRejectedFixes = 0
-        referenceAltitude = null
+        elevation = ElevationAccumulator()
         movingDistanceMeters = 0.0
         movingTimeMs = 0L
         minAltitude = Double.POSITIVE_INFINITY
@@ -247,7 +248,8 @@ class RecordingRepository(
                 verticalAccuracy = null,
                 timestamp = checkpoint.lastTimestamp,
             )
-            referenceAltitude = checkpoint.referenceAltitude
+            // The smoothing window itself isn't persisted: it refills within a minute of fixes.
+            elevation = ElevationAccumulator(checkpoint.referenceAltitude)
             movingDistanceMeters = checkpoint.movingDistanceMeters
             movingTimeMs = checkpoint.movingTimeMs
             lastSampledAtMs = checkpoint.lastSampledAtMs
@@ -313,22 +315,17 @@ class RecordingRepository(
 
         var elevationGain = current.elevationGain
         var elevationLoss = current.elevationLoss
-        val reference = referenceAltitude
-        if (reference == null) {
-            // Nothing to compare the first accepted fix against yet.
-            referenceAltitude = fix.altitude
-        } else {
-            val delta = fix.altitude - reference
-            // GPS altitude is noisy at rest; only count a change once it clears the threshold,
-            // using the last *counted* altitude as the new reference so noise cannot accumulate.
-            if (abs(delta) >= ALTITUDE_THRESHOLD_METERS) {
-                if (delta > 0) elevationGain += delta else elevationLoss += -delta
-                referenceAltitude = fix.altitude
-            }
-        }
+        if (fix.hasAltitude) {
+            val elevationDelta = elevation.add(
+                timestampMs = fix.timestamp,
+                altitude = fix.altitude,
+                isMoving = !fix.hasSpeed || fix.speed > MOVING_SPEED_THRESHOLD_MS,
+            )
+            if (elevationDelta > 0) elevationGain += elevationDelta else elevationLoss -= elevationDelta
 
-        minAltitude = minOf(minAltitude, fix.altitude)
-        maxAltitude = maxOf(maxAltitude, fix.altitude)
+            minAltitude = minOf(minAltitude, fix.altitude)
+            maxAltitude = maxOf(maxAltitude, fix.altitude)
+        }
         latitudeMax = maxOf(latitudeMax, fix.latitude)
         latitudeMin = minOf(latitudeMin, fix.latitude)
         longitudeMax = maxOf(longitudeMax, fix.longitude)
@@ -398,7 +395,7 @@ class RecordingRepository(
                 sessionId = session.id,
                 movingDistanceMeters = movingDistanceMeters,
                 movingTimeMs = movingTimeMs,
-                referenceAltitude = referenceAltitude,
+                referenceAltitude = elevation.referenceAltitude,
                 lastLatitude = fix.latitude,
                 lastLongitude = fix.longitude,
                 lastAltitude = fix.altitude,
@@ -536,9 +533,6 @@ class RecordingRepository(
     companion object {
         /** Consecutive rejected fixes before warning the user (~3s at a 1Hz fix rate). */
         private const val REJECTED_FIX_WARNING_STREAK = 3
-
-        /** Minimum altitude change counted into D+/D- (spec: 3-5 m); picked mid-range. */
-        private const val ALTITUDE_THRESHOLD_METERS = 4.0
 
         /** Below this speed the user is considered stationary; excluded from the moving average. */
         private const val MOVING_SPEED_THRESHOLD_MS = 0.5f

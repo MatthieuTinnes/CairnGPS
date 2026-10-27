@@ -17,7 +17,9 @@ import androidx.room.PrimaryKey
  * @property sessionId               Id of the active [Session] this checkpoint belongs to.
  * @property movingDistanceMeters    Running total of [RecordingRepository]'s moving-only distance.
  * @property movingTimeMs            Running total of time spent above the moving-speed threshold.
- * @property referenceAltitude       Last altitude counted into D+/D-, or `null` before any fix.
+ * @property referenceAltitude       Last smoothed altitude counted into D+/D- (see
+ *                                   [app.matthieu.cairngps.domain.ElevationAccumulator]), or `null`
+ *                                   before any moving fix.
  * @property lastLatitude            Latitude of the last accepted fix.
  * @property lastLongitude           Longitude of the last accepted fix.
  * @property lastAltitude            Altitude of the last accepted fix, in meters.

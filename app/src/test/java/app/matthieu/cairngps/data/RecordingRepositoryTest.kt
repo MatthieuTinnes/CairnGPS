@@ -41,6 +41,8 @@ class RecordingRepositoryTest {
         altitude: Double = 500.0,
         speed: Float = 1f,
         accuracy: Float = 5f,
+        hasAltitude: Boolean = true,
+        hasSpeed: Boolean = true,
         timestamp: Long,
     ) = LocationData(
         latitude = latitude,
@@ -50,6 +52,8 @@ class RecordingRepositoryTest {
         horizontalAccuracy = accuracy,
         verticalAccuracy = null,
         timestamp = timestamp,
+        hasAltitude = hasAltitude,
+        hasSpeed = hasSpeed,
     )
 
     private fun distanceBetween(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Float {
@@ -111,42 +115,99 @@ class RecordingRepositoryTest {
         assertEquals(expected.toDouble(), h.repository.state.value.distanceMeters, 0.01)
     }
 
+    /**
+     * Pushes 1 Hz fixes at a fixed position and altitude, from [start] for [seconds] + 1 fixes: long
+     * enough for the elevation smoothing to warm up. Blocks 200 s apart don't share a window.
+     */
+    private suspend fun TestScope.pushSteady(
+        harness: Harness,
+        altitude: Double,
+        start: Long,
+        latitude: Double = 47.0,
+        longitude: Double = 6.0,
+        seconds: Int = 40,
+        speed: Float = 1f,
+        hasSpeed: Boolean = true,
+    ) {
+        for (i in 0..seconds) {
+            pushFix(
+                harness,
+                fix(latitude, longitude, altitude = altitude, speed = speed, hasSpeed = hasSpeed, timestamp = start + i * 1_000L),
+            )
+        }
+    }
+
     @Test
-    fun `elevation change below the 4m threshold is not counted`() = runTest {
+    fun `altitude jitter between fixes is not counted as elevation`() = runTest {
         val h = Harness(testScheduler)
         h.repository.start("Trace")
         advanceUntilIdle()
 
-        pushFix(h, fix(47.0, 6.0, altitude = 100.0, timestamp = t0))
-        pushFix(h, fix(47.0, 6.0, altitude = 103.9, timestamp = t0 + 1_000))
+        repeat(120) { i ->
+            pushFix(h, fix(47.0, 6.0, altitude = if (i % 2 == 0) 100.0 else 108.0, timestamp = t0 + i * 1_000L))
+        }
 
         assertEquals(0.0, h.repository.state.value.elevationGain, 0.0)
         assertEquals(0.0, h.repository.state.value.elevationLoss, 0.0)
     }
 
     @Test
-    fun `elevation gain is counted at the threshold and the reference rebases to avoid double counting`() = runTest {
+    fun `elevation gain and loss are counted on sustained changes`() = runTest {
         val h = Harness(testScheduler)
         h.repository.start("Trace")
         advanceUntilIdle()
 
-        pushFix(h, fix(47.0, 6.0, altitude = 100.0, timestamp = t0))
-        pushFix(h, fix(47.0, 6.0, altitude = 104.0, timestamp = t0 + 1_000)) // +4: counted, reference -> 104
-        pushFix(h, fix(47.0, 6.0, altitude = 107.0, timestamp = t0 + 2_000)) // +3 from the new reference: not counted
+        pushSteady(h, altitude = 100.0, start = t0)
+        pushSteady(h, altitude = 110.0, start = t0 + 200_000)
+        pushSteady(h, altitude = 95.0, start = t0 + 400_000)
 
-        assertEquals(4.0, h.repository.state.value.elevationGain, 0.0)
+        assertEquals(10.0, h.repository.state.value.elevationGain, 1e-9)
+        assertEquals(15.0, h.repository.state.value.elevationLoss, 1e-9)
     }
 
     @Test
-    fun `elevation loss is counted on a descent past the threshold`() = runTest {
+    fun `altitude changes while stationary are not counted`() = runTest {
         val h = Harness(testScheduler)
         h.repository.start("Trace")
         advanceUntilIdle()
 
-        pushFix(h, fix(47.0, 6.0, altitude = 100.0, timestamp = t0))
-        pushFix(h, fix(47.0, 6.0, altitude = 95.0, timestamp = t0 + 1_000))
+        pushSteady(h, altitude = 100.0, start = t0)
+        pushSteady(h, altitude = 120.0, start = t0 + 200_000, speed = 0.2f)
+        pushSteady(h, altitude = 90.0, start = t0 + 400_000, speed = 0.2f)
 
-        assertEquals(5.0, h.repository.state.value.elevationLoss, 0.0)
+        assertEquals(0.0, h.repository.state.value.elevationGain, 0.0)
+        assertEquals(0.0, h.repository.state.value.elevationLoss, 0.0)
+    }
+
+    @Test
+    fun `elevation is still counted when fixes report no speed`() = runTest {
+        val h = Harness(testScheduler)
+        h.repository.start("Trace")
+        advanceUntilIdle()
+
+        pushSteady(h, altitude = 100.0, start = t0, speed = 0f, hasSpeed = false)
+        pushSteady(h, altitude = 110.0, start = t0 + 200_000, speed = 0f, hasSpeed = false)
+
+        assertEquals(10.0, h.repository.state.value.elevationGain, 1e-9)
+    }
+
+    @Test
+    fun `a fix without altitude is left out of elevation and altitude extremes`() = runTest {
+        val h = Harness(testScheduler)
+        h.repository.start("Trace")
+        advanceUntilIdle()
+
+        pushSteady(h, altitude = 1_000.0, start = t0)
+        pushFix(h, fix(47.0, 6.0, altitude = 0.0, hasAltitude = false, timestamp = t0 + 41_000))
+        pushSteady(h, altitude = 1_000.0, start = t0 + 42_000, seconds = 120)
+
+        h.repository.stop()
+        advanceUntilIdle()
+
+        val session = h.sessionDao.getAll().single()
+        assertEquals(0.0, session.elevationGain, 0.0)
+        assertEquals(0.0, session.elevationLoss, 0.0)
+        assertEquals(1_000.0, session.minAltitude, 0.0)
     }
 
     @Test
@@ -256,9 +317,9 @@ class RecordingRepositoryTest {
         h.repository.start("Trace")
         advanceUntilIdle()
 
-        pushFix(h, fix(47.0, 6.0, altitude = 500.0, timestamp = t0))
-        pushFix(h, fix(47.001, 6.001, altitude = 510.0, timestamp = t0 + 5_000))
-        pushFix(h, fix(46.999, 5.999, altitude = 495.0, timestamp = t0 + 10_000))
+        pushSteady(h, altitude = 500.0, start = t0, latitude = 47.0, longitude = 6.0)
+        pushSteady(h, altitude = 510.0, start = t0 + 200_000, latitude = 47.001, longitude = 6.001)
+        pushSteady(h, altitude = 495.0, start = t0 + 400_000, latitude = 46.999, longitude = 5.999)
 
         val result = h.repository.stop()
         advanceUntilIdle()
