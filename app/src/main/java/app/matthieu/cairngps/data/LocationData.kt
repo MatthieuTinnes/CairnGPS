@@ -51,7 +51,10 @@ fun Location.toLocationData(geoidSeparationMeters: Double): LocationData = Locat
     latitude = latitude,
     longitude = longitude,
     altitude = altitude - geoidSeparationMeters,
-    speed = speed,
+    // The framework documents speed as >= 0, but some chipsets report small negative values when
+    // stationary (Doppler noise). Clamping here keeps them out of every consumer: live display,
+    // session stats, records, waypoints. maxOf (unlike coerceAtLeast) also turns -0.0 into 0.0.
+    speed = maxOf(speed, 0f),
     horizontalAccuracy = accuracy,
     verticalAccuracy = if (hasVerticalAccuracy()) verticalAccuracyMeters else null,
     timestamp = time,

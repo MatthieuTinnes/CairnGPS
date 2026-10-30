@@ -83,6 +83,20 @@ class LocationDataTest {
     }
 
     @Test
+    fun `toLocationData clamps a negative speed to zero`() {
+        val result = locationOf(speed = -0.3f).toLocationData(geoidSeparationMeters = 0.0)
+
+        assertEquals(0f, result.speed)
+    }
+
+    @Test
+    fun `toLocationData turns a negative zero speed into positive zero`() {
+        val result = locationOf(speed = -0f).toLocationData(geoidSeparationMeters = 0.0)
+
+        assertEquals(0f.toBits(), result.speed.toBits())
+    }
+
+    @Test
     fun `toLocationData reports altitude and speed as available when the fix has them`() {
         val result = locationOf().toLocationData(geoidSeparationMeters = 0.0)
 
