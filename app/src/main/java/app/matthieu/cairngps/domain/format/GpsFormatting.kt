@@ -104,15 +104,22 @@ fun formatAltitude(altitudeMeters: Double?, unitSystem: UnitSystem): String = al
     value.roundToInt().toString()
 } ?: DASH
 
-/** Speed converted to km/h or mph (per [unitSystem]) with one decimal, or [DASH]. */
+/**
+ * Speed converted to km/h or mph (per [unitSystem]) with one decimal, or [DASH].
+ *
+ * Negative inputs read as 0: [app.matthieu.cairngps.data.LocationData.speed] is already clamped at the source, but waypoints,
+ * records and backups saved before that clamp may still hold a negative speed.
+ */
 fun formatSpeed(speedMetersPerSecond: Float?, unitSystem: UnitSystem): String = speedMetersPerSecond?.let {
-    val value = if (unitSystem == UnitSystem.METRIC) it * 3.6f else it * MPS_TO_MPH.toFloat()
+    val speed = maxOf(it, 0f)
+    val value = if (unitSystem == UnitSystem.METRIC) speed * 3.6f else speed * MPS_TO_MPH.toFloat()
     "%.1f".format(value)
 } ?: DASH
 
-/** Secondary speed readout in m/s or ft/s (per [unitSystem]) with one decimal, or [DASH]. */
+/** Secondary speed readout in m/s or ft/s (per [unitSystem]) with one decimal, or [DASH]. Negative inputs read as 0. */
 fun formatSpeedSecondary(speedMetersPerSecond: Float?, unitSystem: UnitSystem): String = speedMetersPerSecond?.let {
-    val value = if (unitSystem == UnitSystem.METRIC) it else it * METERS_TO_FEET.toFloat()
+    val speed = maxOf(it, 0f)
+    val value = if (unitSystem == UnitSystem.METRIC) speed else speed * METERS_TO_FEET.toFloat()
     "%.1f".format(value)
 } ?: DASH
 

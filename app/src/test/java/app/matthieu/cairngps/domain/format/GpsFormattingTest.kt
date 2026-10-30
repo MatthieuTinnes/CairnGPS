@@ -168,6 +168,24 @@ class GpsFormattingTest {
         assertEquals("32.8", formatSpeedSecondary(10f, UnitSystem.IMPERIAL))
     }
 
+    @Test
+    fun `formatSpeed reads a negative speed as zero`() {
+        assertEquals("0.0", formatSpeed(-0.3f, UnitSystem.METRIC))
+        assertEquals("0.0", formatSpeed(-0.3f, UnitSystem.IMPERIAL))
+    }
+
+    @Test
+    fun `formatSpeed never shows a negative zero`() {
+        assertEquals("0.0", formatSpeed(-0.01f, UnitSystem.METRIC))
+        assertEquals("0.0", formatSpeed(-0f, UnitSystem.METRIC))
+    }
+
+    @Test
+    fun `formatSpeedSecondary reads a negative speed as zero`() {
+        assertEquals("0.0", formatSpeedSecondary(-0.3f, UnitSystem.METRIC))
+        assertEquals("0.0", formatSpeedSecondary(-0f, UnitSystem.IMPERIAL))
+    }
+
     // --- formatAccuracy --------------------------------------------------------------------------
 
     @Test
