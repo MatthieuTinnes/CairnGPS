@@ -1,0 +1,4 @@
+Bug Fixes
+- Clamp speed to non-negative values (#15)
+Features
+- GNSS spoofing and jamming detection (#16)
