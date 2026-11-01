@@ -83,6 +83,9 @@ android {
         unitTests {
             isReturnDefaultValues = true
             isIncludeAndroidResources = true
+            // Robolectric 4.17 reaches into jdk.internal.access.SharedSecrets to fake raw
+            // FileDescriptors when booting the SDK 36 sandbox; JDK 17+ hides it unless exported.
+            all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
         }
     }
 }
