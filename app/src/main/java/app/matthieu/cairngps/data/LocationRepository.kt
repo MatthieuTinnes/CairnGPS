@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.GnssMeasurementsEvent
 import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
@@ -14,6 +15,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import androidx.annotation.RequiresPermission
 import androidx.core.content.getSystemService
 import app.matthieu.cairngps.demo.DemoGpsSource
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
+import java.time.DateTimeException
 
 /**
  * Single source of truth for raw device location.
@@ -222,6 +225,108 @@ class LocationRepository internal constructor(context: Context, private val demo
         // if a slow collector falls behind.
         .conflate()
         .flowOn(Dispatchers.Default)
+
+    /**
+     * [Flow] of the raw signal data the GNSS interference detection works from: per-band C/N0 and
+     * AGC from [GnssMeasurementsEvent]s (~1 Hz), plus the offset between network time and the GNSS
+     * time of each fix. Shared the same way as [satelliteUpdates], and like it holds its own
+     * keep-alive [GPS_PROVIDER][LocationManager.GPS_PROVIDER] request, whose fixes provide the GNSS
+     * time.
+     *
+     * Not conflated: the detector compares sliding windows of consecutive epochs, so dropping
+     * events would skew them.
+     *
+     * The caller MUST hold [Manifest.permission.ACCESS_FINE_LOCATION] before collecting.
+     */
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    fun gnssSignalUpdates(): Flow<GnssSignalEvent> = sharedGnssSignalUpdates
+
+    private val sharedGnssSignalUpdates: Flow<GnssSignalEvent> =
+        (demo?.gnssSignalUpdates() ?: gnssSignalUpdatesCold())
+            .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L), replay = 0)
+
+    /**
+     * Whether the device provides raw GNSS measurements, or `null` when that can't be known
+     * without starting the GNSS engine (before Android 12). Cheap: doesn't power up the GPS chip.
+     */
+    fun gnssMeasurementsSupported(): Boolean? = when {
+        demo != null -> true
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> locationManager.gnssCapabilities.hasMeasurements()
+        else -> null
+    }
+
+    /** Cold [Flow] backing [gnssSignalUpdates]; see its doc for details. */
+    // Same lint limitation as satelliteUpdatesCold().
+    @SuppressLint("MissingPermission")
+    private fun gnssSignalUpdatesCold(): Flow<GnssSignalEvent> = callbackFlow {
+        val measurementsCallback = object : GnssMeasurementsEvent.Callback() {
+            override fun onGnssMeasurementsReceived(event: GnssMeasurementsEvent) {
+                trySend(GnssSignalEvent.Measurements(event.toBandSamples()))
+            }
+
+            @Deprecated("Deprecated in API 31, still the only support signal on older levels")
+            override fun onStatusChanged(status: Int) {
+                if (status == GnssMeasurementsEvent.Callback.STATUS_NOT_SUPPORTED) {
+                    trySend(GnssSignalEvent.MeasurementsUnsupported)
+                }
+            }
+        }
+
+        val keepAliveListener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                trySend(GnssSignalEvent.TimeOffset(networkMinusGnssTimeMs(location)))
+            }
+
+            override fun onProviderEnabled(provider: String) {}
+            override fun onProviderDisabled(provider: String) {}
+
+            @Deprecated("Deprecated in API 29, still abstract on older levels")
+            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+        }
+        locationManager.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            1_000L,
+            0f,
+            keepAliveListener,
+            Looper.getMainLooper(),
+        )
+
+        val mainHandler = Handler(Looper.getMainLooper())
+        val supported = gnssMeasurementsSupported() != false
+        val registered = supported && if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            locationManager.registerGnssMeasurementsCallback(
+                { command -> mainHandler.post(command) },
+                measurementsCallback,
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            locationManager.registerGnssMeasurementsCallback(measurementsCallback, mainHandler)
+        }
+        if (!registered) trySend(GnssSignalEvent.MeasurementsUnsupported)
+
+        awaitClose {
+            locationManager.unregisterGnssMeasurementsCallback(measurementsCallback)
+            locationManager.removeUpdates(keepAliveListener)
+        }
+    }
+        .flowOn(Dispatchers.Default)
+
+    /**
+     * Network time minus the GNSS time of [location], or `null` without network time. For a
+     * [GPS_PROVIDER][LocationManager.GPS_PROVIDER] fix, [Location.getTime] is the UTC time decoded
+     * from the satellites; both clocks are brought to the same instant through elapsed realtime,
+     * so the delivery latency of the fix doesn't count as offset.
+     */
+    private fun networkMinusGnssTimeMs(location: Location): Long? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
+        val networkNowMs = try {
+            SystemClock.currentNetworkTimeClock().millis()
+        } catch (_: DateTimeException) {
+            return null
+        }
+        val fixAgeMs = (SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos) / 1_000_000L
+        return networkNowMs - (location.time + fixAgeMs)
+    }
 
     /**
      * [Flow] of the [GPS_PROVIDER][LocationManager.GPS_PROVIDER] enabled state: emits the current

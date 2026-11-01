@@ -582,4 +582,38 @@
 
     <!-- About row in the Profil hub -->
     <string name="profile_hub_about_subtitle_fmt">Version %1$s · license and credits</string>
+
+    <!-- GNSS interference detection -->
+    <string name="settings_gnss_section">GNSS signal</string>
+    <string name="settings_gnss_interference_title">Jamming &amp; spoofing detection</string>
+    <string name="settings_gnss_interference_subtitle">Experimental · warns when satellite signals look tampered with</string>
+    <string name="settings_gnss_interference_time_only">Only the time check is available on this phone</string>
+    <string name="settings_gnss_interference_unsupported">Not compatible with this phone</string>
+    <string name="gnss_interference_info_cd">About jamming and spoofing detection</string>
+    <string name="gnss_interference_info_title">Jamming &amp; spoofing detection</string>
+    <string name="gnss_interference_info_what_title">What is it?</string>
+    <string name="gnss_interference_info_what">Jamming drowns the very weak satellite signals under a powerful radio emission: the position becomes unavailable or inaccurate. Spoofing broadcasts fake satellite signals to make the phone believe it is somewhere else, or at another time. Both are increasingly common near conflict zones and some borders.</string>
+    <string name="gnss_interference_info_how_title">How does it work?</string>
+    <string name="gnss_interference_info_how">For each constellation and frequency band, CairnGPS compares the last 10 seconds with the 50 seconds before them, on two values: the signal-to-noise ratio (C/N0) and the receiver\'s automatic gain control (AGC).\n• Both dropping: jamming suspected.\n• C/N0 rising while AGC drops: spoofing suspected.\nThe time decoded from the satellites is also compared with network time: more than one second apart is suspicious.</string>
+    <string name="gnss_interference_info_limits_title">Limitations</string>
+    <string name="gnss_interference_info_limits">• Experimental: the thresholds are heuristics inspired by Google\'s GnssLogger app.\n• Requires a phone that provides raw GNSS measurements and AGC, which not every model does.\n• Only changes are detected: interference already present when monitoring starts goes unnoticed, and an alert fades after about a minute even if the interference persists.\n• Unusual surroundings can cause false alarms, and a sophisticated attack can go undetected.\n• The time check needs Android 13 and a network connection, and network time can itself be faked.\n• Monitoring only runs while the Position or Satellites screen is displayed.</string>
+    <string name="gnss_interference_info_advice">An alert is a clue, not a proof: if in doubt, rely on a map and a compass.</string>
+    <string name="action_close">Close</string>
+    <string name="gnss_alert_jamming_title">GNSS jamming suspected</string>
+    <string name="gnss_alert_spoofing_title">GNSS spoofing suspected</string>
+    <string name="gnss_alert_jamming_body_fmt">Affected signals: %1$s. The position may be unavailable or inaccurate.</string>
+    <string name="gnss_alert_spoofing_signal_body_fmt">Abnormally strong signals: %1$s. The displayed position may be false.</string>
+    <string name="gnss_alert_spoofing_time_body_fmt">Satellite time is %1$s s off network time. The displayed position may be false.</string>
+    <string name="gnss_monitor_title">Interference monitoring</string>
+    <string name="gnss_monitor_signal_label">Signals (C/N0 + AGC)</string>
+    <string name="gnss_monitor_time_label">Satellite vs network time</string>
+    <string name="gnss_state_waiting">Waiting…</string>
+    <string name="gnss_state_unsupported">Not supported by this phone</string>
+    <string name="gnss_state_warming_up">Analysing…</string>
+    <string name="gnss_state_ok">Normal</string>
+    <string name="gnss_state_jamming">Jamming suspected</string>
+    <string name="gnss_state_spoofing">Spoofing suspected</string>
+    <string name="gnss_state_time_unavailable">Network time unavailable</string>
+    <string name="gnss_state_time_ok_fmt">Normal (%1$s s)</string>
+    <string name="gnss_state_time_spoofing_fmt">Spoofing suspected (%1$s s)</string>
 </resources>

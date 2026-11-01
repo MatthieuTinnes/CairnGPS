@@ -11,6 +11,7 @@ import app.matthieu.cairngps.data.BackupRepository
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.GamificationFlagsRepository
 import app.matthieu.cairngps.data.GamificationManager
+import app.matthieu.cairngps.data.GnssInterferenceRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.RecordingRepository
@@ -37,6 +38,10 @@ class CairnApplication : Application(), AppContainer {
     override val compassRepository: CompassRepository by lazy { CompassRepository(this) }
 
     override val settingsRepository: SettingsRepository by lazy { SettingsRepository(this) }
+
+    override val gnssInterferenceRepository: GnssInterferenceRepository by lazy {
+        GnssInterferenceRepository(locationRepository, settingsRepository)
+    }
 
     private val database: AppDatabase by lazy { AppDatabase.getInstance(this) }
 

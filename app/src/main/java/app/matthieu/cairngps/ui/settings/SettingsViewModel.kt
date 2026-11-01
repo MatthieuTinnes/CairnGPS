@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import app.matthieu.cairngps.data.AppSettings
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.GamificationFlagsRepository
+import app.matthieu.cairngps.data.GnssInterferenceRepository
+import app.matthieu.cairngps.data.InterferenceSupport
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
@@ -25,11 +27,17 @@ import kotlinx.coroutines.launch
  * [gamificationFlagsRepository] is `null` everywhere except the Settings screen for the same
  * reason: only that screen ever calls [setThemeMode]/[setCoordinateFormat], so it's the only one
  * that needs to flag `APP_THEMES`/`APP_FORMATS` (see `succes.md` §4.10) when they're used.
+ * [gnssInterferenceRepository] is likewise only passed by the Settings screen, the only one that
+ * shows [gnssInterferenceSupport].
  */
 class SettingsViewModel(
     private val repository: SettingsRepository,
     private val gamificationFlagsRepository: GamificationFlagsRepository? = null,
+    gnssInterferenceRepository: GnssInterferenceRepository? = null,
 ) : ViewModel() {
+
+    val gnssInterferenceSupport: InterferenceSupport =
+        gnssInterferenceRepository?.support ?: InterferenceSupport.AVAILABLE
 
     val settings: StateFlow<AppSettings> = repository.settings.stateIn(
         scope = viewModelScope,
@@ -70,6 +78,10 @@ class SettingsViewModel(
         viewModelScope.launch { repository.setUnitSystem(unitSystem) }
     }
 
+    fun setGnssInterferenceDetection(enabled: Boolean) {
+        viewModelScope.launch { repository.setGnssInterferenceDetection(enabled) }
+    }
+
     /**
      * Resets the first-launch onboarding flag so [app.matthieu.cairngps.MainActivity] switches to
      * [app.matthieu.cairngps.ui.onboarding.OnboardingHost] on its next recomposition.
@@ -82,7 +94,8 @@ class SettingsViewModel(
         fun factory(
             repository: SettingsRepository,
             gamificationFlagsRepository: GamificationFlagsRepository? = null,
+            gnssInterferenceRepository: GnssInterferenceRepository? = null,
         ): ViewModelProvider.Factory =
-            factoryOf { SettingsViewModel(repository, gamificationFlagsRepository) }
+            factoryOf { SettingsViewModel(repository, gamificationFlagsRepository, gnssInterferenceRepository) }
     }
 }

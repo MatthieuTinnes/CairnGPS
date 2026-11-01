@@ -195,6 +195,7 @@ fun MainScaffold(
                         settingsRepository = container.settingsRepository,
                         waypointRepository = container.waypointRepository,
                         recordingRepository = container.recordingRepository,
+                        gnssInterferenceRepository = container.gnssInterferenceRepository,
                     )
                 }
                 composable(Routes.COMPASS) {
@@ -210,6 +211,7 @@ fun MainScaffold(
                 composable(Routes.SATELLITES) {
                     SatellitesRoute(
                         locationRepository = container.locationRepository,
+                        gnssInterferenceRepository = container.gnssInterferenceRepository,
                         onOpenInfo = { navController.navigate(Routes.CONSTELLATION_INFO) },
                         onOpenGlobe = { navController.navigate(Routes.SATELLITE_GLOBE) },
                     )
@@ -328,6 +330,7 @@ fun MainScaffold(
                         repository = container.settingsRepository,
                         backupRepository = container.backupRepository,
                         gamificationFlagsRepository = container.gamificationFlagsRepository,
+                        gnssInterferenceRepository = container.gnssInterferenceRepository,
                         onBack = { navController.popBackStack() },
                     )
                 }

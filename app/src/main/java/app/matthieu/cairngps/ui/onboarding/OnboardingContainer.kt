@@ -8,6 +8,7 @@ import app.matthieu.cairngps.data.BackupRepository
 import app.matthieu.cairngps.data.CompassRepository
 import app.matthieu.cairngps.data.GamificationFlagsRepository
 import app.matthieu.cairngps.data.GamificationManager
+import app.matthieu.cairngps.data.GnssInterferenceRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.NavigationTargetRepository
 import app.matthieu.cairngps.data.RecordingRepository
@@ -43,6 +44,9 @@ class OnboardingContainer(context: Context) : AppContainer, AutoCloseable {
     override val compassRepository: CompassRepository = CompassRepository.simulated(appContext)
 
     override val settingsRepository: SettingsRepository = SettingsRepository(appContext)
+
+    override val gnssInterferenceRepository: GnssInterferenceRepository =
+        GnssInterferenceRepository(locationRepository, settingsRepository)
 
     private val database: AppDatabase = AppDatabase.inMemory(appContext)
 

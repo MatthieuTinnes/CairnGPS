@@ -6,8 +6,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -16,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,12 +55,15 @@ import app.matthieu.cairngps.data.BackupImportError
 import app.matthieu.cairngps.data.BackupRepository
 import app.matthieu.cairngps.data.CoordinateFormat
 import app.matthieu.cairngps.data.GamificationFlagsRepository
+import app.matthieu.cairngps.data.GnssInterferenceRepository
+import app.matthieu.cairngps.data.InterferenceSupport
 import app.matthieu.cairngps.data.NorthReference
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.ThemeMode
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.demo.DemoMode
 import app.matthieu.cairngps.ui.common.SegmentedToggle
+import app.matthieu.cairngps.ui.interference.InterferenceInfoDialog
 import app.matthieu.cairngps.ui.theme.AboutDivider
 import app.matthieu.cairngps.ui.theme.AboutDividerLight
 import app.matthieu.cairngps.ui.theme.AboutMuted
@@ -69,11 +72,11 @@ import app.matthieu.cairngps.ui.theme.Glyph
 import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.Sym
+import kotlinx.coroutines.flow.SharedFlow
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.flow.SharedFlow
 
 // Default export file name, e.g. "cairn-backup-2026-07-17.json" — sortable, filesystem-safe.
 private val BackupFileNameDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -92,11 +95,13 @@ fun SettingsRoute(
     repository: SettingsRepository,
     backupRepository: BackupRepository,
     gamificationFlagsRepository: GamificationFlagsRepository,
+    gnssInterferenceRepository: GnssInterferenceRepository,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val viewModel: SettingsViewModel =
-        viewModel(factory = SettingsViewModel.factory(repository, gamificationFlagsRepository))
+    val viewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.factory(repository, gamificationFlagsRepository, gnssInterferenceRepository),
+    )
     val backupViewModel: BackupViewModel =
         viewModel(factory = BackupViewModel.factory(backupRepository, gamificationFlagsRepository))
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -124,6 +129,9 @@ fun SettingsRoute(
         onNorthReferenceChange = viewModel::setNorthReference,
         unitSystem = settings.unitSystem,
         onUnitSystemChange = viewModel::setUnitSystem,
+        gnssInterferenceDetection = settings.gnssInterferenceDetection,
+        gnssInterferenceSupport = viewModel.gnssInterferenceSupport,
+        onGnssInterferenceDetectionChange = viewModel::setGnssInterferenceDetection,
         isBackupWorking = isBackupWorking,
         backupEvents = backupViewModel.backupEvents,
         onExport = backupViewModel::exportBackup,
@@ -147,6 +155,9 @@ private fun SettingsScreen(
     onNorthReferenceChange: (NorthReference) -> Unit,
     unitSystem: UnitSystem,
     onUnitSystemChange: (UnitSystem) -> Unit,
+    gnssInterferenceDetection: Boolean,
+    gnssInterferenceSupport: InterferenceSupport,
+    onGnssInterferenceDetectionChange: (Boolean) -> Unit,
     isBackupWorking: Boolean,
     backupEvents: SharedFlow<BackupEvent>,
     onExport: (OutputStream) -> Unit,
@@ -158,6 +169,7 @@ private fun SettingsScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var showImportConfirm by remember { mutableStateOf(false) }
+    var showInterferenceInfo by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json"),
@@ -212,6 +224,10 @@ private fun SettingsScreen(
                 }
             },
         )
+    }
+
+    if (showInterferenceInfo) {
+        InterferenceInfoDialog(onDismiss = { showInterferenceInfo = false })
     }
 
     Scaffold(
@@ -334,6 +350,62 @@ private fun SettingsScreen(
                         onSelect = { index ->
                             onNorthReferenceChange(if (index == 0) NorthReference.TRUE else NorthReference.MAGNETIC)
                         },
+                    )
+                }
+            }
+
+            SettingsSection(stringResource(R.string.settings_gnss_section)) {
+                val interferenceAvailable = gnssInterferenceSupport != InterferenceSupport.UNSUPPORTED
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 18.dp, end = 18.dp, top = 9.dp, bottom = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .alpha(if (interferenceAvailable) 1f else 0.38f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        Sym(
+                            icon = Glyph.SatelliteAlt,
+                            contentDescription = null,
+                            size = 22.dp,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Column {
+                            Text(
+                                text = stringResource(R.string.settings_gnss_interference_title),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                text = stringResource(
+                                    when (gnssInterferenceSupport) {
+                                        InterferenceSupport.AVAILABLE -> R.string.settings_gnss_interference_subtitle
+                                        InterferenceSupport.TIME_ONLY -> R.string.settings_gnss_interference_time_only
+                                        InterferenceSupport.UNSUPPORTED -> R.string.settings_gnss_interference_unsupported
+                                    },
+                                ),
+                                fontSize = 12.5.sp,
+                                color = if (LocalIsLightTheme.current) AboutMuted else LabelMuted,
+                            )
+                        }
+                    }
+                    IconButton(onClick = { showInterferenceInfo = true }) {
+                        Sym(
+                            icon = Glyph.Info,
+                            contentDescription = stringResource(R.string.gnss_interference_info_cd),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Switch(
+                        checked = gnssInterferenceDetection && interferenceAvailable,
+                        onCheckedChange = onGnssInterferenceDetectionChange,
+                        enabled = interferenceAvailable,
                     )
                 }
             }

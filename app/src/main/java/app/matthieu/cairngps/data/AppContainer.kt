@@ -12,6 +12,7 @@ interface AppContainer {
     val locationRepository: LocationRepository
     val compassRepository: CompassRepository
     val settingsRepository: SettingsRepository
+    val gnssInterferenceRepository: GnssInterferenceRepository
     val waypointRepository: WaypointRepository
     val sessionRepository: SessionRepository
     val navigationTargetRepository: NavigationTargetRepository
