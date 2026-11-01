@@ -57,11 +57,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.CoordinateFormat
+import app.matthieu.cairngps.data.GnssInterferenceRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.RecordingRepository
 import app.matthieu.cairngps.data.SettingsRepository
 import app.matthieu.cairngps.data.UnitSystem
 import app.matthieu.cairngps.data.WaypointRepository
+import app.matthieu.cairngps.domain.InterferenceStatus
 import app.matthieu.cairngps.domain.format.AccuracyQuality
 import app.matthieu.cairngps.domain.format.accuracyQuality
 import app.matthieu.cairngps.domain.format.copyCoordinates
@@ -80,6 +82,8 @@ import app.matthieu.cairngps.ui.common.BigValue
 import app.matthieu.cairngps.ui.common.CardTitle
 import app.matthieu.cairngps.ui.common.DataCard
 import app.matthieu.cairngps.ui.common.PulsingDot
+import app.matthieu.cairngps.ui.interference.GnssInterferenceViewModel
+import app.matthieu.cairngps.ui.interference.InterferenceAlertBanner
 import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
 import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.recording.RecordingUiState
@@ -147,12 +151,15 @@ fun HomeRoute(
     settingsRepository: SettingsRepository,
     waypointRepository: WaypointRepository,
     recordingRepository: RecordingRepository,
+    gnssInterferenceRepository: GnssInterferenceRepository,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: LocationViewModel =
         viewModel(
             factory = LocationViewModel.factory(locationRepository, waypointRepository, recordingRepository),
         )
+    val interferenceViewModel: GnssInterferenceViewModel =
+        viewModel(factory = GnssInterferenceViewModel.factory(gnssInterferenceRepository))
     val settingsViewModel: SettingsViewModel =
         viewModel(factory = SettingsViewModel.factory(settingsRepository))
     val recordingViewModel: RecordingViewModel =
@@ -161,12 +168,17 @@ fun HomeRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val recordingUiState by recordingViewModel.uiState.collectAsStateWithLifecycle()
+    val interferenceStatus by interferenceViewModel.status.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
 
     LifecycleStartEffect(Unit) {
         viewModel.startTracking()
-        onStopOrDispose { viewModel.stopTracking() }
+        interferenceViewModel.startTracking()
+        onStopOrDispose {
+            viewModel.stopTracking()
+            interferenceViewModel.stopTracking()
+        }
     }
 
     // Showing the recording notification needs POST_NOTIFICATIONS at runtime on API 33+. The
@@ -181,6 +193,7 @@ fun HomeRoute(
         coordinateFormat = settings.coordinateFormat,
         unitSystem = settings.unitSystem,
         recordingUiState = recordingUiState,
+        interferenceStatus = interferenceStatus,
         onSaveWaypoint = viewModel::saveWaypoint,
         onStartRecording = {
             // Recording start/stop is owned by RecordingService, not the ViewModel: only it can
@@ -206,6 +219,7 @@ private fun HomeScreen(
     coordinateFormat: CoordinateFormat,
     unitSystem: UnitSystem,
     recordingUiState: RecordingUiState,
+    interferenceStatus: InterferenceStatus?,
     onSaveWaypoint: (String) -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
@@ -299,6 +313,8 @@ private fun HomeScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                interferenceStatus?.let { InterferenceAlertBanner(status = it) }
+
                 CoordinatesCard(
                     uiState = uiState,
                     format = coordinateFormat,

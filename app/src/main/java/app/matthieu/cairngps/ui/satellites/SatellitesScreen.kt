@@ -51,8 +51,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.matthieu.cairngps.R
 import app.matthieu.cairngps.data.Constellation
+import app.matthieu.cairngps.data.GnssInterferenceRepository
 import app.matthieu.cairngps.data.LocationRepository
 import app.matthieu.cairngps.data.SatelliteInfo
+import app.matthieu.cairngps.domain.InterferenceStatus
+import app.matthieu.cairngps.ui.interference.GnssInterferenceViewModel
+import app.matthieu.cairngps.ui.interference.InterferenceAlertBanner
+import app.matthieu.cairngps.ui.interference.InterferenceInfoDialog
+import app.matthieu.cairngps.ui.interference.InterferenceMonitorCard
+import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
+import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.theme.CairnGreen
 import app.matthieu.cairngps.ui.theme.CairnGreenDark
 import app.matthieu.cairngps.ui.theme.CairnStone
@@ -71,8 +79,6 @@ import app.matthieu.cairngps.ui.theme.LabelMuted
 import app.matthieu.cairngps.ui.theme.LightBorderSubtle
 import app.matthieu.cairngps.ui.theme.LightNavBar
 import app.matthieu.cairngps.ui.theme.LightStatusText
-import app.matthieu.cairngps.ui.onboarding.OnboardingTarget
-import app.matthieu.cairngps.ui.onboarding.onboardingTarget
 import app.matthieu.cairngps.ui.theme.LocalIsLightTheme
 import app.matthieu.cairngps.ui.theme.MonoFontFamily
 import app.matthieu.cairngps.ui.theme.OutlineSubtle
@@ -101,21 +107,30 @@ private const val CN0_MIN_FRACTION = 0.06f
 @Composable
 fun SatellitesRoute(
     locationRepository: LocationRepository,
+    gnssInterferenceRepository: GnssInterferenceRepository,
     onOpenInfo: () -> Unit,
     onOpenGlobe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: SatellitesViewModel =
         viewModel(factory = SatellitesViewModel.factory(locationRepository))
+    val interferenceViewModel: GnssInterferenceViewModel =
+        viewModel(factory = GnssInterferenceViewModel.factory(gnssInterferenceRepository))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val interferenceStatus by interferenceViewModel.status.collectAsStateWithLifecycle()
 
     LifecycleStartEffect(Unit) {
         viewModel.startTracking()
-        onStopOrDispose { viewModel.stopTracking() }
+        interferenceViewModel.startTracking()
+        onStopOrDispose {
+            viewModel.stopTracking()
+            interferenceViewModel.stopTracking()
+        }
     }
 
     SatellitesScreen(
         uiState = uiState,
+        interferenceStatus = interferenceStatus,
         onOpenInfo = onOpenInfo,
         onOpenGlobe = onOpenGlobe,
         modifier = modifier,
@@ -126,11 +141,13 @@ fun SatellitesRoute(
 @Composable
 private fun SatellitesScreen(
     uiState: SatellitesUiState,
+    interferenceStatus: InterferenceStatus?,
     onOpenInfo: () -> Unit,
     onOpenGlobe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showHelp by remember { mutableStateOf(false) }
+    var showInterferenceInfo by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -165,6 +182,9 @@ private fun SatellitesScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                if (interferenceStatus?.isAlert == true) {
+                    item(key = "interference-alert") { InterferenceAlertBanner(status = interferenceStatus) }
+                }
                 item(key = "skyplot") {
                     SkyPlotCard(
                         satellites = uiState.satellites.orEmpty(),
@@ -192,6 +212,14 @@ private fun SatellitesScreen(
                         )
                     }
                 }
+                if (interferenceStatus != null) {
+                    item(key = "interference-monitor") {
+                        InterferenceMonitorCard(
+                            status = interferenceStatus,
+                            onInfo = { showInterferenceInfo = true },
+                        )
+                    }
+                }
                 uiState.satellitesByConstellation.forEach { (constellation, sats) ->
                     item(key = "group-${constellation.name}") {
                         ConstellationGroupCard(constellation = constellation, satellites = sats)
@@ -203,6 +231,9 @@ private fun SatellitesScreen(
 
     if (showHelp) {
         SatelliteHelpSheet(onDismiss = { showHelp = false })
+    }
+    if (showInterferenceInfo) {
+        InterferenceInfoDialog(onDismiss = { showInterferenceInfo = false })
     }
 }
 

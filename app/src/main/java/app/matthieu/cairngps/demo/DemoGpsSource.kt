@@ -1,18 +1,22 @@
 package app.matthieu.cairngps.demo
 
 import android.hardware.SensorManager
+import app.matthieu.cairngps.data.CarrierBand
 import app.matthieu.cairngps.data.CompassReading
 import app.matthieu.cairngps.data.Constellation
+import app.matthieu.cairngps.data.GnssBand
+import app.matthieu.cairngps.data.GnssBandSample
+import app.matthieu.cairngps.data.GnssSignalEvent
 import app.matthieu.cairngps.data.LocationData
 import app.matthieu.cairngps.data.SatelliteInfo
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -35,6 +39,15 @@ private const val HEADING_INTERVAL_MS = 50L
 
 /** Seconds between the two samples the instantaneous speed and heading are derived from. */
 private const val DERIVATIVE_STEP_SECONDS = 1.0
+
+private val demoBands = listOf(
+    GnssBand(Constellation.GPS, CarrierBand.L1),
+    GnssBand(Constellation.GPS, CarrierBand.L5),
+    GnssBand(Constellation.GALILEO, CarrierBand.L1),
+    GnssBand(Constellation.GALILEO, CarrierBand.L5),
+    GnssBand(Constellation.GLONASS, CarrierBand.G1),
+    GnssBand(Constellation.BEIDOU, CarrierBand.B1I),
+)
 
 private val demoRoute = DemoRoute(
     centerLatitude = DEMO_CENTER_LATITUDE,
@@ -72,6 +85,25 @@ class DemoGpsSource {
     fun satelliteUpdates(): Flow<List<SatelliteInfo>> = flow {
         while (true) {
             emit(currentSatellites())
+            delay(FIX_INTERVAL_MS.milliseconds)
+        }
+    }
+
+    /**
+     * Raw signal epochs at the real ~1 Hz cadence, describing a clean sky: C/N0 and AGC only
+     * wobble well inside the detector's thresholds, so the interference check settles on "normal".
+     */
+    fun gnssSignalUpdates(): Flow<GnssSignalEvent> = flow {
+        while (true) {
+            val seconds = nowSeconds()
+            val bands = demoBands.mapIndexed { index, band ->
+                band to GnssBandSample(
+                    cn0DbHz = 39.0 + index * 0.8 + 0.6 * sin(seconds / 11.0 + index),
+                    agcDb = 2.4 + 0.3 * sin(seconds / 19.0 + index),
+                )
+            }.toMap()
+            emit(GnssSignalEvent.Measurements(bands))
+            emit(GnssSignalEvent.TimeOffset(networkMinusGnssMs = 40L))
             delay(FIX_INTERVAL_MS.milliseconds)
         }
     }

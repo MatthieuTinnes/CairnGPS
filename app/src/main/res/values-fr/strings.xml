@@ -579,4 +579,38 @@
 
     <!-- Ligne À propos du hub Profil -->
     <string name="profile_hub_about_subtitle_fmt">Version %1$s · licence et crédits</string>
+
+    <!-- Détection de brouillage / spoofing GNSS -->
+    <string name="settings_gnss_section">Signal GNSS</string>
+    <string name="settings_gnss_interference_title">Détection de brouillage et de spoofing</string>
+    <string name="settings_gnss_interference_subtitle">Expérimental · alerte si les signaux satellites semblent falsifiés</string>
+    <string name="settings_gnss_interference_time_only">Seul le contrôle de l\'heure est disponible sur ce téléphone</string>
+    <string name="settings_gnss_interference_unsupported">Non compatible avec ce téléphone</string>
+    <string name="gnss_interference_info_cd">À propos de la détection de brouillage et de spoofing</string>
+    <string name="gnss_interference_info_title">Détection de brouillage et de spoofing</string>
+    <string name="gnss_interference_info_what_title">De quoi s\'agit-il ?</string>
+    <string name="gnss_interference_info_what">Le brouillage (jamming) noie les signaux satellites, très faibles, sous une émission radio puissante : la position devient indisponible ou imprécise. Le spoofing diffuse de faux signaux satellites pour faire croire au téléphone qu\'il se trouve ailleurs, ou à une autre heure. Ces deux phénomènes sont de plus en plus fréquents près des zones de conflit et de certaines frontières.</string>
+    <string name="gnss_interference_info_how_title">Comment ça marche ?</string>
+    <string name="gnss_interference_info_how">Pour chaque constellation et bande de fréquence, CairnGPS compare les 10 dernières secondes aux 50 secondes précédentes, sur deux valeurs : le rapport signal/bruit (C/N0) et le gain automatique du récepteur (AGC).\n• Les deux baissent : brouillage suspecté.\n• Le C/N0 monte pendant que l\'AGC baisse : spoofing suspecté.\nL\'heure transmise par les satellites est aussi comparée à l\'heure réseau : plus d\'une seconde d\'écart est suspect.</string>
+    <string name="gnss_interference_info_limits_title">Limites</string>
+    <string name="gnss_interference_info_limits">• Expérimental : les seuils sont des heuristiques inspirées de l\'application GnssLogger de Google.\n• Nécessite un téléphone qui fournit les mesures GNSS brutes et l\'AGC, ce que tous les modèles ne font pas.\n• Seuls les changements sont détectés : une interférence déjà présente au démarrage de la surveillance passe inaperçue, et une alerte s\'efface au bout d\'une minute environ même si l\'interférence persiste.\n• Un environnement inhabituel peut provoquer de fausses alertes, et une attaque sophistiquée peut passer inaperçue.\n• Le contrôle de l\'heure nécessite Android 13 et une connexion réseau, et l\'heure réseau peut elle-même être falsifiée.\n• La surveillance ne fonctionne que lorsque l\'écran Position ou Satellites est affiché.</string>
+    <string name="gnss_interference_info_advice">Une alerte est un indice, pas une preuve : en cas de doute, fiez-vous à une carte et à une boussole.</string>
+    <string name="action_close">Fermer</string>
+    <string name="gnss_alert_jamming_title">Brouillage GNSS suspecté</string>
+    <string name="gnss_alert_spoofing_title">Spoofing GNSS suspecté</string>
+    <string name="gnss_alert_jamming_body_fmt">Signaux affectés : %1$s. La position peut être indisponible ou imprécise.</string>
+    <string name="gnss_alert_spoofing_signal_body_fmt">Signaux anormalement forts : %1$s. La position affichée peut être fausse.</string>
+    <string name="gnss_alert_spoofing_time_body_fmt">L\'heure satellite diffère de l\'heure réseau de %1$s s. La position affichée peut être fausse.</string>
+    <string name="gnss_monitor_title">Surveillance des interférences</string>
+    <string name="gnss_monitor_signal_label">Signaux (C/N0 + AGC)</string>
+    <string name="gnss_monitor_time_label">Heure satellite / réseau</string>
+    <string name="gnss_state_waiting">En attente…</string>
+    <string name="gnss_state_unsupported">Non pris en charge par ce téléphone</string>
+    <string name="gnss_state_warming_up">Analyse en cours…</string>
+    <string name="gnss_state_ok">Normal</string>
+    <string name="gnss_state_jamming">Brouillage suspecté</string>
+    <string name="gnss_state_spoofing">Spoofing suspecté</string>
+    <string name="gnss_state_time_unavailable">Heure réseau indisponible</string>
+    <string name="gnss_state_time_ok_fmt">Normal (%1$s s)</string>
+    <string name="gnss_state_time_spoofing_fmt">Spoofing suspecté (%1$s s)</string>
 </resources>

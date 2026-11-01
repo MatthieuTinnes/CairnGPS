@@ -45,4 +45,5 @@ data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.DARK,
     val northReference: NorthReference = NorthReference.MAGNETIC,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
+    val gnssInterferenceDetection: Boolean = false,
 )

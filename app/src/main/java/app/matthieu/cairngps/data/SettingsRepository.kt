@@ -8,11 +8,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 
 // Single DataStore instance for the process, scoped to the application context via this delegate.
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -31,6 +31,7 @@ class SettingsRepository(context: Context) {
         val NORTH_REFERENCE = stringPreferencesKey("north_reference")
         val UNIT_SYSTEM = stringPreferencesKey("unit_system")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        val GNSS_INTERFERENCE_DETECTION = booleanPreferencesKey("gnss_interference_detection")
     }
 
     // Single source for default values, reused below instead of repeating each enum default in
@@ -57,6 +58,8 @@ class SettingsRepository(context: Context) {
                 unitSystem = prefs[Keys.UNIT_SYSTEM]
                     ?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() }
                     ?: defaults.unitSystem,
+                gnssInterferenceDetection = prefs[Keys.GNSS_INTERFERENCE_DETECTION]
+                    ?: defaults.gnssInterferenceDetection,
             )
         }
 
@@ -74,6 +77,10 @@ class SettingsRepository(context: Context) {
 
     suspend fun setUnitSystem(unitSystem: UnitSystem) {
         dataStore.edit { prefs -> prefs[Keys.UNIT_SYSTEM] = unitSystem.name }
+    }
+
+    suspend fun setGnssInterferenceDetection(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[Keys.GNSS_INTERFERENCE_DETECTION] = enabled }
     }
 
     /**
@@ -99,6 +106,7 @@ class SettingsRepository(context: Context) {
             prefs[Keys.THEME_MODE] = settings.themeMode.name
             prefs[Keys.NORTH_REFERENCE] = settings.northReference.name
             prefs[Keys.UNIT_SYSTEM] = settings.unitSystem.name
+            prefs[Keys.GNSS_INTERFERENCE_DETECTION] = settings.gnssInterferenceDetection
         }
     }
 }
