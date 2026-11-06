@@ -18,7 +18,8 @@ La reproductibilité du build F-Droid n'est pas affectée.
 2. **Réglages → Debug → Mode démo** (section visible uniquement en debug).
 3. L'application redémarre : la base et les sources de données sont choisies au démarrage du
    processus, pas à chaud.
-4. Faire les captures.
+4. Faire les captures. Les captures du store, elles, sont générées automatiquement à partir des
+   mêmes données : voir `docs/store-screenshots.md`.
 5. Rebasculer l'interrupteur pour revenir aux données réelles — elles n'ont jamais été touchées.
 
 ## Ce qui est simulé
