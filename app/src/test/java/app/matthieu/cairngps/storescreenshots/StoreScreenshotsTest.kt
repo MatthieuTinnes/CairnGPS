@@ -179,10 +179,11 @@ class StoreScreenshotsTest {
         spoofed: Boolean = false,
         settleMs: Long = 2_500,
     ) = StoreFrameSpec(spoofed = spoofed, settleMs = settleMs) { fonts, _, device ->
-        // Tablets get a single, larger device: two overlapping tablets don't fit the canvas.
+        // Tablets get a single device, shown whole: two tablets don't fit the canvas, and a
+        // cropped one hides too much of its screen.
         val shown = if (device == DeviceKind.TABLET) screens.take(1) else screens.toList()
         val slots = when {
-            device == DeviceKind.TABLET -> listOf(DeviceSlot(x = 22f, top = 252f, width = 316f))
+            device == DeviceKind.TABLET -> listOf(DeviceSlot(x = 60f, top = 184f, width = 240f))
             shown.size == 1 -> listOf(DeviceSlot(x = 46f, top = 262f, width = 268f))
             else -> listOf(DeviceSlot(x = 12f, top = 262f, width = 192f), DeviceSlot(x = 158f, top = 314f, width = 192f))
         }

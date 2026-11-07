@@ -34,12 +34,12 @@ val FrenchCopy = StoreCopy(
     ),
     satellites = FeatureCopy(
         eyebrow = "02 · Satellites",
-        headline = Headline("Les satellites ", "au-dessus de vous."),
+        headline = Headline("Les satellites\n", "au-dessus de vous."),
         subtitle = "Globe 3D, carte du ciel et force de chaque signal.",
     ),
     tracks = FeatureCopy(
         eyebrow = "03 · Traces",
-        headline = Headline("Rangez le téléphone, ", "il garde la trace."),
+        headline = Headline("Rangez le téléphone,\n", "il garde la trace."),
         subtitle = "Distance, dénivelé et profil, même écran éteint.",
     ),
     compass = FeatureCopy(
@@ -81,12 +81,12 @@ val EnglishCopy = StoreCopy(
     ),
     satellites = FeatureCopy(
         eyebrow = "02 · Satellites",
-        headline = Headline("The satellites ", "right above you."),
+        headline = Headline("The satellites\n", "right above you."),
         subtitle = "3D globe, sky plot and the strength of every signal.",
     ),
     tracks = FeatureCopy(
         eyebrow = "03 · Tracks",
-        headline = Headline("Pocket your phone, ", "it keeps the track."),
+        headline = Headline("Pocket your phone,\n", "it keeps the track."),
         subtitle = "Distance, climb and profile, even with the screen off.",
     ),
     compass = FeatureCopy(

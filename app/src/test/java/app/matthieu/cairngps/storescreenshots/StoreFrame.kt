@@ -110,7 +110,7 @@ enum class DeviceKind(
     val punchHole: Boolean,
 ) {
     PHONE(360, 800, 12, 56, 46, punchHole = true),
-    TABLET(720, 1152, 22, 48, 28, punchHole = false),
+    TABLET(600, 960, 18, 40, 24, punchHole = false),
 }
 
 /** Frame size unit: 1/360 of the canvas width, so the layout scales with the canvas. */
@@ -122,6 +122,12 @@ value class Unit360(val dpPerUnit: Float) {
 
 /** Where the topographic rings sit, as a fraction of the canvas, and how big they are. */
 data class Contours(val centerX: Float, val centerY: Float, val size: Float = 1.25f)
+
+/** Vertical rhythm of a feature frame's text block, in [Unit360]. */
+private enum class HeaderMetrics(val top: Float, val gap: Float, val headlineSize: Float, val subtitleSize: Float) {
+    REGULAR(top = 50f, gap = 16f, headlineSize = 35f, subtitleSize = 15f),
+    COMPACT(top = 34f, gap = 12f, headlineSize = 30f, subtitleSize = 13.5f),
+}
 
 /** One device of a frame: its horizontal position and width in [Unit360], its top in units. */
 data class DeviceSlot(val x: Float, val top: Float, val width: Float)
@@ -144,23 +150,30 @@ fun FeatureFrame(
             .clipToBounds(),
     ) {
         val u = Unit360(maxWidth.value / 360f)
+        // Tablet canvases are shorter (1.6:1 instead of 2:1) and the whole tablet must fit below
+        // the text, so the header is tightened there.
+        val header = if (device == DeviceKind.TABLET) HeaderMetrics.COMPACT else HeaderMetrics.REGULAR
         ContourRings(contours, backdrop.contour)
-        Column(modifier = Modifier.padding(start = u(30), end = u(26), top = u(50))) {
+        Column(modifier = Modifier.padding(start = u(30), end = u(26), top = u(header.top))) {
             Eyebrow(copy.eyebrow, backdrop.eyebrow, fonts, u)
-            Spacer(Modifier.height(u(16)))
+            Spacer(Modifier.height(u(header.gap)))
             HeadlineText(
                 headline = copy.headline,
                 color = backdrop.text,
                 accent = backdrop.accent,
                 fonts = fonts,
-                fontSize = u.sp(35),
-                lineHeight = u.sp(37),
+                fontSize = u.sp(header.headlineSize),
+                lineHeight = u.sp(header.headlineSize + 2),
             )
-            Spacer(Modifier.height(u(16)))
+            Spacer(Modifier.height(u(header.gap)))
             Text(
                 text = copy.subtitle,
                 color = backdrop.muted,
-                style = TextStyle(fontFamily = fonts.sans, fontSize = u.sp(15), lineHeight = u.sp(21)),
+                style = TextStyle(
+                    fontFamily = fonts.sans,
+                    fontSize = u.sp(header.subtitleSize),
+                    lineHeight = u.sp(header.subtitleSize * 1.4f),
+                ),
             )
         }
         // Later slots are drawn first so the first device overlaps the second, like the
