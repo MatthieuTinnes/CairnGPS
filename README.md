@@ -20,8 +20,8 @@ or on F-Droid and Google Play.
 
 <p align="center">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="30%" alt="Position screen showing coordinates, speed, altitude and accuracy" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="30%" alt="Skyplot of satellites in view" />
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="30%" alt="3D globe view of satellites in view" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="30%" alt="3D globe and skyplot of satellites in view" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="30%" alt="Recorded track with altitude and speed profiles, and the logbook" />
 </p>
 
 ## Features
@@ -126,5 +126,6 @@ Third-party data and assets used by the app:
 
 Tools used around the project:
 
-- **[Screenshots Pro](https://screenshots.pro/)** — used to produce the store
-  screenshots in `fastlane/metadata/android/*/images/*Screenshots`.
+- **[Roborazzi](https://github.com/takahirom/roborazzi)** with Robolectric —
+  generates the store screenshots in `fastlane/metadata/android/*/images/`
+  from the app's real screens (see [docs/store-screenshots.md](docs/store-screenshots.md)).

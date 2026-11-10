@@ -67,8 +67,17 @@ private val demoRoute = DemoRoute(
  * Every value is a pure function of the wall clock: no state, no accumulated drift, identical
  * across app restarts, and continuous — which is what makes it usable for a screen recording
  * where the numbers must move smoothly rather than jump.
+ *
+ * @param clock         Epoch milliseconds the values are derived from. The store screenshot
+ *                      generator pins it so every capture shows the exact same sky and position.
+ * @param timeOffsetMs  Network minus GNSS time reported to the interference detector. The default
+ *                      is a clean sky; anything over the detector's threshold stages a spoofing
+ *                      alert for the store screenshots.
  */
-class DemoGpsSource {
+class DemoGpsSource(
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val timeOffsetMs: () -> Long = { 40L },
+) {
 
     /** Fixes at the real GPS cadence. Emits immediately so a screen never opens on `--`. */
     fun locationUpdates(): Flow<LocationData> = flow {
@@ -103,7 +112,7 @@ class DemoGpsSource {
                 )
             }.toMap()
             emit(GnssSignalEvent.Measurements(bands))
-            emit(GnssSignalEvent.TimeOffset(networkMinusGnssMs = 40L))
+            emit(GnssSignalEvent.TimeOffset(networkMinusGnssMs = timeOffsetMs()))
             delay(FIX_INTERVAL_MS.milliseconds)
         }
     }
@@ -143,7 +152,7 @@ class DemoGpsSource {
             // the readout doesn't look frozen.
             horizontalAccuracy = (3.1 + 0.55 * sin(seconds / 17.0)).toFloat(),
             verticalAccuracy = (4.4 + 1.1 * sin(seconds / 23.0)).toFloat(),
-            timestamp = System.currentTimeMillis(),
+            timestamp = clock(),
         )
     }
 
@@ -179,7 +188,7 @@ class DemoGpsSource {
         return atan2(east, north) * 180.0 / PI
     }
 
-    private fun nowSeconds(): Double = System.currentTimeMillis() / 1_000.0
+    private fun nowSeconds(): Double = clock() / 1_000.0
 }
 
 /** The unchanging part of a simulated satellite; the time-varying part is applied per snapshot. */

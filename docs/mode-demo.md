@@ -1,64 +1,63 @@
-# Mode démo — captures d'écran et vidéos anonymisées
+# Demo mode — anonymized screenshots and videos
 
-Le mode démo remplace **toutes** les données affichées par des données fictives, pour pouvoir
-faire des captures d'écran et des screencasts (F-Droid, README, store) sans jamais exposer sa
-position réelle, ses traces ou ses repères.
+Demo mode replaces **all** displayed data with fake data, so that screenshots and screencasts
+(F-Droid, README, store) can be made without ever exposing your real position, tracks or
+waypoints.
 
-L'interrupteur lui-même et la bascule de base de données (`cairn-demo.db`) n'existent **que dans
-les builds debug** : `DemoMode.isAvailable` vaut `BuildConfig.DEBUG`, donc `false` en release, et
-R8 supprime ces branches. En revanche `demo/DemoGpsSource.kt`, `demo/DemoRoute.kt` et
-`demo/DemoDataSeeder.kt` sont aussi utilisés par la visite guidée du premier lancement (voir
-`docs/onboarding.md`), qui doit fonctionner en release : ces trois fichiers restent donc dans
-l'APK release (quelques Ko). Seul `DemoMode` et son redémarrage de processus disparaissent.
-La reproductibilité du build F-Droid n'est pas affectée.
+The switch itself and the database swap (`cairn-demo.db`) exist **only in debug builds**:
+`DemoMode.isAvailable` is `BuildConfig.DEBUG`, hence `false` in release, and R8 strips those
+branches. However, `demo/DemoGpsSource.kt`, `demo/DemoRoute.kt` and `demo/DemoDataSeeder.kt` are
+also used by the first-launch guided tour (see `docs/onboarding.md`), which must work in release:
+these three files therefore remain in the release APK (a few KB). Only `DemoMode` and its process
+restart go away. The reproducibility of the F-Droid build is not affected.
 
-## Utilisation
+## Usage
 
-1. Installer le build debug (`./gradlew installDebug`).
-2. **Réglages → Debug → Mode démo** (section visible uniquement en debug).
-3. L'application redémarre : la base et les sources de données sont choisies au démarrage du
-   processus, pas à chaud.
-4. Faire les captures.
-5. Rebasculer l'interrupteur pour revenir aux données réelles — elles n'ont jamais été touchées.
+1. Install the debug build (`./gradlew installDebug`).
+2. **Settings → Debug → Demo mode** (section visible in debug only).
+3. The app restarts: the database and data sources are chosen when the process starts, not on
+   the fly.
+4. Take the screenshots. Store screenshots, on the other hand, are generated automatically from
+   the same data: see `docs/store-screenshots.md`.
+5. Flip the switch back to return to real data — it was never touched.
 
-## Ce qui est simulé
+## What is simulated
 
-| Donnée | En mode démo |
+| Data | In demo mode |
 |---|---|
-| Position, altitude, vitesse, précision | Marche fictive en boucle, ~4,5 km/h, vers 2400 m, précision ~3 m (indicateur vert) |
-| Satellites (`GnssStatus`) | 33 satellites GPS / Galileo / GLONASS / BeiDou / SBAS, dérive lente, ~2/3 utilisés dans le fix |
-| Boussole | Cap suivant le sens de marche, précision haute (jamais d'avertissement de calibration) |
-| État du GPS | Toujours activé (pas de bandeau « GPS désactivé ») |
-| Base de données | Fichier séparé `cairn-demo.db` — `cairn.db` n'est ni lu ni écrit |
-| Historique | 10 sessions fictives sur 10 mois, dans des massifs sans rapport entre eux |
-| Repères | 16 repères, un par icône du sélecteur |
-| Records, succès, niveau, XP | **Non pré-remplis** : `GamificationManager` les recalcule à partir des sessions/repères ci-dessus, donc ils ne peuvent pas contredire les traces affichées |
+| Position, altitude, speed, accuracy | Fake looping walk, ~4.5 km/h, around 2400 m, ~3 m accuracy (green indicator) |
+| Satellites (`GnssStatus`) | 33 GPS / Galileo / GLONASS / BeiDou / SBAS satellites, slow drift, ~2/3 used in the fix |
+| Compass | Heading follows the walking direction, high accuracy (never a calibration warning) |
+| GPS state | Always enabled (no "GPS disabled" banner) |
+| Database | Separate `cairn-demo.db` file — `cairn.db` is neither read nor written |
+| History | 10 fake sessions over 10 months, in unrelated mountain ranges |
+| Waypoints | 16 waypoints, one per icon in the picker |
+| Records, achievements, level, XP | **Not pre-filled**: `GamificationManager` recomputes them from the sessions/waypoints above, so they cannot contradict the displayed tracks |
 
-Toutes les valeurs live sont des fonctions pures de l'horloge : elles bougent de façon continue
-(bon pour la vidéo), sans dérive accumulée, et sont identiques d'un lancement à l'autre.
+All live values are pure functions of the clock: they move continuously (good for video), with no
+accumulated drift, and are identical from one launch to the next.
 
-Le jeu de données est calibré pour que les écrans de gamification soient intéressants à
-capturer : 3 jours consécutifs pour la série, 6 mois distincts, une session à cheval sur minuit,
-une session assez rapide pour la condition « croisière », un point à −19 m et un sommet à
-3113 m — tout en **laissant beaucoup de succès verrouillés**, pour que les barres de progression
-restent visibles.
+The dataset is tuned so that the gamification screens are interesting to capture: 3 consecutive
+days for the streak, 6 distinct months, a session spanning midnight, a session fast enough for the
+"cruising speed" condition, a point at −19 m and a summit at 3113 m — while **leaving many
+achievements locked**, so that the progress bars stay visible.
 
-## Limite connue
+## Known limitation
 
-L'enregistrement d'une trace nécessite toujours la permission de localisation réelle, même en
-mode démo : le service de premier plan est de type `location`, et Android 14+ refuse de le
-démarrer sans `ACCESS_FINE_LOCATION`. Sur un appareil où la permission est accordée,
-l'enregistrement fonctionne normalement et enregistre la trace simulée. Le reste de
-l'application (écran de permission compris) est accessible sans aucune permission.
+Recording a track still requires the real location permission, even in demo mode: the foreground
+service is of type `location`, and Android 14+ refuses to start it without
+`ACCESS_FINE_LOCATION`. On a device where the permission is granted, recording works normally and
+records the simulated track. The rest of the app (permission screen included) is accessible
+without any permission.
 
-## Où c'est implémenté
+## Where it is implemented
 
-- `demo/DemoMode.kt` — l'interrupteur, ses `SharedPreferences` et le redémarrage du processus
-- `demo/DemoRoute.kt` — la géométrie de boucle partagée entre le live et l'historique
-- `demo/DemoGpsSource.kt` — position, satellites et cap simulés
-- `demo/DemoDataSeeder.kt` — le jeu de données fictif
+- `demo/DemoMode.kt` — the switch, its `SharedPreferences` and the process restart
+- `demo/DemoRoute.kt` — the loop geometry shared between live data and history
+- `demo/DemoGpsSource.kt` — simulated position, satellites and heading
+- `demo/DemoDataSeeder.kt` — the fake dataset
 
-Les points de branchement sont volontairement peu nombreux : `LocationRepository`,
-`CompassRepository`, `AppDatabase.databaseName()`, `CairnApplication.onCreate`,
-`GamificationManager.startLiveTracking` et `LocationPermissionGate`. Aucun ViewModel ni aucun
-composable ne sait que le mode démo existe.
+The hook points are deliberately few: `LocationRepository`, `CompassRepository`,
+`AppDatabase.databaseName()`, `CairnApplication.onCreate`,
+`GamificationManager.startLiveTracking` and `LocationPermissionGate`. No ViewModel or composable
+knows that demo mode exists.

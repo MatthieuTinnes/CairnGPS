@@ -85,7 +85,18 @@ android {
             isIncludeAndroidResources = true
             // Robolectric 4.17 reaches into jdk.internal.access.SharedSecrets to fake raw
             // FileDescriptors when booting the SDK 36 sandbox; JDK 17+ hides it unless exported.
-            all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
+            all {
+                it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+                // The store screenshot generator renders every screen of the app 42 times and
+                // overwrites fastlane/metadata: it only runs when asked for with
+                // -PstoreScreenshots (see docs/store-screenshots.md), never as part of `test`.
+                if (providers.gradleProperty("storeScreenshots").isPresent) {
+                    it.filter.includeTestsMatching("*.storescreenshots.*")
+                    it.outputs.upToDateWhen { false }
+                } else {
+                    it.exclude("**/storescreenshots/**")
+                }
+            }
         }
     }
 }
@@ -134,6 +145,12 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
+    // Store screenshot generator (storescreenshots/): renders the real screens on the JVM.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
