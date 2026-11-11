@@ -1,0 +1,96 @@
+name: Play Store listing
+
+# Uploads the store screenshots and graphics in fastlane/metadata/android/<locale>/images/ to the
+# Google Play listing with fastlane supply. Texts, changelogs and app bundles are left alone: the
+# release workflow builds the AAB, and the listing texts are still edited in Play Console.
+# Setup (service account, secret): docs/store-screenshots.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "fastlane/metadata/android/*/images/**"
+  workflow_dispatch:
+    inputs:
+      validate_only:
+        description: "Validate only: have Google check the changes without publishing them"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-listing
+  cancel-in-progress: false
+
+env:
+  PACKAGE_NAME: app.matthieu.cairngps
+  FASTLANE_VERSION: "2.241.2"
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Play credentials
+        id: credentials
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          # Skipped rather than failed while the secret isn't set up, so merging new screenshots
+          # never turns main red.
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::notice::PLAY_SERVICE_ACCOUNT_JSON is not set: Play listing upload skipped (see docs/store-screenshots.md)."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.credentials.outputs.configured == 'true'
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        if: steps.credentials.outputs.configured == 'true'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install fastlane
+        if: steps.credentials.outputs.configured == 'true'
+        run: gem install fastlane --version "$FASTLANE_VERSION" --no-document
+
+      - name: Upload screenshots and graphics
+        if: steps.credentials.outputs.configured == 'true'
+        env:
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          # A push to main publishes; a manual run validates only unless told otherwise.
+          VALIDATE_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.validate_only || false }}
+          FASTLANE_SKIP_UPDATE_CHECK: "1"
+          FASTLANE_HIDE_CHANGELOG: "1"
+        run: |
+          set -euo pipefail
+          # sync_image_upload compares checksums and only sends the images that changed.
+          fastlane supply \
+            --package_name "$PACKAGE_NAME" \
+            --metadata_path fastlane/metadata/android \
+            --skip_upload_apk true \
+            --skip_upload_aab true \
+            --skip_upload_metadata true \
+            --skip_upload_changelogs true \
+            --sync_image_upload true \
+            --validate_only "$VALIDATE_ONLY"
+
+      - name: Summary
+        if: steps.credentials.outputs.configured == 'true'
+        env:
+          VALIDATE_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.validate_only || false }}
+        run: |
+          if [ "$VALIDATE_ONLY" = "true" ]; then
+            echo "### Validated only — nothing was published to the Play listing" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Screenshots and graphics sent to the Play listing" >> "$GITHUB_STEP_SUMMARY"
+            echo "They go live once Google has reviewed them (or once released from Play Console if managed publishing is on)." >> "$GITHUB_STEP_SUMMARY"
+          fi
