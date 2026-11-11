@@ -49,3 +49,31 @@ Everything lives in `app/src/test/java/app/matthieu/cairngps/storescreenshots/`:
 
 The Fraunces and Manrope fonts (`app/src/test/resources/store-fonts/`, OFL license) are only used
 by the generator and are not shipped in the APK.
+
+## Publishing
+
+- **F-Droid** reads `fastlane/metadata/android/` from the repository: the new images show up with
+  the next tagged release, nothing to do.
+- **Google Play** is updated by the `Play Store listing` workflow
+  (`.github/workflows/play-listing.yml`), which runs fastlane `supply` on every push to `main`
+  that changes `fastlane/metadata/android/*/images/`. It uploads the screenshots, the feature
+  graphic and the icon only, and only those that changed: texts, changelogs and bundles are left
+  alone. Changes go live once Google has reviewed them (or once sent for publication from Play
+  Console, if managed publishing is on).
+
+It can also be run by hand (Actions → Play Store listing → Run workflow). A manual run is
+**validate only** by default: Google checks the changes without publishing anything. Untick it to
+publish.
+
+### One-time setup
+
+1. Play Console → **Setup → API access**: link a Google Cloud project, then create a
+   **service account** in it and download a JSON key.
+2. Play Console → **Users and permissions**: invite the service account's email, with access to
+   CairnGPS only and a single permission, **Edit store listing, pricing & distribution**.
+3. GitHub → **Settings → Secrets and variables → Actions**: add the JSON key's content as
+   `PLAY_SERVICE_ACCOUNT_JSON`.
+4. Run the workflow by hand with *validate only* ticked to check the setup.
+
+Until the secret is set, the workflow is skipped with a notice instead of failing. Both `fr-FR`
+and `en-US` must exist as languages of the Play listing.
